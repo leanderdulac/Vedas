@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "title": "Texto védico em domínio público (exemplo)",
+      "url": "https://dominio-publico.example/texto.pdf",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Texto vaishnava autorizado (exemplo)",
+      "url": "https://example.org/export.txt",
+      "tradition": "vaishnava",
+      "language": "en",
+      "license": "authorized",
+      "download": true
+    },
+    {
+      "title": "Fixture local — Isha Upanishad (sa)",
+      "url": "fixtures/sample_texts/isha_upanishad_sa.txt",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "public-domain",
+      "download": true
+    }
+  ]
+}

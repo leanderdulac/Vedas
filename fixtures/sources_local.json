@@ -1,0 +1,44 @@
+{
+  "sources": [
+    {
+      "title": "Isha Upanishad (Sanskrit, fixture)",
+      "url": "fixtures/sample_texts/isha_upanishad_sa.txt",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Isha Upanishad (English, fixture)",
+      "url": "fixtures/sample_texts/isha_upanishad_en.txt",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Bhagavad-gita sample (English, fixture)",
+      "url": "fixtures/sample_texts/gita_sample_en.txt",
+      "tradition": "vaishnava",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Panini Ashtadhyayi samples (Sanskrit, fixture)",
+      "url": "fixtures/sample_texts/panini_grammar_sa.txt",
+      "tradition": "grammar",
+      "language": "sa",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Catalog only — no download",
+      "url": "https://example.org/bbt-catalog",
+      "tradition": "vaishnava",
+      "language": "en",
+      "license": "authorized",
+      "download": false
+    }
+  ]
+}

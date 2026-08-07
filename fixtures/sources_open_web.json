@@ -1,0 +1,679 @@
+{
+  "meta": {
+    "description": "Fontes abertas verificadas (Project Gutenberg + Sacred Texts public-domain).",
+    "policy": "public-domain | cc0 | cc-by | cc-by-sa | authorized | official-api",
+    "verified": "2026-08-07 — IDs Gutenberg checados por download HTTP 200 + título",
+    "notes": [
+      "Project Gutenberg: domínio público nos EUA; confira jurisdição local.",
+      "Sacred Texts: edições PD (Griffith, Wilson, etc.).",
+      "Mahabharata Ganguli: volumes grandes (MB) — use --limit em testes.",
+      "Não incluir BBT/Vedabase sem autorização."
+    ]
+  },
+  "sources": [
+    {
+      "title": "Bhagavad-Gita — The Song Celestial (Edwin Arnold, Gutenberg #2388)",
+      "url": "https://www.gutenberg.org/cache/epub/2388/pg2388.txt",
+      "tradition": "vaishnava",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg",
+      "tags": [
+        "gita"
+      ]
+    },
+    {
+      "title": "The Upanishads (Max Müller / Sacred Books tradition, Gutenberg #3283)",
+      "url": "https://www.gutenberg.org/cache/epub/3283/pg3283.txt",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg",
+      "tags": [
+        "upanishad"
+      ]
+    },
+    {
+      "title": "The Yoga Sutras of Patanjali (Charles Johnston, Gutenberg #2526)",
+      "url": "https://www.gutenberg.org/cache/epub/2526/pg2526.txt",
+      "tradition": "yoga",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg",
+      "tags": [
+        "yoga"
+      ]
+    },
+    {
+      "title": "The Ramayan of Valmiki — English verse (Gutenberg #24869)",
+      "url": "https://www.gutenberg.org/cache/epub/24869/pg24869.txt",
+      "tradition": "itihasa",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg",
+      "tags": [
+        "ramayana"
+      ]
+    },
+    {
+      "title": "The Mahabharata Volume 1 (Ganguli, Gutenberg #15474)",
+      "url": "https://www.gutenberg.org/cache/epub/15474/pg15474.txt",
+      "tradition": "itihasa",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg",
+      "tags": [
+        "mahabharata"
+      ]
+    },
+    {
+      "title": "The Mahabharata Volume 2 (Ganguli, Gutenberg #15475)",
+      "url": "https://www.gutenberg.org/cache/epub/15475/pg15475.txt",
+      "tradition": "itihasa",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg"
+    },
+    {
+      "title": "The Mahabharata Volume 3 (Ganguli, Gutenberg #15476)",
+      "url": "https://www.gutenberg.org/cache/epub/15476/pg15476.txt",
+      "tradition": "itihasa",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg"
+    },
+    {
+      "title": "The Mahabharata Volume 4 (Ganguli, Gutenberg #15477)",
+      "url": "https://www.gutenberg.org/cache/epub/15477/pg15477.txt",
+      "tradition": "itihasa",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "gutenberg",
+      "tags": [
+        "bhishma",
+        "gita"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.1 Agni (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01001.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts"
+    },
+    {
+      "title": "Rigveda RV 1.32 Indra (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01032.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts"
+    },
+    {
+      "title": "Rigveda RV 10.90 Purusha Sukta (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10090.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts"
+    },
+    {
+      "title": "Rigveda RV 10.129 Nasadiya (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10129.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts"
+    },
+    {
+      "title": "Rigveda RV 10.191 Samjnana (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10191.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts"
+    },
+    {
+      "title": "Vishnu Purana Book 1 opening (H.H. Wilson, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/vp/vp001.htm",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts"
+    },
+    {
+      "title": "Laws of Manu (sacred-texts index/body)",
+      "url": "https://www.sacred-texts.com/hin/manu/manu01.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "dharma-shastra"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.2 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01002.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.3 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01003.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.4 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01004.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.5 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01005.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.6 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01006.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.7 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01007.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.8 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01008.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.9 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01009.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.10 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01010.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.11 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01011.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.12 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01012.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.13 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01013.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.14 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01014.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.15 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01015.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.16 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01016.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.17 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01017.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.18 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01018.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.19 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01019.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.20 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01020.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.50 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01050.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.62 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01062.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.89 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01089.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.92 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01092.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.113 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01113.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.154 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01154.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.162 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01162.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.164 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01164.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.14 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10014.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.71 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10071.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.81 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10081.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.82 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10082.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.85 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10085.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.121 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10121.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.125 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10125.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.130 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10130.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.135 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10135.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.151 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10151.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.168 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10168.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.190 (Griffith)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10190.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "book10"
+      ]
+    }
+  ]
+}

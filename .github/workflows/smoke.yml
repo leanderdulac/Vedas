@@ -1,0 +1,52 @@
+name: smoke
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  retrieval-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements_vedic_pipeline.txt
+
+      - name: Install deps (API + embeddings, CPU)
+        run: |
+          python -m pip install --upgrade pip
+          # torch CPU first to avoid huge CUDA wheel
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements_vedic_pipeline.txt
+
+      - name: Bootstrap mini corpus + index
+        run: |
+          python -m vedic_pipeline ingest --manifest fixtures/sources_vedic_corpus.json
+          python -m vedic_pipeline dedupe
+          python -m vedic_pipeline build-index --backend numpy --chunk-size 1000 --overlap 150 --batch-size 32
+
+      - name: Smoke RAG (strict, fixtures gold set)
+        env:
+          # force numpy path in CI (no postgres)
+          DATABASE_URL: ""
+        run: |
+          python scripts/smoke_rag.py \
+            --backend numpy \
+            --queries fixtures/smoke_queries_ci.json \
+            --strict \
+            --json-out data/smoke_report.json
+
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: data/smoke_report.json

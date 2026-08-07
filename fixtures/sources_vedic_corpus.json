@@ -1,0 +1,92 @@
+{
+  "sources": [
+    {
+      "title": "Isha Upanishad (Sanskrit)",
+      "url": "fixtures/sample_texts/isha_upanishad_sa.txt",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Isha Upanishad (English)",
+      "url": "fixtures/sample_texts/isha_upanishad_en.txt",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Principal Upanishads (English core)",
+      "url": "fixtures/sample_texts/upanishads_core_en.txt",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Rig Veda selected hymns (English)",
+      "url": "fixtures/sample_texts/rigveda_selection_en.txt",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Bhagavad-gita (English)",
+      "url": "fixtures/sample_texts/bhagavad_gita_en.txt",
+      "tradition": "vaishnava",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Yoga-sutras of Patanjali (English)",
+      "url": "fixtures/sample_texts/yoga_sutra_en.txt",
+      "tradition": "yoga",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Ramayana selected themes (English)",
+      "url": "fixtures/sample_texts/ramayana_selection_en.txt",
+      "tradition": "itihasa",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Mahabharata selected themes (English)",
+      "url": "fixtures/sample_texts/mahabharata_selection_en.txt",
+      "tradition": "itihasa",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Panini Ashtadhyayi samples (Sanskrit)",
+      "url": "fixtures/sample_texts/panini_grammar_sa.txt",
+      "tradition": "grammar",
+      "language": "sa",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Vedic conceptual lexicon (SA/EN)",
+      "url": "fixtures/sample_texts/vedic_concepts_sa_en.txt",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    },
+    {
+      "title": "Bhagavad-gita sample (legacy fixture)",
+      "url": "fixtures/sample_texts/gita_sample_en.txt",
+      "tradition": "vaishnava",
+      "language": "en",
+      "license": "public-domain",
+      "download": true
+    }
+  ]
+}

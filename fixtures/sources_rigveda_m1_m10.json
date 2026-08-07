@@ -1,0 +1,4978 @@
+{
+  "meta": {
+    "description": "Ṛgveda completo (Griffith) via sacred-texts — public domain",
+    "hymns": 382,
+    "books": [
+      1,
+      10
+    ]
+  },
+  "sources": [
+    {
+      "title": "Rigveda RV 1.1 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01001.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.2 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01002.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.3 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01003.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.4 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01004.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.5 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01005.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.6 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01006.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.7 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01007.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.8 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01008.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.9 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01009.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.10 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01010.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.11 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01011.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.12 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01012.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.13 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01013.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.14 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01014.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.15 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01015.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.16 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01016.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.17 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01017.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.18 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01018.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.19 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01019.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.20 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01020.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.21 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01021.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.22 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01022.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.23 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01023.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.24 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01024.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.25 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01025.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.26 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01026.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.27 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01027.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.28 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01028.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.29 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01029.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.30 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01030.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.31 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01031.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.32 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01032.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.33 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01033.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.34 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01034.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.35 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01035.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.36 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01036.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.37 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01037.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.38 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01038.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.39 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01039.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.40 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01040.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.41 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01041.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.42 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01042.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.43 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01043.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.44 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01044.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.45 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01045.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.46 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01046.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.47 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01047.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.48 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01048.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.49 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01049.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.50 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01050.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.51 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01051.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.52 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01052.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.53 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01053.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.54 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01054.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.55 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01055.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.56 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01056.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.57 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01057.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.58 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01058.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.59 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01059.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.60 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01060.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.61 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01061.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.62 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01062.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.63 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01063.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.64 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01064.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.65 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01065.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.66 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01066.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.67 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01067.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.68 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01068.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.69 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01069.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.70 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01070.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.71 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01071.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.72 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01072.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.73 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01073.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.74 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01074.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.75 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01075.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.76 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01076.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.77 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01077.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.78 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01078.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.79 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01079.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.80 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01080.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.81 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01081.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.82 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01082.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.83 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01083.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.84 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01084.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.85 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01085.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.86 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01086.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.87 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01087.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.88 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01088.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.89 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01089.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.90 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01090.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.91 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01091.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.92 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01092.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.93 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01093.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.94 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01094.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.95 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01095.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.96 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01096.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.97 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01097.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.98 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01098.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.99 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01099.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.100 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01100.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.101 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01101.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.102 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01102.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.103 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01103.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.104 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01104.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.105 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01105.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.106 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01106.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.107 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01107.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.108 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01108.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.109 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01109.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.110 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01110.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.111 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01111.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.112 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01112.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.113 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01113.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.114 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01114.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.115 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01115.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.116 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01116.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.117 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01117.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.118 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01118.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.119 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01119.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.120 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01120.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.121 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01121.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.122 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01122.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.123 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01123.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.124 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01124.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.125 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01125.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.126 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01126.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.127 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01127.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.128 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01128.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.129 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01129.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.130 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01130.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.131 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01131.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.132 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01132.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.133 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01133.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.134 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01134.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.135 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01135.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.136 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01136.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.137 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01137.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.138 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01138.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.139 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01139.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.140 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01140.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.141 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01141.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.142 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01142.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.143 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01143.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.144 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01144.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.145 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01145.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.146 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01146.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.147 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01147.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.148 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01148.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.149 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01149.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.150 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01150.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.151 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01151.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.152 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01152.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.153 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01153.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.154 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01154.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.155 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01155.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.156 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01156.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.157 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01157.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.158 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01158.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.159 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01159.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.160 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01160.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.161 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01161.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.162 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01162.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.163 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01163.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.164 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01164.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.165 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01165.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.166 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01166.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.167 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01167.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.168 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01168.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.169 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01169.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.170 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01170.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.171 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01171.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.172 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01172.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.173 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01173.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.174 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01174.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.175 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01175.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.176 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01176.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.177 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01177.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.178 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01178.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.179 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01179.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.180 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01180.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.181 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01181.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.182 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01182.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.183 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01183.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.184 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01184.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.185 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01185.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.186 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01186.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.187 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01187.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.188 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01188.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.189 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01189.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.190 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01190.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 1.191 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv01191.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-1"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.1 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10001.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.2 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10002.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.3 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10003.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.4 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10004.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.5 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10005.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.6 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10006.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.7 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10007.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.8 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10008.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.9 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10009.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.10 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10010.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.11 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10011.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.12 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10012.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.13 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10013.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.14 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10014.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.15 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10015.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.16 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10016.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.17 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10017.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.18 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10018.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.19 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10019.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.20 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10020.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.21 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10021.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.22 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10022.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.23 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10023.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.24 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10024.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.25 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10025.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.26 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10026.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.27 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10027.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.28 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10028.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.29 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10029.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.30 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10030.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.31 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10031.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.32 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10032.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.33 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10033.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.34 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10034.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.35 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10035.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.36 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10036.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.37 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10037.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.38 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10038.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.39 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10039.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.40 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10040.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.41 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10041.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.42 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10042.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.43 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10043.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.44 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10044.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.45 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10045.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.46 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10046.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.47 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10047.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.48 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10048.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.49 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10049.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.50 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10050.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.51 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10051.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.52 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10052.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.53 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10053.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.54 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10054.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.55 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10055.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.56 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10056.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.57 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10057.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.58 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10058.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.59 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10059.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.60 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10060.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.61 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10061.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.62 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10062.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.63 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10063.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.64 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10064.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.65 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10065.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.66 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10066.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.67 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10067.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.68 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10068.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.69 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10069.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.70 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10070.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.71 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10071.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.72 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10072.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.73 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10073.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.74 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10074.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.75 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10075.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.76 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10076.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.77 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10077.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.78 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10078.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.79 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10079.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.80 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10080.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.81 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10081.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.82 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10082.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.83 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10083.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.84 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10084.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.85 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10085.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.86 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10086.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.87 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10087.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.88 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10088.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.89 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10089.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.90 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10090.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.91 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10091.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.92 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10092.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.93 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10093.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.94 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10094.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.95 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10095.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.96 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10096.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.97 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10097.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.98 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10098.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.99 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10099.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.100 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10100.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.101 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10101.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.102 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10102.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.103 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10103.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.104 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10104.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.105 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10105.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.106 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10106.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.107 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10107.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.108 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10108.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.109 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10109.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.110 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10110.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.111 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10111.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.112 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10112.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.113 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10113.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.114 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10114.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.115 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10115.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.116 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10116.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.117 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10117.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.118 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10118.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.119 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10119.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.120 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10120.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.121 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10121.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.122 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10122.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.123 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10123.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.124 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10124.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.125 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10125.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.126 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10126.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.127 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10127.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.128 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10128.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.129 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10129.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.130 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10130.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.131 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10131.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.132 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10132.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.133 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10133.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.134 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10134.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.135 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10135.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.136 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10136.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.137 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10137.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.138 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10138.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.139 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10139.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.140 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10140.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.141 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10141.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.142 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10142.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.143 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10143.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.144 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10144.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.145 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10145.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.146 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10146.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.147 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10147.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.148 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10148.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.149 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10149.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.150 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10150.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.151 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10151.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.152 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10152.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.153 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10153.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.154 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10154.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.155 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10155.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.156 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10156.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.157 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10157.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.158 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10158.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.159 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10159.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.160 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10160.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.161 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10161.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.162 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10162.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.163 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10163.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.164 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10164.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.165 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10165.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.166 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10166.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.167 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10167.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.168 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10168.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.169 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10169.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.170 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10170.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.171 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10171.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.172 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10172.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.173 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10173.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.174 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10174.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.175 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10175.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.176 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10176.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.177 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10177.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.178 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10178.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.179 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10179.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.180 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10180.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.181 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10181.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.182 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10182.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.183 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10183.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.184 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10184.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.185 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10185.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.186 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10186.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.187 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10187.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.188 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10188.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.189 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10189.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.190 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10190.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    },
+    {
+      "title": "Rigveda RV 10.191 (Griffith, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/rigveda/rv10191.htm",
+      "tradition": "vedic",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": [
+        "rigveda",
+        "mandala-10"
+      ]
+    }
+  ]
+}

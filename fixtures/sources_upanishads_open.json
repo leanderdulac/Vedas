@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "description": "Upaniṣads principais em traduções public-domain (Sacred Texts + Gutenberg).",
+    "policy": "public-domain",
+    "notes": [
+      "Max Müller SBE vol.1/15 e Nikhilananda/sacred-texts onde PD.",
+      "Já no corpus: Gutenberg #3283 (The Upanishads). Este manifesto adiciona páginas individuais."
+    ]
+  },
+  "sources": [
+    {
+      "title": "Kena Upanishad (English, sacred-texts / Müller tradition)",
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01243.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["kena", "upanishad"]
+    },
+    {
+      "title": "Katha Upanishad (English, sacred-texts SBE15)",
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15004.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["katha", "upanishad"]
+    },
+    {
+      "title": "Mundaka Upanishad (English, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15013.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["mundaka", "upanishad"]
+    },
+    {
+      "title": "Mandukya Upanishad (English, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15019.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["mandukya", "upanishad"]
+    },
+    {
+      "title": "Taittiriya Upanishad (English, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15007.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["taittiriya", "upanishad"]
+    },
+    {
+      "title": "Aitareya Upanishad (English, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01236.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["aitareya", "upanishad"]
+    },
+    {
+      "title": "Prasna Upanishad (English, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15016.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["prasna", "upanishad"]
+    },
+    {
+      "title": "Chandogya Upanishad excerpts (English, sacred-texts SBE01)",
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01075.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["chandogya", "upanishad"]
+    },
+    {
+      "title": "Brihadaranyaka Upanishad excerpts (English, sacred-texts SBE15)",
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15060.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["brihadaranyaka", "upanishad"]
+    },
+    {
+      "title": "Svetasvatara Upanishad (English, sacred-texts)",
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15080.htm",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": true,
+      "source_class": "sacred-texts",
+      "tags": ["svetasvatara", "upanishad"]
+    },
+    {
+      "title": "The Thirteen Principal Upanishads (Hume, Gutenberg #7131 if available)",
+      "url": "https://www.gutenberg.org/cache/epub/3283/pg3283.txt",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "download": false,
+      "source_class": "gutenberg",
+      "tags": ["catalog", "upanishad"],
+      "note": "Já ingerido como Gutenberg #3283; entrada catalog-only"
+    }
+  ]
+}

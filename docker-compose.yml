@@ -1,0 +1,49 @@
+# PostgreSQL + pgvector para catálogo e busca semântica
+# Uso:
+#   docker compose up -d
+#   export DATABASE_URL=postgresql://vedas:vedas@localhost:5432/vedas
+#   python -m vedic_pipeline db-init
+#   python -m vedic_pipeline db-sync
+#   python -m vedic_pipeline build-index --backend pgvector
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: vedas-pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vedas
+      POSTGRES_PASSWORD: vedas
+      POSTGRES_DB: vedas
+    ports:
+      - "5432:5432"
+    volumes:
+      - vedas_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vedas -d vedas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: vedas-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://vedas:vedas@db:5432/vedas
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      XAI_MODEL: ${XAI_MODEL:-grok-4.5}
+      XAI_BASE_URL: ${XAI_BASE_URL:-https://api.x.ai/v1}
+      CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+      - ./fixtures:/app/fixtures
+
+volumes:
+  vedas_pgdata:

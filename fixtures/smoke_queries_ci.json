@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "description": "Gold set reduzido para CI (fixtures locais apenas)",
+    "version": 1
+  },
+  "queries": [
+    {
+      "id": "isha-self",
+      "query": "What is the Self according to the Isha Upanishad?",
+      "top_k": 5,
+      "expect_title_any": ["Isha", "Upanishad"],
+      "min_hits": 1
+    },
+    {
+      "id": "gita-dharma",
+      "query": "Krishna Arjuna dharma battlefield Bhagavad Gita",
+      "top_k": 5,
+      "expect_title_any": ["Gita", "Bhagavad", "gita"],
+      "min_hits": 1
+    },
+    {
+      "id": "agni-rv",
+      "query": "Agni priest of the sacrifice Rig Veda",
+      "top_k": 5,
+      "expect_title_any": ["Rig", "Veda", "Agni"],
+      "min_hits": 1
+    },
+    {
+      "id": "yoga",
+      "query": "yoga citta vritti nirodha Patanjali",
+      "top_k": 5,
+      "expect_title_any": ["Yoga", "Patanjali"],
+      "min_hits": 1
+    }
+  ]
+}

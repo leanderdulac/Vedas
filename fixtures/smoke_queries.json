@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "description": "Gold set de regressão de retrieval (título/tradição esperados no top-k)",
+    "version": 2,
+    "notes": "Queries calibradas após corpus com Mahābhārata completo (muitos chunks dominam ranking genérico)."
+  },
+  "queries": [
+    {
+      "id": "isha-self",
+      "query": "What is the Self according to the Isha Upanishad?",
+      "top_k": 8,
+      "expect_title_any": ["Isha", "Īśā", "Isa", "Upanishad"],
+      "min_hits": 1
+    },
+    {
+      "id": "atman-brahman",
+      "query": "ātman and brahman unity in the Upanishads",
+      "top_k": 8,
+      "expect_title_any": ["Upanishad", "Isha", "Müller", "Muller"],
+      "min_hits": 1
+    },
+    {
+      "id": "gita-dharma",
+      "query": "Krishna explains dharma to Arjuna Song Celestial Bhagavad Gita",
+      "top_k": 8,
+      "expect_title_any": ["Gita", "Gītā", "Bhagavad", "Song Celestial"],
+      "min_hits": 1
+    },
+    {
+      "id": "nasadiya",
+      "query": "In the beginning there was neither non-existence nor existence then Nasadiya",
+      "top_k": 8,
+      "tradition": "vedic",
+      "expect_title_any": ["10.129", "Nasadiya", "Rig Veda selected"],
+      "min_hits": 1
+    },
+    {
+      "id": "purusha-sukta",
+      "query": "Purusha Sukta cosmic person sacrifice",
+      "top_k": 10,
+      "tradition": "vedic",
+      "expect_title_any": ["10.90", "Purusha", "Purusa", "Rigveda RV 10.90", "Rig Veda"],
+      "min_hits": 1
+    },
+    {
+      "id": "agni-rv1",
+      "query": "Agni priest of the sacrifice Rig Veda hymn 1.1",
+      "top_k": 8,
+      "tradition": "vedic",
+      "expect_title_any": ["1.1", "Agni", "Rigveda RV 1", "Rig Veda"],
+      "min_hits": 1
+    },
+    {
+      "id": "yoga-citta",
+      "query": "yogaś citta-vṛtti-nirodhaḥ Patanjali Yoga Sutras",
+      "top_k": 8,
+      "expect_title_any": ["Yoga", "Patanjali", "Patañjali"],
+      "min_hits": 1
+    },
+    {
+      "id": "rama-exile",
+      "query": "Rama exile forest Sita Lakshmana Valmiki Ramayana",
+      "top_k": 10,
+      "tradition": "itihasa",
+      "expect_title_any": ["Ramayan", "Rāmāyaṇ", "Valmiki"],
+      "min_hits": 1
+    },
+    {
+      "id": "mahabharata-war",
+      "query": "Kurukshetra war Mahabharata Bhishma",
+      "top_k": 8,
+      "expect_title_any": ["Mahabharata", "Mahābhārata", "Ganguli"],
+      "min_hits": 1
+    },
+    {
+      "id": "manu-dharma",
+      "query": "Laws of Manu on dharma and social order",
+      "top_k": 8,
+      "expect_title_any": ["Manu", "Laws"],
+      "min_hits": 1
+    }
+  ]
+}

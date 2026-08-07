@@ -1,0 +1,48 @@
+Bhagavad-gita — sample public-domain verses (pipeline fixture)
+
+Chapter 2, selected themes (paraphrased public-domain style for testing)
+
+The Blessed Lord said: You grieve for those who should not be grieved for,
+yet you speak words of wisdom. The wise grieve neither for the living nor for the dead.
+
+Never was there a time when I did not exist, nor you, nor these kings;
+nor in the future shall any of us cease to be.
+
+As the embodied soul continuously passes, in this body, from boyhood to youth to old age,
+the soul similarly passes into another body at death. The self-realized is not bewildered by such a change.
+
+Those who are seers of the truth have concluded that of the nonexistent there is no endurance,
+and of the existent there is no cessation. This seers have concluded by studying the nature of both.
+
+That which pervades the entire body is indestructible. No one is able to destroy the imperishable soul.
+
+For the soul there is never birth nor death. Nor, having once been, does he ever cease to be.
+He is unborn, eternal, ever-existing, undying and primeval. He is not slain when the body is slain.
+
+As a person puts on new garments, giving up old ones,
+likewise the soul accepts new material bodies, giving up the old and useless ones.
+
+Weapons cannot cut this soul, fire cannot burn it,
+water cannot wet it, and wind cannot dry it.
+
+This individual soul is unbreakable and insoluble, and can be neither burned nor dried.
+He is everlasting, all-pervading, unchangeable, immovable and eternally the same.
+
+Considering this, you should not grieve for the body.
+
+You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.
+Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty.
+
+Perform your duty equipoised, O Arjuna, abandoning all attachment to success or failure.
+Such equanimity is called yoga.
+
+A person is said to have attained yoga when, having renounced all material desires,
+he neither acts for sense gratification nor engages in fruitive activities.
+
+When a man gives up all varieties of desire for sense gratification,
+which arise from mental concoction, and when his mind finds satisfaction in the self alone,
+then he is said to be in pure transcendental consciousness.
+
+Tradition note for pipeline metadata tests: vaishnava / bhakti literature often
+comments extensively on these themes — karma-yoga, jnana, and devotion.
+This fixture text is synthetic public-domain style English for offline ETL/RAG tests only.
