@@ -118,19 +118,18 @@ python scripts/bulk_ingest_open.py --rebuild-index --backend both --limit 0
 python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 ```
 
-### Contagens canônicas (snapshot 2026-08-07, pós m.2–9)
+### Contagens canônicas (snapshot 2026-08-07/08)
 
 | Métrica | Valor |
 |---------|-------|
-| Documentos no corpus / PG | **~1044+** (alinhados, purge on) |
-| Caracteres | **~19,7M** |
+| Documentos no corpus / PG | **1054** (alinhados, purge on) |
+| Caracteres | **~19,8M** |
+| Chunks + embeddings | **23.702** (numpy e pgvector) |
 | Hinos Ṛgveda (Griffith) | **1028** (mandalas **1–10** completas) |
-| Tradições com docs | vedic, itihasa, upanishad, vaishnava, yoga, purana, grammar |
-| Idiomas | en dominante; sa residual (fixtures) |
-| Licenças | public-domain |
+| Upaniṣads PD adicionais | Kena, Kaṭha, Muṇḍaka, Māṇḍūkya, Taittirīya, Aitareya, Praśna, Chāndogya, Bṛhadāraṇyaka, Śvetāśvatara (+ Müller) |
 | Ranking | híbrido + boost título/hino + **max 2 chunks/doc** |
 | Ask | JSON + **SSE** `/api/v1/ask/stream` |
-| Smoke retrieval | `python scripts/smoke_rag.py --strict` |
+| Smoke retrieval | **10/10** (`python scripts/smoke_rag.py --strict`) |
 
 **Obras de base:** Mahābhārata Ganguli vols. 1–4, Rāmāyaṇa Valmiki, Upaniṣads (Müller + páginas SBE/sacred-texts), Gītā Arnold, Yoga-sūtra Johnston, Manu, Viṣṇu Purāṇa (abertura), Ṛgveda Griffith completo.
 
