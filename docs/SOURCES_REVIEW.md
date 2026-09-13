@@ -49,10 +49,15 @@ com a redistribuição MIT/CC do projeto.
     (`language=sa`, `license=gov-ind`, `attribution`), reutilizando SSRF/`gov-ind`.
   - Rota em `crawler/ingest.py`: `source_class: "vedicheritage"` (ou host do
     portal) aciona o adaptador.
-  - `fixtures/sources_vedicheritage.json` (exemplo) e
-    `fixtures/vedicheritage/isha_upanishad.html` (amostra p/ testes).
-  - Testes em `tests/test_vedicheritage.py`; validado também contra o HTML real
-    do portal. Próximo: popular o manifesto com as saṃhitās reais e rodar ingest.
+  - `scripts/build_vedicheritage_manifest.py` — gera (a partir do sitemap
+    oficial) o **manifesto completo das saṃhitās**: `fixtures/sources_vedicheritage.json`
+    com **1860 fontes** de texto (Ṛgveda 1011 sūktas, Yajurveda 118 capítulos,
+    Atharvaveda Śaunaka 731 sūktas) — cada página vira um registro de corpus.
+    Regenere com `python scripts/build_vedicheritage_manifest.py`.
+  - `fixtures/vedicheritage/isha_upanishad.html` (amostra p/ testes) e
+    `tests/test_vedicheritage.py`; validado também contra HTML real do portal.
+  - **Nota:** o Sāma Veda não expõe páginas de texto no sitemap (apenas menus
+    de recensão), então fica de fora até o portal publicar o texto.
 
 
 ---
