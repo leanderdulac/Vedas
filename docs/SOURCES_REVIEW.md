@@ -43,6 +43,18 @@ com a redistribuição MIT/CC do projeto.
   projeto aberto antes de publicar o corpus derivado; é aceitável para a fase
   de índice local/RAG.
 
+  **Status (implementado):**
+  - `vedic_pipeline/etl/vedicheritage.py` — extrai o Devanāgarī canônico do
+    bloco `#videotext` (não-modal, maior conteúdo), monta registro de corpus
+    (`language=sa`, `license=gov-ind`, `attribution`), reutilizando SSRF/`gov-ind`.
+  - Rota em `crawler/ingest.py`: `source_class: "vedicheritage"` (ou host do
+    portal) aciona o adaptador.
+  - `fixtures/sources_vedicheritage.json` (exemplo) e
+    `fixtures/vedicheritage/isha_upanishad.html` (amostra p/ testes).
+  - Testes em `tests/test_vedicheritage.py`; validado também contra o HTML real
+    do portal. Próximo: popular o manifesto com as saṃhitās reais e rodar ingest.
+
+
 ---
 
 ## 2. VedaWeb (legacy) — [vedaweb-legacy](https://github.com/VedaWebProject/vedaweb-legacy)

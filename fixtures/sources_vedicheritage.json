@@ -1,0 +1,23 @@
+{
+  "note": "Exemplo de manifesto para o Vedic Heritage Portal (vedicheritage.gov.in). ",
+  "note2": "Uso educacional com atribuição; token de licença gov-ind. Substitua os URLs de exemplo por páginas reais do portal antes de rodar ingest. ",
+  "note3": "O campo source_class='vedicheritage' aciona o adaptador vedic_pipeline/etl/vedicheritage.py.",
+  "sources": [
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/ishavasyopanishad/",
+      "title": "Ishavasyopanishad of Vajasneyi Kanva Samhita",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/kathopanishad/",
+      "title": "Kathopanishad of Vajasneyi Kanva Samhita",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    }
+  ]
+}

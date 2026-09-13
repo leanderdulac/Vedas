@@ -19,6 +19,10 @@ from vedic_pipeline.crawler.download import download_source
 from vedic_pipeline.crawler.licenses import validate_source
 from vedic_pipeline.etl.extractors import extract_text
 from vedic_pipeline.etl.structured_json import expand_structured_file, looks_structured
+from vedic_pipeline.etl.vedicheritage import (
+    is_vedicheritage_url,
+    parse_vedicheritage_file,
+)
 
 logger = logging.getLogger("vedic_pipeline.ingest")
 
@@ -95,10 +99,15 @@ def ingest_manifest(
             continue
 
         stats["accepted"] += 1
+        url = (src.get("url") or "").strip()
         try:
             local = download_source(src, raw_dir=raw_dir)
-            structured = src.get("source_class") == "structured-json" or looks_structured(local)
-            expanded = expand_structured_file(local, source=src) if structured else None
+            records = None
+            # Vedic Heritage Portal: parser dedicado (Devanāgarī + atribuição gov-ind).
+            if (src.get("source_class") == "vedicheritage") or is_vedicheritage_url(url):
+                records = parse_vedicheritage_file(local, source=src)
+            elif src.get("source_class") == "structured-json" or looks_structured(local):
+                records = expand_structured_file(local, source=src)
         except Exception as exc:  # noqa: BLE001
             stats["failed"] += 1
             msg = f"{src.get('url')}: {exc}"
@@ -106,12 +115,12 @@ def ingest_manifest(
             logger.error("Falha no download/extração: %s", msg)
             continue
 
-        if expanded is not None:
-            if not expanded:
+        if records is not None:
+            if not records:
                 stats["empty_or_short"] += 1
-                logger.warning("JSON estruturado sem versos: %s", src.get("title"))
+                logger.warning("Fonte sem conteúdo extraível: %s", src.get("title"))
                 continue
-            for rec in expanded:
+            for rec in records:
                 if rec["fingerprint"] in existing_fps or rec["source_url"] in existing_urls:
                     stats["duplicates"] += 1
                     continue
