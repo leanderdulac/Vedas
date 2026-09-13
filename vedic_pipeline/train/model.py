@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_BASE_MODEL, DEFAULT_MODEL_DIR
 from vedic_pipeline.common.corpus import iter_corpus_texts, utc_now_iso
@@ -17,12 +17,12 @@ def train_causal_model(
     corpus_path: Path,
     out_dir: Path = DEFAULT_MODEL_DIR,
     base_model: str = DEFAULT_BASE_MODEL,
-    tokenizer_dir: Optional[Path] = None,
+    tokenizer_dir: Path | None = None,
     epochs: int = 1,
     block_size: int = 512,
     batch_size: int = 2,
     learning_rate: float = 5e-5,
-    max_steps: Optional[int] = None,
+    max_steps: int | None = None,
     fp16: bool = False,
 ) -> Path:
     """
@@ -92,7 +92,7 @@ def train_causal_model(
     )
 
     def group_texts(examples: dict[str, list]) -> dict[str, list]:
-        concatenated = {k: sum(examples[k], []) for k in examples.keys()}
+        concatenated = {k: sum(examples[k], []) for k in examples}
         total_len = len(concatenated["input_ids"])
         total_len = (total_len // block_size) * block_size
         result = {

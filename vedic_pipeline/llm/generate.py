@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger("vedic_pipeline.llm")
 
@@ -33,11 +33,27 @@ def list_providers() -> dict[str, Any]:
     }
 
 
+def _chat_messages(
+    system: str,
+    user: str,
+    history: list[dict[str, str]] | None = None,
+) -> list[dict[str, str]]:
+    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    for turn in (history or [])[-8:]:
+        role = turn.get("role")
+        content = (turn.get("content") or "").strip()
+        if role in {"user", "assistant"} and content:
+            messages.append({"role": role, "content": content[:4000]})
+    messages.append({"role": "user", "content": user})
+    return messages
+
+
 def _generate_xai(
     system: str,
     user: str,
-    model: Optional[str] = None,
+    model: str | None = None,
     max_tokens: int = 1800,
+    history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     api_key = os.environ.get("XAI_API_KEY")
     if not api_key:
@@ -50,15 +66,13 @@ def _generate_xai(
         base_url=os.environ.get("XAI_BASE_URL", DEFAULT_XAI_BASE_URL),
     )
     model_name = model or os.environ.get("XAI_MODEL", DEFAULT_XAI_MODEL)
+    messages = _chat_messages(system, user, history)
 
     # Responses API (preferida na docs xAI)
     try:
         resp = client.responses.create(
             model=model_name,
-            input=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
+            input=messages,
             store=False,
             max_output_tokens=max_tokens,
         )
@@ -81,10 +95,7 @@ def _generate_xai(
         logger.warning("Responses API falhou (%s); tentando chat.completions", exc)
         resp = client.chat.completions.create(
             model=model_name,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
+            messages=messages,
             max_tokens=max_tokens,
             temperature=0.35,
         )
@@ -99,7 +110,7 @@ def _generate_xai(
 def _generate_local(
     system: str,
     user: str,
-    model: Optional[str] = None,
+    model: str | None = None,
     max_new_tokens: int = 128,
 ) -> dict[str, Any]:
     import torch
@@ -134,6 +145,8 @@ def _generate_local(
 
 
 def _generate_extractive(user_context_block: str, hits: list[dict[str, Any]]) -> dict[str, Any]:
+    from vedic_pipeline.etl.structure import citation_label
+
     if not hits:
         return {
             "provider": "extractive",
@@ -148,11 +161,11 @@ def _generate_extractive(user_context_block: str, hits: list[dict[str, Any]]) ->
         "",
     ]
     for i, h in enumerate(hits[:3], 1):
-        title = h.get("title") or "fonte"
+        label = citation_label(h)
         snippet = (h.get("text") or "").strip().replace("\n", " ")
         if len(snippet) > 400:
             snippet = snippet[:400] + "…"
-        lines.append(f"[{i}] ({title}, score={h.get('score')}) {snippet}")
+        lines.append(f"[{i}] ({label}, score={h.get('score')}) {snippet}")
     lines.append("")
     lines.append(
         "Para resposta discursiva com modelo generativo, defina XAI_API_KEY "
@@ -170,9 +183,10 @@ def generate_answer(
     user: str,
     *,
     provider: str = "auto",
-    model: Optional[str] = None,
-    hits: Optional[list[dict[str, Any]]] = None,
+    model: str | None = None,
+    hits: list[dict[str, Any]] | None = None,
     max_tokens: int = 1024,
+    history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """
     provider:
@@ -186,7 +200,9 @@ def generate_answer(
         provider = "xai" if os.environ.get("XAI_API_KEY") else "extractive"
 
     if provider == "xai":
-        return _generate_xai(system, user, model=model, max_tokens=max_tokens)
+        return _generate_xai(
+            system, user, model=model, max_tokens=max_tokens, history=history
+        )
     if provider == "local":
         return _generate_local(system, user, model=model)
     if provider == "extractive":
@@ -198,8 +214,9 @@ def generate_answer(
 def _stream_xai(
     system: str,
     user: str,
-    model: Optional[str] = None,
+    model: str | None = None,
     max_tokens: int = 1800,
+    history: list[dict[str, str]] | None = None,
 ):
     """Yields dicts: {type: meta|token}."""
     api_key = os.environ.get("XAI_API_KEY")
@@ -218,10 +235,7 @@ def _stream_xai(
     # chat.completions stream é o path mais portável
     stream = client.chat.completions.create(
         model=model_name,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
+        messages=_chat_messages(system, user, history),
         max_tokens=max_tokens,
         temperature=0.35,
         stream=True,
@@ -241,9 +255,10 @@ def stream_answer(
     user: str,
     *,
     provider: str = "auto",
-    model: Optional[str] = None,
-    hits: Optional[list[dict[str, Any]]] = None,
+    model: str | None = None,
+    hits: list[dict[str, Any]] | None = None,
     max_tokens: int = 1024,
+    history: list[dict[str, str]] | None = None,
 ):
     """
     Generator de chunks de texto (streaming).
@@ -257,7 +272,9 @@ def stream_answer(
 
     if provider == "xai":
         try:
-            yield from _stream_xai(system, user, model=model, max_tokens=max_tokens)
+            yield from _stream_xai(
+                system, user, model=model, max_tokens=max_tokens, history=history
+            )
             return
         except Exception as exc:  # noqa: BLE001
             logger.warning("stream xAI falhou (%s); fallback one-shot", exc)
@@ -270,6 +287,7 @@ def stream_answer(
         model=model,
         hits=hits,
         max_tokens=max_tokens,
+        history=history,
     )
     yield {
         "type": "meta",

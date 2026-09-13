@@ -6,15 +6,16 @@ import hashlib
 import json
 import logging
 import re
-from datetime import datetime, timezone
+from collections.abc import Iterable, Iterator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Optional
+from typing import Any
 
 logger = logging.getLogger("vedic_pipeline.corpus")
 
 
 def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def stable_id(*parts: str) -> str:
@@ -128,7 +129,7 @@ def _is_fixture_url(url: str) -> bool:
     return u.startswith("fixtures/") or "/fixtures/" in u
 
 
-def _work_key(title: str) -> Optional[str]:
+def _work_key(title: str) -> str | None:
     t = (title or "").lower()
     for key, patterns in _WORK_KEYS:
         if any(re.search(p, t, flags=re.IGNORECASE) for p in patterns):

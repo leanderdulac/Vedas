@@ -1,3 +1,5 @@
+import { createSseParser } from './sse';
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -34,6 +36,17 @@ export type Tradition = {
   document_count?: number;
 };
 
+export type VerseUnit = {
+  work: string;
+  book?: number | null;
+  hymn?: number | null;
+  verse?: number | null;
+  verse_id: string;
+  locator: string;
+  heading?: string | null;
+  text: string;
+};
+
 export type DocumentSummary = {
   id: string;
   title: string;
@@ -41,10 +54,12 @@ export type DocumentSummary = {
   tradition: string;
   language: string;
   license?: string;
+  work?: string | null;
   char_count: number;
   retrieved_at?: string;
   preview: string;
   text?: string;
+  units?: VerseUnit[];
 };
 
 export type SearchHit = {
@@ -58,6 +73,42 @@ export type SearchHit = {
   source_url?: string;
   score?: number;
   chunk_index?: number;
+  work?: string | null;
+  verse_id?: string | null;
+  locator?: string | null;
+  book?: number | null;
+  hymn?: number | null;
+  verse?: number | null;
+  verse_end?: number | null;
+  heading?: string | null;
+};
+
+export type VerseWitness = {
+  role: "sa" | "iast" | "en" | "pt" | string;
+  language?: string;
+  text: string;
+  title?: string;
+  doc_id?: string;
+  license?: string;
+  source_url?: string;
+  locator?: string;
+};
+
+export type VerseBundle = {
+  verse_id: string;
+  locator: string;
+  work?: string;
+  witnesses: VerseWitness[];
+  has_sanskrit?: boolean;
+};
+
+export type VerseExplanation = {
+  verse_id: string;
+  locator?: string;
+  lang: "pt" | "en";
+  provider?: string;
+  explanation: string;
+  witnesses?: VerseWitness[];
 };
 
 export type AskResponse = {
@@ -115,6 +166,30 @@ export const api = {
   },
   document: (id: string) =>
     request<DocumentSummary>(`/api/v1/documents/${encodeURIComponent(id)}`),
+  verse: (verseId: string) =>
+    request<VerseBundle>(`/api/v1/verses/${encodeURIComponent(verseId)}`),
+  explainVerse: (verseId: string, lang: "pt" | "en", provider = "auto") =>
+    request<VerseExplanation>(`/api/v1/verses/${encodeURIComponent(verseId)}/explain`, {
+      method: "POST",
+      body: JSON.stringify({ lang, provider }),
+    }),
+  verseAudioUrl: (verseId: string) =>
+    `${API_BASE}/api/v1/verses/${encodeURIComponent(verseId)}/audio`,
+  mediaCached: () =>
+    request<{ images: string[]; videos: string[] }>("/api/v1/media/cached"),
+  verseImageUrl: (verseId: string) =>
+    `${API_BASE}/api/v1/verses/${encodeURIComponent(verseId)}/image`,
+  startVerseVideo: (verseId: string) =>
+    request<{ verse_id: string; status: string; ready?: boolean }>(
+      `/api/v1/verses/${encodeURIComponent(verseId)}/video`,
+      { method: "POST", body: JSON.stringify({}) }
+    ),
+  verseVideoStatus: (verseId: string) =>
+    request<{ verse_id: string; status: string; ready?: boolean }>(
+      `/api/v1/verses/${encodeURIComponent(verseId)}/video`
+    ),
+  verseVideoFileUrl: (verseId: string) =>
+    `${API_BASE}/api/v1/verses/${encodeURIComponent(verseId)}/video/file`,
   search: (body: {
     query: string;
     top_k?: number;
@@ -133,6 +208,7 @@ export const api = {
     language?: string;
     backend?: string;
     provider?: string;
+    history?: { role: "user" | "assistant"; content: string }[];
   }) =>
     request<AskResponse>("/api/v1/ask", {
       method: "POST",
@@ -151,6 +227,7 @@ export const api = {
       language?: string;
       backend?: string;
       provider?: string;
+      history?: { role: "user" | "assistant"; content: string }[];
     },
     handlers: {
       onMeta?: (data: { hits?: SearchHit[]; retrieval_backend?: string; n_hits?: number }) => void;
@@ -178,8 +255,6 @@ export const api = {
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-    let buffer = "";
-    let eventName = "message";
 
     const dispatch = (name: string, dataRaw: string) => {
       let data: Record<string, unknown> = {};
@@ -201,36 +276,16 @@ export const api = {
       }
     };
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split("\n");
-      buffer = parts.pop() || "";
-      let dataLines: string[] = [];
-      for (const line of parts) {
-        if (line.startsWith("event:")) {
-          eventName = line.slice(6).trim();
-        } else if (line.startsWith("data:")) {
-          dataLines.push(line.slice(5).trim());
-        } else if (line === "") {
-          if (dataLines.length) {
-            dispatch(eventName, dataLines.join("\n"));
-            dataLines = [];
-            eventName = "message";
-          }
-        }
+    const parse = createSseParser(dispatch);
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        parse(decoder.decode(value, { stream: true }));
       }
-    }
-    if (buffer.trim()) {
-      // flush trailing
-      const lines = buffer.split("\n");
-      let dataLines: string[] = [];
-      for (const line of lines) {
-        if (line.startsWith("event:")) eventName = line.slice(6).trim();
-        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
-      }
-      if (dataLines.length) dispatch(eventName, dataLines.join("\n"));
+      parse(decoder.decode());
+    } finally {
+      reader.releaseLock();
     }
   },
 };

@@ -12,7 +12,11 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from vedic_pipeline.common.constants import DEFAULT_CORPUS, DEFAULT_EMBED_DIR, DEFAULT_EMBEDDING_MODEL
+from vedic_pipeline.common.constants import (
+    DEFAULT_CORPUS,
+    DEFAULT_EMBED_DIR,
+    DEFAULT_EMBEDDING_MODEL,
+)
 from vedic_pipeline.common.corpus import load_corpus
 from vedic_pipeline.storage.catalog import sync_corpus_to_db
 from vedic_pipeline.storage.db import init_schema
@@ -57,11 +61,10 @@ def main() -> int:
         {c.get("doc_id") for c in chunks if c.get("doc_id")}
         | {r.get("id") for r in load_corpus(DEFAULT_CORPUS) if r.get("id")}
     )
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            if doc_ids:
-                cur.execute("DELETE FROM chunks WHERE doc_id = ANY(%s)", (doc_ids,))
-                print(f"Chunks antigos removidos (docs={len(doc_ids)})")
+    with get_connection() as conn, conn.cursor() as cur:
+        if doc_ids:
+            cur.execute("DELETE FROM chunks WHERE doc_id = ANY(%s)", (doc_ids,))
+            print(f"Chunks antigos removidos (docs={len(doc_ids)})")
 
     print(f"Upsert {len(chunks)} embeddings → pgvector (model={model})…")
     # batch to avoid huge transactions

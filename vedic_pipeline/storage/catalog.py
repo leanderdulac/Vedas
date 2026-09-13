@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_CORPUS
 from vedic_pipeline.common.corpus import load_corpus
@@ -13,12 +13,11 @@ from vedic_pipeline.storage.db import get_connection, init_schema
 logger = logging.getLogger("vedic_pipeline.storage.catalog")
 
 
-def count_documents(url: Optional[str] = None) -> int:
-    with get_connection(url) as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) AS n FROM documents")
-            row = cur.fetchone()
-            return int(row["n"]) if row else 0
+def count_documents(url: str | None = None) -> int:
+    with get_connection(url) as conn, conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) AS n FROM documents")
+        row = cur.fetchone()
+        return int(row["n"]) if row else 0
 
 
 def upsert_document(conn: Any, rec: dict[str, Any]) -> None:
@@ -62,7 +61,7 @@ def upsert_document(conn: Any, rec: dict[str, Any]) -> None:
 
 def sync_corpus_to_db(
     corpus_path: Path = DEFAULT_CORPUS,
-    url: Optional[str] = None,
+    url: str | None = None,
     init: bool = True,
     purge: bool = True,
 ) -> dict[str, Any]:
@@ -78,10 +77,9 @@ def sync_corpus_to_db(
     ids = [rec["id"] for rec in records if rec.get("id")]
     if not records:
         if purge:
-            with get_connection(url) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("DELETE FROM documents")
-                    deleted = cur.rowcount
+            with get_connection(url) as conn, conn.cursor() as cur:
+                cur.execute("DELETE FROM documents")
+                deleted = cur.rowcount
             return {
                 "synced": 0,
                 "purged": deleted,

@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Generator, Optional
+from typing import Any
 
 logger = logging.getLogger("vedic_pipeline.storage")
 
-DEFAULT_DATABASE_URL = "postgresql://vedas:vedas@localhost:5432/vedas"
+DEFAULT_DATABASE_URL = os.environ.get(
+    "VEDIC_DEFAULT_DATABASE_URL", "postgresql://vedas:vedas@127.0.0.1:5433/vedas"
+)
 
 
-def get_database_url() -> Optional[str]:
+def get_database_url() -> str | None:
     """None se DB desabilitado; string se configurado."""
     # VEDIC_DATABASE_URL tem prioridade; DATABASE_URL é o padrão de mercado
     url = os.environ.get("VEDIC_DATABASE_URL") or os.environ.get("DATABASE_URL")
@@ -37,7 +40,7 @@ def require_database_url() -> str:
 
 
 @contextmanager
-def get_connection(url: Optional[str] = None) -> Generator[Any, None, None]:
+def get_connection(url: str | None = None) -> Generator[Any, None, None]:
     try:
         import psycopg
         from psycopg.rows import dict_row
@@ -92,6 +95,14 @@ CREATE TABLE IF NOT EXISTS chunks (
     language      TEXT,
     license       TEXT,
     char_count    INTEGER,
+    work          TEXT,
+    verse_id      TEXT,
+    locator       TEXT,
+    book          INTEGER,
+    hymn          INTEGER,
+    verse         INTEGER,
+    verse_end     INTEGER,
+    heading       TEXT,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -112,60 +123,81 @@ CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_model
 """
 
 
-def init_schema(url: Optional[str] = None) -> dict[str, Any]:
-    with get_connection(url) as conn:
-        with conn.cursor() as cur:
-            cur.execute(SCHEMA_SQL)
-            # índice HNSW (pode falhar se tabela vazia em algumas versões — ok)
-            try:
-                cur.execute(
-                    """
+_CHUNK_LOCATOR_COLUMNS_SQL = """
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS work TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS verse_id TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS locator TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS book INTEGER;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS hymn INTEGER;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS verse INTEGER;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS verse_end INTEGER;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS heading TEXT;
+CREATE INDEX IF NOT EXISTS idx_chunks_verse_id ON chunks (verse_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_work ON chunks (work);
+"""
+
+
+def init_schema(url: str | None = None) -> dict[str, Any]:
+    with get_connection(url) as conn, conn.cursor() as cur:
+        cur.execute(SCHEMA_SQL)
+        cur.execute(_CHUNK_LOCATOR_COLUMNS_SQL)
+        # índice HNSW (pode falhar se tabela vazia em algumas versões — ok)
+        try:
+            cur.execute(
+                """
                     CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_hnsw
                     ON chunk_embeddings
                     USING hnsw (embedding vector_cosine_ops);
                     """
-                )
-            except Exception as exc:  # noqa: BLE001
-                logger.warning("Índice HNSW não criado agora: %s", exc)
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Índice HNSW não criado agora: %s", exc)
     logger.info("Schema PostgreSQL/pgvector inicializado")
     return {"ok": True, "schema": "documents+chunks+chunk_embeddings"}
 
 
-def check_db(url: Optional[str] = None) -> dict[str, Any]:
+def _sanitize_db_error(exc: Exception) -> str:
+    import re
+    msg = str(exc)
+    msg = re.sub(r"://([^:]+):([^@]+)@", r"://\1:******@", msg)
+    msg = re.sub(r"password=\S+", "password=******", msg)
+    return msg
+
+
+def check_db(url: str | None = None) -> dict[str, Any]:
     configured = get_database_url()
     if not configured and url is None:
         return {"configured": False, "reachable": False}
     try:
-        with get_connection(url or configured) as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1 AS ok")
-                cur.fetchone()
-                cur.execute(
-                    "SELECT extname FROM pg_extension WHERE extname = 'vector'"
-                )
-                has_vector = cur.fetchone() is not None
-                cur.execute(
-                    """
+        with get_connection(url or configured) as conn, conn.cursor() as cur:
+            cur.execute("SELECT 1 AS ok")
+            cur.fetchone()
+            cur.execute(
+                "SELECT extname FROM pg_extension WHERE extname = 'vector'"
+            )
+            has_vector = cur.fetchone() is not None
+            cur.execute(
+                """
                     SELECT to_regclass('public.documents') AS documents,
                            to_regclass('public.chunks') AS chunks,
                            to_regclass('public.chunk_embeddings') AS embeddings
                     """
-                )
-                regs = cur.fetchone() or {}
-                schema_ready = all(regs.get(k) for k in ("documents", "chunks", "embeddings"))
-                counts: dict[str, Any] = {}
-                if schema_ready:
-                    cur.execute(
-                        """
+            )
+            regs = cur.fetchone() or {}
+            schema_ready = all(regs.get(k) for k in ("documents", "chunks", "embeddings"))
+            counts: dict[str, Any] = {}
+            if schema_ready:
+                cur.execute(
+                    """
                         SELECT
                           (SELECT COUNT(*) FROM documents) AS documents,
                           (SELECT COUNT(*) FROM chunks) AS chunks,
                           (SELECT COUNT(*) FROM chunk_embeddings) AS embeddings
                         """
-                    )
-                    counts = dict(cur.fetchone() or {})
-                else:
-                    counts = {"note": "schema ausente — rode db-init"}
+                )
+                counts = dict(cur.fetchone() or {})
+            else:
+                counts = {"note": "schema ausente — rode db-init"}
         return {
             "configured": True,
             "reachable": True,
@@ -174,8 +206,10 @@ def check_db(url: Optional[str] = None) -> dict[str, Any]:
             "counts": counts,
         }
     except Exception as exc:  # noqa: BLE001
+        sanitized = _sanitize_db_error(exc)
+        logger.warning("Falha na verificação do banco: %s", sanitized)
         return {
             "configured": True,
             "reachable": False,
-            "error": str(exc),
+            "error": sanitized,
         }

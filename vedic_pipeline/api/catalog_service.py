@@ -4,10 +4,39 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_CORPUS
 from vedic_pipeline.common.corpus import load_corpus
+from vedic_pipeline.etl.structure import detect_work, parse_document_units
+
+_CORPUS_CACHE: dict[str, tuple[float, int, list[dict[str, Any]]]] = {}
+
+
+def get_cached_corpus(corpus_path: Path = DEFAULT_CORPUS, reload: bool = False) -> list[dict[str, Any]]:
+    """Carrega o corpus com cache sensível a mtime e tamanho do arquivo."""
+    path = Path(corpus_path)
+    if not path.exists():
+        return []
+    stat = path.stat()
+    key = str(path.resolve())
+    cached = _CORPUS_CACHE.get(key)
+    if not reload and cached is not None:
+        cached_mtime, cached_size, records = cached
+        if cached_mtime == stat.st_mtime and cached_size == stat.st_size:
+            return records
+
+    records = load_corpus(path)
+    _CORPUS_CACHE[key] = (stat.st_mtime, stat.st_size, records)
+    return records
+
+
+def invalidate_corpus_cache(corpus_path: Path | None = None) -> None:
+    """Invalida o cache do catálogo em memória."""
+    if corpus_path is None:
+        _CORPUS_CACHE.clear()
+    else:
+        _CORPUS_CACHE.pop(str(Path(corpus_path).resolve()), None)
 
 
 def _preview(text: str, n: int = 280) -> str:
@@ -26,6 +55,7 @@ def document_summary(rec: dict[str, Any]) -> dict[str, Any]:
         "tradition": rec.get("tradition") or "unknown",
         "language": rec.get("language") or "und",
         "license": rec.get("license"),
+        "work": detect_work(rec.get("title"), rec.get("source_url"), rec.get("tradition")),
         "char_count": rec.get("char_count") or len(rec.get("text") or ""),
         "retrieved_at": rec.get("retrieved_at"),
         "preview": _preview(rec.get("text") or ""),
@@ -35,13 +65,13 @@ def document_summary(rec: dict[str, Any]) -> dict[str, Any]:
 def list_documents(
     corpus_path: Path = DEFAULT_CORPUS,
     *,
-    tradition: Optional[str] = None,
-    language: Optional[str] = None,
-    q: Optional[str] = None,
+    tradition: str | None = None,
+    language: str | None = None,
+    q: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> dict[str, Any]:
-    records = load_corpus(Path(corpus_path))
+    records = get_cached_corpus(Path(corpus_path))
     items: list[dict[str, Any]] = []
 
     q_norm = (q or "").strip().lower()
@@ -80,19 +110,20 @@ def get_document(
     corpus_path: Path = DEFAULT_CORPUS,
     *,
     include_text: bool = True,
-) -> Optional[dict[str, Any]]:
-    records = load_corpus(Path(corpus_path))
+) -> dict[str, Any] | None:
+    records = get_cached_corpus(Path(corpus_path))
     for rec in records:
         if rec.get("id") == doc_id:
             out = document_summary(rec)
             if include_text:
                 out["text"] = rec.get("text") or ""
+                out["units"] = [unit.to_public_dict() for unit in parse_document_units(rec)]
             return out
     return None
 
 
 def corpus_stats(corpus_path: Path = DEFAULT_CORPUS) -> dict[str, Any]:
-    records = load_corpus(Path(corpus_path))
+    records = get_cached_corpus(Path(corpus_path))
     by_tradition: dict[str, int] = {}
     by_language: dict[str, int] = {}
     total_chars = 0

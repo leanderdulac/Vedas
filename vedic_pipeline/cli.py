@@ -7,7 +7,6 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 from vedic_pipeline.common.constants import (
     DEFAULT_BASE_MODEL,
@@ -119,7 +118,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ask.add_argument("--no-hits", action="store_true")
     p_ask.add_argument("--prompt", action="store_true")
 
-    p_db = sub.add_parser("db-init", help="Cria schema PostgreSQL/pgvector")
+    sub.add_parser("db-init", help="Cria schema PostgreSQL/pgvector")
     p_db_sync = sub.add_parser("db-sync", help="Sincroniza corpus JSONL → PostgreSQL")
     p_db_sync.add_argument("--corpus", default=str(DEFAULT_CORPUS))
     p_db_sync.add_argument(
@@ -127,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Não remove documentos órfãos ausentes no corpus",
     )
-    p_db_check = sub.add_parser("db-check", help="Status da conexão PostgreSQL")
+    sub.add_parser("db-check", help="Status da conexão PostgreSQL")
     p_serve = sub.add_parser("serve", help="Sobe a API FastAPI")
     p_serve.add_argument("--host", default="0.0.0.0")
     p_serve.add_argument("--port", type=int, default=8000)
@@ -135,7 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 

@@ -5,13 +5,13 @@ Aplicação full-stack de conhecimento védico: **biblioteca**, **busca semânti
 ## Aplicação web (frontend + backend)
 
 ```bash
-# Backend deps
+# Backend deps (pip install -e . ou requirements)
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements_vedic_pipeline.txt
+pip install -e ".[dev,db]"   # ou: pip install -r requirements_vedic_pipeline.txt
 
 # Corpus + índice (offline)
-python -m vedic_pipeline ingest --manifest fixtures/sources_local.json
-python -m vedic_pipeline build-index --backend numpy
+vedic-pipeline ingest --manifest fixtures/sources_local.json
+vedic-pipeline build-index --backend numpy
 
 # Frontend
 cd frontend && npm install && cd ..
@@ -259,3 +259,19 @@ Eventos SSE: `meta` → `token*` → `done` (ou `error`). UI: página **Pergunta
 - Deploy multi-container (crawler / etl / train / api)  
 - Dimensão de embedding configurável no schema  
 - Rerank cross-encoder opcional  
+
+## Desenvolvimento local revisado
+
+Veja `docs/DEVELOPMENT_REVIEW.md` para correções, prioridades, execução local e validação.
+
+As operações HTTP `/ingest`, `/tokenize`, `/train`, `/build-index`, `/db/init` e `/db/sync` exigem `VEDIC_PIPELINE_API_TOKEN` e o cabeçalho `Authorization: Bearer <token>`. Sem token configurado, ficam desabilitadas (503). Os comandos da CLI continuam disponíveis sem esse token.
+
+Testes & Qualidade: `pytest -v` (ou `python -m unittest discover -s tests -v`) e linter via `ruff check .`; frontend: `npm run lint`, `npm test` e `npm audit` dentro de `frontend/` (Node.js 22+). O score mostrado nas fontes é uma pontuação de ordenação, não uma probabilidade.
+
+### Controle de geração e índice na API
+
+Busca e chat aceitam somente o diretório definido em `VEDIC_API_INDEX_DIR` (padrão `artifacts/embeddings`). A CLI mantém a possibilidade de escolher outros diretórios.
+
+Para usar `provider=xai` ou `provider=local` por HTTP, configure `VEDIC_GENERATION_API_TOKEN` e envie `Authorization: Bearer <token>`. O modelo permitido vem de `XAI_MODEL` ou `VEDIC_LOCAL_LM`; o cliente não pode escolher outro. `auto` também exige autorização se selecionar xAI. Sem configuração do token, geração HTTP retorna 503; com token ausente ou incorreto na requisição, retorna 401. Essas respostas acontecem antes de iniciar o streaming ou recuperar documentos.
+
+`provider=extractive` continua público e não aceita `model`. A interface web atual usa esse modo automaticamente quando não há chave xAI; para usar geração protegida, clientes HTTP precisam enviar o cabeçalho. Não exponha o token em `VITE_*` nem no bundle público. O token do pipeline não concede acesso à geração.

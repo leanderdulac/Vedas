@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR, DEFAULT_EMBEDDING_MODEL
 from vedic_pipeline.llm.generate import generate_answer
@@ -25,8 +25,8 @@ def retrieve_hits(
     backend: str = "auto",
     index_dir: Path = DEFAULT_EMBED_DIR,
     top_k: int = DEFAULT_TOP_K,
-    tradition: Optional[str] = None,
-    language: Optional[str] = None,
+    tradition: str | None = None,
+    language: str | None = None,
     embed_model: str = DEFAULT_EMBEDDING_MODEL,
     hybrid: bool = True,
 ) -> tuple[list[dict[str, Any]], str]:
@@ -44,10 +44,7 @@ def retrieve_hits(
 
                 st = check_db()
                 n = (st.get("counts") or {}).get("embeddings") or 0
-                if st.get("reachable") and int(n) > 0:
-                    backend = "pgvector"
-                else:
-                    backend = "numpy"
+                backend = "pgvector" if st.get("reachable") and int(n) > 0 else "numpy"
             except Exception:  # noqa: BLE001
                 backend = "numpy"
         else:
@@ -87,7 +84,11 @@ def retrieve_hits(
         try:
             if backend == "numpy" or Path(index_dir).exists():
                 idx = get_index(Path(index_dir))
-                all_chunks = idx.get("chunks")
+                all_chunks = [
+                    chunk for chunk in (idx.get("chunks") or [])
+                    if (not tradition or (chunk.get("tradition") or "").lower() == tradition.lower())
+                    and (not language or (chunk.get("language") or "").lower() == language.lower())
+                ]
         except Exception:  # noqa: BLE001
             all_chunks = None
 
@@ -114,15 +115,16 @@ def ask(
     backend: str = "auto",
     index_dir: Path = DEFAULT_EMBED_DIR,
     top_k: int = DEFAULT_TOP_K,
-    tradition: Optional[str] = None,
-    language: Optional[str] = None,
+    tradition: str | None = None,
+    language: str | None = None,
     provider: str = "auto",
-    model: Optional[str] = None,
+    model: str | None = None,
     embed_model: str = DEFAULT_EMBEDDING_MODEL,
     include_hits: bool = True,
     include_prompt: bool = False,
     hybrid: bool = True,
     max_tokens: int = 1800,
+    history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     hits, used_backend = retrieve_hits(
         query,
@@ -142,6 +144,7 @@ def ask(
         model=model,
         hits=hits,
         max_tokens=max_tokens,
+        history=history,
     )
 
     out: dict[str, Any] = {
@@ -169,13 +172,14 @@ def ask_stream_events(
     backend: str = "auto",
     index_dir: Path = DEFAULT_EMBED_DIR,
     top_k: int = DEFAULT_TOP_K,
-    tradition: Optional[str] = None,
-    language: Optional[str] = None,
+    tradition: str | None = None,
+    language: str | None = None,
     provider: str = "auto",
-    model: Optional[str] = None,
+    model: str | None = None,
     embed_model: str = DEFAULT_EMBEDDING_MODEL,
     hybrid: bool = True,
     max_tokens: int = 1800,
+    history: list[dict[str, str]] | None = None,
 ):
     """
     Gera eventos SSE-friendly (dicts) para /ask/stream:
@@ -214,6 +218,7 @@ def ask_stream_events(
             model=model,
             hits=hits,
             max_tokens=max_tokens,
+            history=history,
         ):
             if chunk.get("type") == "token":
                 t = chunk.get("text") or ""

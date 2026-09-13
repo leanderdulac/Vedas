@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, Optional
 
 from vedic_pipeline.common.constants import (
     DEFAULT_TOKENIZER_DIR,
@@ -21,10 +21,11 @@ def train_bpe_tokenizer(
     out_dir: Path = DEFAULT_TOKENIZER_DIR,
     vocab_size: int = 32_000,
     min_frequency: int = 2,
-    special_tokens: Optional[list[str]] = None,
+    special_tokens: list[str] | None = None,
 ) -> Path:
     from tokenizers import Tokenizer, decoders, models, pre_tokenizers, processors, trainers
-    from tokenizers.normalizers import NFC, Sequence as NormSequence
+    from tokenizers.normalizers import NFC
+    from tokenizers.normalizers import Sequence as NormSequence
 
     if not corpus_path.exists():
         raise FileNotFoundError(f"Corpus não encontrado: {corpus_path}")

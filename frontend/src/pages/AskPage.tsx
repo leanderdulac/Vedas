@@ -11,12 +11,22 @@ type Turn = {
   streaming?: boolean;
 };
 
+const DEFAULT_TRADITIONS = [
+  { id: "vedic", name: "Védico" },
+  { id: "upanishad", name: "Upaniṣads" },
+  { id: "itihasa", name: "Itihāsa" },
+  { id: "vaishnava", name: "Vaishnava" },
+  { id: "yoga", name: "Yoga" },
+  { id: "grammar", name: "Vyākaraṇa / Gramática" },
+];
+
 export default function AskPage() {
   const [params] = useSearchParams();
   const initial = params.get("q") || "";
 
   const [query, setQuery] = useState(initial);
   const [tradition, setTradition] = useState("");
+  const [availableTraditions, setAvailableTraditions] = useState(DEFAULT_TRADITIONS);
   const [provider, setProvider] = useState("auto");
   const [topK, setTopK] = useState(10);
   const [useStream, setUseStream] = useState(true);
@@ -25,7 +35,24 @@ export default function AskPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initial.trim()) {
+    api.traditions()
+      .then((res) => {
+        if (res?.items && res.items.length > 0) {
+          setAvailableTraditions(
+            res.items.map((t) => ({ id: t.id, name: t.name_pt || t.name_sa || t.name_en || t.id }))
+          );
+        }
+      })
+      .catch(() => {
+        // fallback silencioso
+      });
+  }, []);
+
+  useEffect(() => {
+    const verse = params.get("verse")?.trim();
+    if (verse && initial.trim()) {
+      void runAsk(`${initial.trim()}\n\n(verso ${verse})`);
+    } else if (initial.trim()) {
       void runAsk(initial.trim());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,6 +78,10 @@ export default function AskPage() {
         tradition: tradition || undefined,
         provider,
         backend: "auto",
+        history: turns
+          .filter((t) => t.content && !t.streaming)
+          .slice(-8)
+          .map((t) => ({ role: t.role, content: t.content })),
       },
       {
         onMeta: (data) => {
@@ -132,6 +163,10 @@ export default function AskPage() {
           tradition: tradition || undefined,
           provider,
           backend: "auto",
+          history: turns
+            .filter((t) => t.content && !t.streaming)
+            .slice(-8)
+            .map((t) => ({ role: t.role, content: t.content })),
         });
         setTurns((prev) => [
           ...prev,
@@ -181,20 +216,17 @@ export default function AskPage() {
     <div className="container">
       <div className="section-head">
         <div>
-          <h1>Perguntar às fontes</h1>
+          <h1>Conversar sobre os versos</h1>
           <p className="muted">
-            Q&A com recuperação de trechos e resposta fundamentada. Streaming SSE quando
-            disponível; sem chave xAI, usa modo extrativo com citações.
+            Conversa com memória dos turnos anteriores, sempre citada no corpus.
+            No leitor, cada mantra tem ouvir, explicar (PT/EN), ilustrar e vídeo.
           </p>
         </div>
       </div>
 
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: "minmax(0, 1.4fr) minmax(280px, 0.9fr)", gap: "1rem" }}
-      >
+      <div className="ask-layout">
         <div className="stack">
-          <div className="card chat-history" style={{ minHeight: 320 }}>
+          <div className="card chat-history">
             {turns.length === 0 && (
               <div className="empty">
                 Faça uma pergunta sobre o corpus. Ex.: “What is the Self according to the Isha
@@ -263,13 +295,11 @@ export default function AskPage() {
                   onChange={(e) => setTradition(e.target.value)}
                 >
                   <option value="">Qualquer</option>
-                  <option value="vedic">vedic</option>
-                  <option value="upanishad">upanishad</option>
-                  <option value="itihasa">itihasa</option>
-                  <option value="vaishnava">vaishnava</option>
-                  <option value="yoga">yoga</option>
-                  <option value="purana">purana</option>
-                  <option value="grammar">grammar</option>
+                  {availableTraditions.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="field">
@@ -314,27 +344,24 @@ export default function AskPage() {
           </form>
         </div>
 
-        <aside className="stack">
-          <div className="card">
+        <aside className="ask-sources">
+          <div className="card ask-sources-panel">
             <h3 className="panel-title">Fontes recuperadas</h3>
             <p className="muted" style={{ marginTop: 0, fontSize: "0.92rem" }}>
               Trechos usados na última resposta. Sempre confira a licença e o contexto original.
             </p>
+            {lastHits.length === 0 ? (
+              <div className="empty">As citações aparecerão aqui.</div>
+            ) : (
+              <div className="stack">
+                {lastHits.map((h, i) => (
+                  <HitCard key={h.chunk_id || i} hit={h} index={i} />
+                ))}
+              </div>
+            )}
           </div>
-          {lastHits.length === 0 && <div className="empty">As citações aparecerão aqui.</div>}
-          {lastHits.map((h, i) => (
-            <HitCard key={h.chunk_id || i} hit={h} index={i} />
-          ))}
         </aside>
       </div>
-
-      <style>{`
-        @media (max-width: 960px) {
-          .container > .grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

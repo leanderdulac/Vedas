@@ -1,0 +1,16 @@
+{
+  "work": "yajurveda",
+  "samhita": "vajasaneyi-madhyandina",
+  "language": "sa",
+  "license": "odbl",
+  "adhyayas": [
+    {
+      "adhyaya": 1,
+      "heading": null,
+      "verses": [
+        {"n": 1, "text": "इषे त्वोर्जे त्वा वायव स्थ देवो वः सविता प्रार्पयतु।"},
+        {"n": 2, "text": "वसोः पवित्रमसि द्यौरसि पृथिव्यसि।"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+"""Testes unitários para o módulo de Cross-Encoder Reranker."""
+
+from __future__ import annotations
+
+import os
+import unittest
+from unittest.mock import MagicMock, patch
+
+from vedic_pipeline.search.reranker import (
+    get_reranker,
+    invalidate_reranker,
+    is_reranker_enabled,
+    rerank_chunks,
+)
+
+
+class RerankerTests(unittest.TestCase):
+    def setUp(self):
+        invalidate_reranker()
+
+    def tearDown(self):
+        invalidate_reranker()
+
+    def test_empty_chunks(self):
+        self.assertEqual(rerank_chunks("query", []), [])
+
+    def test_disabled_reranker_returns_original(self):
+        with patch.dict(os.environ, {"VEDIC_ENABLE_RERANKER": "false"}):
+            self.assertFalse(is_reranker_enabled())
+            chunks = [
+                {"chunk_id": "c1", "text": "Primeiro texto", "score": 0.9},
+                {"chunk_id": "c2", "text": "Segundo texto", "score": 0.8},
+            ]
+            result = rerank_chunks("teste", chunks, top_k=2)
+            self.assertEqual(len(result), 2)
+            self.assertEqual(result[0]["chunk_id"], "c1")
+            self.assertIsNone(get_reranker())
+
+    def test_rerank_with_mock_model(self):
+        # Mock de CrossEncoder que atribui score maior ao chunk 2
+        mock_ce = MagicMock()
+        # Logits: c1 ganha -2.0 (sigmoid baixa), c2 ganha 3.0 (sigmoid alta)
+        mock_ce.predict.return_value = [-2.0, 3.0]
+
+        with (
+            patch.dict(os.environ, {"VEDIC_ENABLE_RERANKER": "true"}),
+            patch("vedic_pipeline.search.reranker.get_reranker", return_value=mock_ce),
+        ):
+            chunks = [
+                {"chunk_id": "c1", "text": "Texto neutro", "score": 0.5},
+                {"chunk_id": "c2", "text": "Texto muito relevante", "score": 0.5},
+            ]
+            result = rerank_chunks("ātman", chunks, top_k=2)
+            self.assertEqual(len(result), 2)
+            # c2 deve ter sido promovido ao primeiro lugar pelo cross encoder
+            self.assertEqual(result[0]["chunk_id"], "c2")
+            self.assertIn("_cross_score", result[0])
+            self.assertGreater(result[0]["score"], result[1]["score"])
+
+    def test_graceful_fallback_on_exception(self):
+        mock_ce = MagicMock()
+        mock_ce.predict.side_effect = RuntimeError("CUDA OOM or model error")
+
+        with (
+            patch.dict(os.environ, {"VEDIC_ENABLE_RERANKER": "true"}),
+            patch("vedic_pipeline.search.reranker.get_reranker", return_value=mock_ce),
+        ):
+            chunks = [
+                {"chunk_id": "c1", "text": "Texto 1", "score": 0.9},
+                {"chunk_id": "c2", "text": "Texto 2", "score": 0.8},
+            ]
+            result = rerank_chunks("ātman", chunks, top_k=2)
+            # Deve retornar a lista sem quebrar a execução
+            self.assertEqual(len(result), 2)
+            self.assertEqual(result[0]["chunk_id"], "c1")
+
+
+if __name__ == "__main__":
+    unittest.main()

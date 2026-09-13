@@ -18,6 +18,7 @@ from vedic_pipeline.common.corpus import (
 from vedic_pipeline.crawler.download import download_source
 from vedic_pipeline.crawler.licenses import validate_source
 from vedic_pipeline.etl.extractors import extract_text
+from vedic_pipeline.etl.structured_json import expand_structured_file, looks_structured
 
 logger = logging.getLogger("vedic_pipeline.ingest")
 
@@ -96,12 +97,36 @@ def ingest_manifest(
         stats["accepted"] += 1
         try:
             local = download_source(src, raw_dir=raw_dir)
-            text = extract_text(local)
+            structured = src.get("source_class") == "structured-json" or looks_structured(local)
+            expanded = expand_structured_file(local, source=src) if structured else None
         except Exception as exc:  # noqa: BLE001
             stats["failed"] += 1
             msg = f"{src.get('url')}: {exc}"
             stats["errors"].append(msg)
             logger.error("Falha no download/extração: %s", msg)
+            continue
+
+        if expanded is not None:
+            if not expanded:
+                stats["empty_or_short"] += 1
+                logger.warning("JSON estruturado sem versos: %s", src.get("title"))
+                continue
+            for rec in expanded:
+                if rec["fingerprint"] in existing_fps or rec["source_url"] in existing_urls:
+                    stats["duplicates"] += 1
+                    continue
+                existing_fps.add(rec["fingerprint"])
+                existing_urls.add(rec["source_url"])
+                new_records.append(rec)
+            continue
+
+        try:
+            text = extract_text(local)
+        except Exception as exc:  # noqa: BLE001
+            stats["failed"] += 1
+            msg = f"{src.get('url')}: {exc}"
+            stats["errors"].append(msg)
+            logger.error("Falha na extração: %s", msg)
             continue
 
         if len(text) < min_chars:

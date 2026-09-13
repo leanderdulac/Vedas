@@ -3,18 +3,34 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, Stats, Tradition } from "../api/client";
 import TraditionCard from "../components/TraditionCard";
 
+const ILLUSTRATED = [
+  { verse_id: "BG.2.47", locator: "BG 2.47", caption: "Gītā — o direito à ação", doc: "011a40c5947dba3222591227" },
+  { verse_id: "BG.1.1", locator: "BG 1.1", caption: "Gītā — o campo do dharma", doc: "c934846207ae4c61a26fa405" },
+  { verse_id: "RV.1.1.1", locator: "RV 1.1.1", caption: "Ṛgveda — Agni, o purohita", doc: "e18671807016d8fe318ec4dc" },
+  { verse_id: "RV.10.129.1", locator: "RV 10.129.1", caption: "Nāsadīya — antes do ser", doc: "e31ef3d419d690118c5a4d08" },
+  { verse_id: "VS.1.1", locator: "VS 1.1", caption: "Yajurveda — o rito da aurora", doc: "772d8a9d4938a33ad8ebe5df" },
+  { verse_id: "AV.1.1.1", locator: "AV 1.1.1", caption: "Atharvaveda — o senhor da fala", doc: "5086dfc25601fc1601434bf0" },
+];
+
 export default function HomePage() {
   const nav = useNavigate();
   const [traditions, setTraditions] = useState<Tradition[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [q, setQ] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [illustrated, setIllustrated] = useState<typeof ILLUSTRATED>([]);
 
   useEffect(() => {
-    Promise.all([api.traditions(), api.stats()])
-      .then(([t, s]) => {
+    Promise.all([
+      api.traditions(),
+      api.stats(),
+      api.mediaCached().catch(() => ({ images: [] as string[], videos: [] as string[] })),
+    ])
+      .then(([t, s, media]) => {
         setTraditions(t.items);
         setStats(s);
+        const have = new Set(media.images);
+        setIllustrated(ILLUSTRATED.filter((item) => have.has(item.verse_id)));
       })
       .catch((e: Error) => setError(e.message));
   }, []);
@@ -30,11 +46,11 @@ export default function HomePage() {
       <section className="hero">
         <div className="hero-panel">
           <div className="chip">Biblioteca · Busca · RAG</div>
-          <h1 style={{ marginTop: "0.8rem" }}>Conhecimento védico com fontes citáveis</h1>
+          <h1 style={{ marginTop: "0.8rem" }}>O verso sânscrito, narrado e explicado</h1>
           <p className="shloka">ॐ पूर्णमदः पूर्णमिदं पूर्णात्पूर्णमुदच्यते ॥</p>
           <p className="muted" style={{ maxWidth: "40rem", marginTop: "0.6rem" }}>
-            Explore textos autorizados — Veda, Upaniṣad, Itihāsa, Vaiṣṇava, Jyotiṣa e
-            vyākaraṇa — com busca semântica e perguntas fundamentadas no corpus.
+            O original em sânscrito é a fonte. Cada mantra pode ser ouvido, ilustrado
+            e explicado em português e inglês, sempre com citação da edição licenciada.
           </p>
 
           <form onSubmit={onAsk} style={{ marginTop: "1.4rem", maxWidth: 640 }}>
@@ -89,6 +105,35 @@ export default function HomePage() {
       </section>
 
       {error && <div className="error" style={{ marginTop: "1rem" }}>{error}</div>}
+
+      {illustrated.length > 0 && (
+        <section className="section">
+          <div className="section-head">
+            <div>
+              <h2>O que o verso narra</h2>
+              <p className="muted">
+                Imagens e vídeos gerados a partir do sentido do mantra. Abra o verso para ouvir,
+                explicar e ver o filme curto.
+              </p>
+            </div>
+          </div>
+          <div className="illustrations-grid">
+            {illustrated.map((item) => (
+              <Link
+                key={item.verse_id}
+                className="illustration-card"
+                to={`/documento/${item.doc}#${encodeURIComponent(item.verse_id)}`}
+              >
+                <img src={api.verseImageUrl(item.verse_id)} alt={item.caption} />
+                <div className="illustration-meta">
+                  <span className="illustration-locator">{item.locator}</span>
+                  <span>{item.caption}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="section">
         <div className="section-head">

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -22,15 +23,24 @@ from vedic_pipeline.etl.chunking import chunk_records
 logger = logging.getLogger("vedic_pipeline.search")
 
 _MODEL_CACHE: dict[str, Any] = {}
+_MODEL_LOCK = threading.Lock()
 
 
 def _load_st_model(model_name: str):
     from sentence_transformers import SentenceTransformer
 
-    if model_name not in _MODEL_CACHE:
+    cached = _MODEL_CACHE.get(model_name)
+    if cached is not None:
+        return cached
+    with _MODEL_LOCK:
+        cached = _MODEL_CACHE.get(model_name)
+        if cached is not None:
+            return cached
         logger.info("Carregando embedding model: %s", model_name)
-        _MODEL_CACHE[model_name] = SentenceTransformer(model_name)
-    return _MODEL_CACHE[model_name]
+        # MPS + dois loads em paralelo já derrubou o processo (SIGSEGV).
+        model = SentenceTransformer(model_name, device="cpu")
+        _MODEL_CACHE[model_name] = model
+        return model
 
 
 def build_embedding_index(
@@ -75,10 +85,13 @@ def build_embedding_index(
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    np.save(out_dir / "embeddings.npy", vectors)
+    tmp_emb = out_dir / "embeddings_tmp.npy"
+    tmp_chunks = out_dir / "chunks_tmp.jsonl"
+    tmp_meta = out_dir / "index_meta_tmp.json"
 
-    chunks_path = out_dir / "chunks.jsonl"
-    with chunks_path.open("w", encoding="utf-8") as f:
+    np.save(tmp_emb, vectors)
+
+    with tmp_chunks.open("w", encoding="utf-8") as f:
         for c in chunks:
             f.write(json.dumps(c, ensure_ascii=False) + "\n")
 
@@ -93,11 +106,17 @@ def build_embedding_index(
         "built_at": utc_now_iso(),
         "normalized": True,
     }
-    (out_dir / "index_meta.json").write_text(
+    tmp_meta.write_text(
         json.dumps(meta, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    logger.info("Índice salvo em %s (%d chunks, dim=%d)", out_dir, len(chunks), vectors.shape[1])
+
+    import os
+    os.replace(tmp_emb, out_dir / "embeddings.npy")
+    os.replace(tmp_chunks, out_dir / "chunks.jsonl")
+    os.replace(tmp_meta, out_dir / "index_meta.json")
+
+    logger.info("Índice salvo atomicamente em %s (%d chunks, dim=%d)", out_dir, len(chunks), vectors.shape[1])
     return meta
 
 
@@ -135,9 +154,9 @@ def search_index(
     query: str,
     index: dict[str, Any],
     top_k: int = 5,
-    model_name: Optional[str] = None,
-    tradition: Optional[str] = None,
-    language: Optional[str] = None,
+    model_name: str | None = None,
+    tradition: str | None = None,
+    language: str | None = None,
 ) -> list[dict[str, Any]]:
     """Busca por similaridade cosseno (vetores já normalizados → dot product)."""
     model_name = model_name or index.get("meta", {}).get(

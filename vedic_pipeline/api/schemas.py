@@ -1,9 +1,10 @@
 """Schemas Pydantic da API (nível de módulo — necessário para OpenAPI)."""
 
-from typing import Optional
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
+from vedic_pipeline.api.request_policy import api_index_dir, validate_index_dir
 from vedic_pipeline.common.constants import (
     DEFAULT_BASE_MODEL,
     DEFAULT_CORPUS,
@@ -37,7 +38,7 @@ class TrainRequest(BaseModel):
     block_size: int = Field(default=512, ge=64, le=4096)
     batch_size: int = Field(default=2, ge=1, le=64)
     learning_rate: float = Field(default=5e-5, gt=0)
-    max_steps: Optional[int] = None
+    max_steps: int | None = None
     fp16: bool = False
 
 
@@ -47,31 +48,67 @@ class BuildIndexRequest(BaseModel):
     model_name: str = Field(default=DEFAULT_EMBEDDING_MODEL)
     chunk_size: int = Field(default=800, ge=100, le=4000)
     overlap: int = Field(default=120, ge=0, le=1000)
-    backend: str = Field(default="numpy")
+    backend: Literal["numpy", "pgvector", "both"] = "numpy"
+
+    @model_validator(mode="after")
+    def validate_overlap(self):
+        if self.overlap >= self.chunk_size:
+            raise ValueError("overlap deve ser menor que chunk_size")
+        return self
 
 
-class SearchRequest(BaseModel):
-    query: str = Field(..., min_length=1)
-    index_dir: str = Field(default=str(DEFAULT_EMBED_DIR))
+class QueryRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=4000)
+    index_dir: str = Field(default_factory=api_index_dir, validate_default=True)
+
+    @field_validator("index_dir")
+    @classmethod
+    def configured_index(cls, value: str) -> str:
+        return validate_index_dir(value)
+
+    @field_validator("query")
+    @classmethod
+    def nonempty_query(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("query não pode conter apenas espaços")
+        return value
+
+
+class SearchRequest(QueryRequest):
     top_k: int = Field(default=5, ge=1, le=50)
-    tradition: Optional[str] = None
-    language: Optional[str] = None
-    backend: str = Field(default="auto")
+    tradition: str | None = None
+    language: str | None = None
+    backend: Literal["auto", "numpy", "pgvector"] = "auto"
     include_prompt: bool = False
 
 
-class AskRequest(BaseModel):
-    query: str = Field(..., min_length=1, max_length=4000)
-    index_dir: str = Field(default=str(DEFAULT_EMBED_DIR))
+class ExplainRequest(BaseModel):
+    lang: Literal["pt", "en"] = "pt"
+    provider: Literal["auto", "xai", "local", "extractive"] = "auto"
+    model: str | None = None
+
+
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=6000)
+
+
+class AskRequest(QueryRequest):
     top_k: int = Field(default=10, ge=1, le=30)
-    tradition: Optional[str] = None
-    language: Optional[str] = None
-    backend: str = Field(default="auto")
-    provider: str = Field(default="auto")
-    model: Optional[str] = None
+    tradition: str | None = None
+    language: str | None = None
+    backend: Literal["auto", "numpy", "pgvector"] = "auto"
+    provider: Literal["auto", "xai", "local", "extractive"] = "auto"
+    model: str | None = None
     include_hits: bool = True
     include_prompt: bool = False
     hybrid: bool = Field(
         default=True,
         description="Fusão semântica + lexical com expansão de consulta",
+    )
+    history: list[ChatTurn] = Field(
+        default_factory=list,
+        max_length=12,
+        description="Turnos anteriores da conversa (sem a pergunta atual)",
     )

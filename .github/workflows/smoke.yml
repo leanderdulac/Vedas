@@ -23,9 +23,17 @@ jobs:
       - name: Install deps (API + embeddings, CPU)
         run: |
           python -m pip install --upgrade pip
+          pip install ruff pytest
           # torch CPU first to avoid huge CUDA wheel
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements_vedic_pipeline.txt
+          pip install -e .
+
+      - name: Lint Python with Ruff
+        run: ruff check .
+
+      - name: Unit and API regressions
+        run: pytest -v
 
       - name: Bootstrap mini corpus + index
         run: |
@@ -50,3 +58,21 @@ jobs:
         with:
           name: smoke-report
           path: data/smoke_report.json
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=moderate
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

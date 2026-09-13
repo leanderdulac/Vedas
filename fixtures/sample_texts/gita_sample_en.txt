@@ -2,10 +2,10 @@ Bhagavad-gita — sample public-domain verses (pipeline fixture)
 
 Chapter 2, selected themes (paraphrased public-domain style for testing)
 
-The Blessed Lord said: You grieve for those who should not be grieved for,
+2.11 The Blessed Lord said: You grieve for those who should not be grieved for,
 yet you speak words of wisdom. The wise grieve neither for the living nor for the dead.
 
-Never was there a time when I did not exist, nor you, nor these kings;
+2.12 Never was there a time when I did not exist, nor you, nor these kings;
 nor in the future shall any of us cease to be.
 
 As the embodied soul continuously passes, in this body, from boyhood to youth to old age,
@@ -30,10 +30,10 @@ He is everlasting, all-pervading, unchangeable, immovable and eternally the same
 
 Considering this, you should not grieve for the body.
 
-You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.
+2.47 You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.
 Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty.
 
-Perform your duty equipoised, O Arjuna, abandoning all attachment to success or failure.
+2.48 Perform your duty equipoised, O Arjuna, abandoning all attachment to success or failure.
 Such equanimity is called yoga.
 
 A person is said to have attained yoga when, having renounced all material desires,

@@ -1,16 +1,40 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { api, SearchHit } from "../api/client";
 import HitCard from "../components/HitCard";
+
+const DEFAULT_TRADITIONS = [
+  { id: "vedic", name: "Védico" },
+  { id: "upanishad", name: "Upaniṣads" },
+  { id: "itihasa", name: "Itihāsa" },
+  { id: "vaishnava", name: "Vaishnava" },
+  { id: "yoga", name: "Yoga" },
+  { id: "grammar", name: "Vyākaraṇa / Gramática" },
+];
 
 export default function SearchPage() {
   const [query, setQuery] = useState("Self and oneness");
   const [tradition, setTradition] = useState("");
+  const [availableTraditions, setAvailableTraditions] = useState(DEFAULT_TRADITIONS);
   const [language, setLanguage] = useState("");
   const [topK, setTopK] = useState(5);
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [backend, setBackend] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.traditions()
+      .then((res) => {
+        if (res?.items && res.items.length > 0) {
+          setAvailableTraditions(
+            res.items.map((t) => ({ id: t.id, name: t.name_pt || t.name_sa || t.name_en || t.id }))
+          );
+        }
+      })
+      .catch(() => {
+        // mantém fallback local se offline
+      });
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -62,10 +86,11 @@ export default function SearchPage() {
             <label htmlFor="s-trad">Tradição</label>
             <select id="s-trad" className="select" value={tradition} onChange={(e) => setTradition(e.target.value)}>
               <option value="">Qualquer</option>
-              <option value="vedic">vedic</option>
-              <option value="vaishnava">vaishnava</option>
-              <option value="grammar">grammar</option>
-              <option value="upanishad">upanishad</option>
+              {availableTraditions.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="field">

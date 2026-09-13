@@ -21,7 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements_vedic_pipeline.txt ./
+RUN groupadd -g 10001 appuser && useradd -u 10001 -g appuser -s /bin/bash -m appuser
+
+COPY requirements_vedic_pipeline.txt pyproject.toml ./
 # torch CPU wheel é grande; em container de API preferimos instalar o que a API precisa.
 # Para treino use a imagem host / venv local.
 RUN pip install --upgrade pip \
@@ -34,7 +36,10 @@ COPY fixtures ./fixtures
 COPY --from=frontend-build /frontend/dist ./frontend/dist
 
 # dados montados em runtime (volumes)
-RUN mkdir -p data/raw artifacts/embeddings artifacts/tokenizer
+RUN mkdir -p data/raw artifacts/embeddings artifacts/tokenizer \
+ && chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \

@@ -18,9 +18,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from vedic_pipeline.crawler.ingest import ingest_manifest
 from vedic_pipeline.common.constants import DEFAULT_CORPUS, DEFAULT_EMBED_DIR
 from vedic_pipeline.common.corpus import load_corpus, rewrite_corpus
+from vedic_pipeline.crawler.ingest import ingest_manifest
 
 
 def main() -> int:

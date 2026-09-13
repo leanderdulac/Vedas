@@ -1,0 +1,96 @@
+# Docker Compose de Produção — Veda Knowledge
+# Uso:
+#   docker compose -f docker-compose.prod.yml --profile ingress up -d
+#
+# O Caddy (ingresso/HTTPS) está no perfil "ingress": use --profile ingress para
+# subir a stack completa com TLS. Sem o perfil, apenas db + api sobem.
+#
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: vedas-prod-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vedas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-vedas}
+    volumes:
+      - vedas_prod_pgdata:/var/lib/postgresql/data
+    networks:
+      - vedas_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vedas} -d ${POSTGRES_DB:-vedas}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  api:
+    image: ${VEDAS_IMAGE:-ghcr.io/leanderdulac/vedas:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vedas-prod-api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vedas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-vedas}
+      VEDIC_PIPELINE_API_TOKEN: ${VEDIC_PIPELINE_API_TOKEN:-}
+      VEDIC_GENERATION_API_TOKEN: ${VEDIC_GENERATION_API_TOKEN:-}
+      VEDIC_API_INDEX_DIR: /app/artifacts/embeddings
+      VEDIC_LOG_FORMAT: json
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      XAI_MODEL: ${XAI_MODEL:-grok-4.5}
+      XAI_BASE_URL: ${XAI_BASE_URL:-https://api.x.ai/v1}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://vedas.local,http://localhost:8000}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - vedas_prod_data:/app/data
+      - vedas_prod_artifacts:/app/artifacts
+    networks:
+      - vedas_internal
+      - vedas_public
+    expose:
+      - "8000"
+    ports:
+      - "${HOST_API_PORT:-8000}:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: vedas-prod-caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-vedas.local}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - vedas_public
+    depends_on:
+      - api
+    profiles:
+      - ingress
+
+networks:
+  vedas_internal:
+    internal: true
+  vedas_public:
+
+volumes:
+  vedas_prod_pgdata:
+  vedas_prod_data:
+  vedas_prod_artifacts:
+  caddy_data:
+  caddy_config:

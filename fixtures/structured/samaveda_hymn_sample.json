@@ -1,0 +1,30 @@
+{
+  "veda": "Samaveda",
+  "title": "The Hymns of the Sama-Veda",
+  "translator": "Ralph T. H. Griffith",
+  "language": "English",
+  "verses": [
+    {
+      "id": "SV-000001",
+      "part": "FIRST PART",
+      "book": "Book I",
+      "chapter": "Chapter I",
+      "section": "Decade I",
+      "hymn": 1,
+      "deity": "Agni",
+      "verse": 1,
+      "text": "Come, Agni, praised with song, to feast and sacrificial offering: sit As Hotar on the holy grass!"
+    },
+    {
+      "id": "SV-000002",
+      "part": "FIRST PART",
+      "book": "Book I",
+      "chapter": "Chapter I",
+      "section": "Decade I",
+      "hymn": 1,
+      "deity": "Agni",
+      "verse": 2,
+      "text": "O Agni, thou hast been appointed Hotar of this sacrifice, by Gods, even by the will of men."
+    }
+  ]
+}

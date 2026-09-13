@@ -1,6 +1,9 @@
 artifacts/
 data/corpus.jsonl
 data/raw/
+data/structured/
+data/audio/
+data/media/
 data/bulk_state.json
 data/bulk_errors.jsonl
 data/*.log

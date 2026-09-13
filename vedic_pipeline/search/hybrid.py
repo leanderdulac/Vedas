@@ -5,7 +5,10 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
-from typing import Any, Optional
+from typing import Any
+
+from vedic_pipeline.common.sanskrit import fold_for_search, get_sanskrit_variants
+from vedic_pipeline.search.reranker import rerank_chunks
 
 # Sinônimos / equivalentes úteis para literatura védica (en-sa)
 QUERY_EXPANSIONS: dict[str, list[str]] = {
@@ -36,18 +39,34 @@ QUERY_EXPANSIONS: dict[str, list[str]] = {
 
 
 def tokenize(text: str) -> list[str]:
-    return re.findall(r"[\wāīūṛṝḷḹṃḥśṣñṅṭḍṇā-]+", (text or "").lower(), flags=re.UNICODE)
+    folded = fold_for_search(text)
+    return re.findall(r"[\wāīūṛṝḷḹṃḥśṣñṅṭḍṇ]+", folded, flags=re.UNICODE)
 
 
 def expand_query(query: str) -> list[str]:
-    """Gera variantes da pergunta para recall mais alto."""
+    """Gera variantes da pergunta para recall mais alto, incluindo transliterações sânscritas."""
     base = query.strip()
     variants = [base]
+
+    # Transliteração e variações sânscritas da query inteira
+    for s_var in get_sanskrit_variants(base):
+        if s_var not in variants:
+            variants.append(s_var)
+
     tokens = tokenize(base)
     extra_terms: list[str] = []
     for t in tokens:
         for exp in QUERY_EXPANSIONS.get(t, []):
             extra_terms.append(exp)
+        # Expande termos sânscritos específicos do token
+        for s_token in get_sanskrit_variants(t):
+            if s_token != t and s_token not in extra_terms:
+                extra_terms.append(s_token)
+            # Também verifica se a variante tem expansão em QUERY_EXPANSIONS
+            for exp in QUERY_EXPANSIONS.get(s_token, []):
+                if exp not in extra_terms:
+                    extra_terms.append(exp)
+
     if extra_terms:
         variants.append(base + " " + " ".join(dict.fromkeys(extra_terms)))
         # variante só com termos expandidos + originais chave
@@ -63,13 +82,30 @@ def expand_query(query: str) -> list[str]:
     return out
 
 
+_CHUNK_TOKEN_CACHE: dict[str, list[str]] = {}
+
+
+def get_chunk_tokens(chunk: dict[str, Any]) -> list[str]:
+    """Retorna tokens do chunk com cache em memória."""
+    cid = chunk.get("chunk_id")
+    if cid and cid in _CHUNK_TOKEN_CACHE:
+        return _CHUNK_TOKEN_CACHE[cid]
+    text = chunk.get("text") or ""
+    tokens = tokenize(text)
+    if cid:
+        if len(_CHUNK_TOKEN_CACHE) > 50_000:
+            _CHUNK_TOKEN_CACHE.clear()
+        _CHUNK_TOKEN_CACHE[cid] = tokens
+    return tokens
+
+
 def lexical_scores(query: str, chunks: list[dict[str, Any]]) -> list[float]:
-    """BM25-light sobre tokens unicode."""
+    """BM25-light sobre tokens unicode com cache de tokenização."""
     q_tokens = tokenize(query)
     if not q_tokens or not chunks:
         return [0.0] * len(chunks)
 
-    docs = [tokenize(c.get("text") or "") for c in chunks]
+    docs = [get_chunk_tokens(c) for c in chunks]
     df: Counter[str] = Counter()
     for d in docs:
         df.update(set(d))
@@ -192,16 +228,17 @@ def apply_title_and_size_boost(query: str, pool: list[dict[str, Any]]) -> None:
 def hybrid_rerank(
     query: str,
     semantic_hits: list[dict[str, Any]],
-    all_chunks: Optional[list[dict[str, Any]]] = None,
+    all_chunks: list[dict[str, Any]] | None = None,
     top_k: int = 8,
     semantic_weight: float = 0.65,
     max_per_doc: int = 2,
+    use_cross_encoder: bool = True,
 ) -> list[dict[str, Any]]:
     """
     Combina ranking semântico (já filtrado) com score lexical nos mesmos hits
     e, se all_chunks for dado, amplia candidatos lexicais.
 
-    Pós-processamento: boost de título/hino + diversificação por doc_id
+    Pós-processamento: boost de título/hino + Cross-Encoder + diversificação por doc_id
     (evita top-k monopolizado pelo Mahābhārata).
     """
     pool: list[dict[str, Any]] = []
@@ -256,5 +293,28 @@ def hybrid_rerank(
 
     apply_title_and_size_boost(query, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
+
+    if use_cross_encoder and pool:
+        top_slice_size = max(top_k * 3, 12)
+        top_candidates = pool[:top_slice_size]
+        reranked_top = rerank_chunks(query, top_candidates, top_k=top_slice_size)
+        pool = reranked_top + pool[top_slice_size:]
+
+    apply_phrase_boost(query, pool)
+    pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
+
     # pool maior antes de diversificar
     return diversify_by_doc(pool, top_k=top_k, max_per_doc=max_per_doc)
+
+
+def apply_phrase_boost(query: str, pool: list[dict[str, Any]]) -> None:
+    """Sobe trechos que contêm a consulta (sem acentos de recitação)."""
+    needle = fold_for_search(query)
+    compact = re.sub(r"\s+", "", needle)
+    if len(compact) < 8:
+        return
+    for chunk in pool:
+        hay = fold_for_search(chunk.get("text") or "")
+        hay_compact = re.sub(r"\s+", "", hay)
+        if needle in hay or compact in hay_compact:
+            chunk["score"] = round(float(chunk.get("score") or 0.0) + 1.25, 4)

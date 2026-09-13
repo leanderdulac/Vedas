@@ -51,7 +51,7 @@ def main() -> int:
             sources.append(
                 {
                     "title": f"Rigveda RV {book}.{h} (Griffith, sacred-texts)",
-                    "url": f"https://www.sacred-texts.com/hin/rigveda/{fn}",
+                    "url": f"https://archive.sacred-texts.com/hin/rigveda/{fn}",
                     "tradition": "vedic",
                     "language": "en",
                     "license": "public-domain",

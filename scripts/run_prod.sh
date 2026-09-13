@@ -9,7 +9,7 @@ if [[ -f .venv/bin/activate ]]; then
   source .venv/bin/activate
 fi
 
-export DATABASE_URL="${DATABASE_URL:-postgresql://vedas:vedas@localhost:5432/vedas}"
+# DATABASE_URL é opcional: a API carrega .env e usa o índice NumPy sem banco.
 
 echo "→ Building frontend…"
 (cd frontend && npm install && npm run build)

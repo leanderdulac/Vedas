@@ -10,11 +10,18 @@ ALLOWED_LICENSES = frozenset(
         "cc0",
         "cc-by",
         "cc-by-sa",
+        "odbl",
         "authorized",
         "official-api",
+        # Conteúdo do portal governamental indiano (Ministério da Cultura): as
+        # escrituras estão em domínio público como obras antigas; a transcrição
+        # digital é reutilizável com atribuição à fonte (vedicheritage.gov.in),
+        # tipicamente para uso educacional. Ver docs/SOURCES_REVIEW.md.
+        "gov-ind",
     }
 )
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CORPUS = Path("data/corpus.jsonl")
 DEFAULT_TOKENIZER_DIR = Path("artifacts/tokenizer")
 DEFAULT_MODEL_DIR = Path("artifacts/model")

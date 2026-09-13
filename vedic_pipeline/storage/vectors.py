@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -31,23 +32,25 @@ def upsert_chunk_embeddings(
     chunks: list[dict[str, Any]],
     vectors: np.ndarray,
     model_name: str,
-    url: Optional[str] = None,
+    url: str | None = None,
 ) -> int:
     if len(chunks) != len(vectors):
         raise ValueError("chunks e vectors com tamanhos diferentes")
 
-    with get_connection(url) as conn:
-        with conn.cursor() as cur:
-            for ch, vec in zip(chunks, vectors):
-                cur.execute(
-                    """
+    with get_connection(url) as conn, conn.cursor() as cur:
+        for ch, vec in zip(chunks, vectors, strict=True):
+            cur.execute(
+                """
                     INSERT INTO chunks (
                         chunk_id, doc_id, chunk_index, text, source_url,
-                        title, tradition, language, license, char_count
+                        title, tradition, language, license, char_count,
+                        work, verse_id, locator, book, hymn, verse, verse_end, heading
                     ) VALUES (
                         %(chunk_id)s, %(doc_id)s, %(chunk_index)s, %(text)s,
                         %(source_url)s, %(title)s, %(tradition)s, %(language)s,
-                        %(license)s, %(char_count)s
+                        %(license)s, %(char_count)s,
+                        %(work)s, %(verse_id)s, %(locator)s, %(book)s, %(hymn)s,
+                        %(verse)s, %(verse_end)s, %(heading)s
                     )
                     ON CONFLICT (chunk_id) DO UPDATE SET
                         text = EXCLUDED.text,
@@ -55,25 +58,41 @@ def upsert_chunk_embeddings(
                         tradition = EXCLUDED.tradition,
                         language = EXCLUDED.language,
                         license = EXCLUDED.license,
-                        char_count = EXCLUDED.char_count
+                        char_count = EXCLUDED.char_count,
+                        work = EXCLUDED.work,
+                        verse_id = EXCLUDED.verse_id,
+                        locator = EXCLUDED.locator,
+                        book = EXCLUDED.book,
+                        hymn = EXCLUDED.hymn,
+                        verse = EXCLUDED.verse,
+                        verse_end = EXCLUDED.verse_end,
+                        heading = EXCLUDED.heading
                     """,
-                    {
-                        "chunk_id": ch["chunk_id"],
-                        "doc_id": ch.get("doc_id"),
-                        "chunk_index": ch.get("chunk_index", 0),
-                        "text": ch.get("text") or "",
-                        "source_url": ch.get("source_url"),
-                        "title": ch.get("title"),
-                        "tradition": ch.get("tradition"),
-                        "language": ch.get("language"),
-                        "license": ch.get("license"),
-                        "char_count": ch.get("char_count")
-                        or len(ch.get("text") or ""),
-                    },
-                )
-                lit = _vector_literal(vec)
-                cur.execute(
-                    """
+                {
+                    "chunk_id": ch["chunk_id"],
+                    "doc_id": ch.get("doc_id"),
+                    "chunk_index": ch.get("chunk_index", 0),
+                    "text": ch.get("text") or "",
+                    "source_url": ch.get("source_url"),
+                    "title": ch.get("title"),
+                    "tradition": ch.get("tradition"),
+                    "language": ch.get("language"),
+                    "license": ch.get("license"),
+                    "char_count": ch.get("char_count")
+                    or len(ch.get("text") or ""),
+                    "work": ch.get("work"),
+                    "verse_id": ch.get("verse_id"),
+                    "locator": ch.get("locator"),
+                    "book": ch.get("book"),
+                    "hymn": ch.get("hymn"),
+                    "verse": ch.get("verse"),
+                    "verse_end": ch.get("verse_end"),
+                    "heading": ch.get("heading"),
+                },
+            )
+            lit = _vector_literal(vec)
+            cur.execute(
+                """
                     INSERT INTO chunk_embeddings (chunk_id, model_name, embedding)
                     VALUES (%s, %s, %s::vector)
                     ON CONFLICT (chunk_id) DO UPDATE SET
@@ -81,8 +100,8 @@ def upsert_chunk_embeddings(
                         embedding = EXCLUDED.embedding,
                         created_at = NOW()
                     """,
-                    (ch["chunk_id"], model_name, lit),
-                )
+                (ch["chunk_id"], model_name, lit),
+            )
     return len(chunks)
 
 
@@ -92,7 +111,7 @@ def build_pgvector_index(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     overlap: int = DEFAULT_CHUNK_OVERLAP,
     batch_size: int = 32,
-    url: Optional[str] = None,
+    url: str | None = None,
 ) -> dict[str, Any]:
     """Chunka corpus, gera embeddings e grava em PostgreSQL/pgvector."""
     from vedic_pipeline.search.embeddings import _load_st_model
@@ -110,11 +129,10 @@ def build_pgvector_index(
 
     doc_ids = [r["id"] for r in records if r.get("id")]
     # remove chunks antigos dos docs do corpus (evita órfãos se chunking mudou)
-    with get_connection(url) as conn:
-        with conn.cursor() as cur:
-            if doc_ids:
-                cur.execute("DELETE FROM chunks WHERE doc_id = ANY(%s)", (doc_ids,))
-                logger.info("Chunks antigos removidos para %d docs", len(doc_ids))
+    with get_connection(url) as conn, conn.cursor() as cur:
+        if doc_ids:
+            cur.execute("DELETE FROM chunks WHERE doc_id = ANY(%s)", (doc_ids,))
+            logger.info("Chunks antigos removidos para %d docs", len(doc_ids))
 
     model = _load_st_model(model_name)
     texts = [c["text"] for c in chunks]
@@ -148,9 +166,9 @@ def search_pgvector(
     query: str,
     top_k: int = 5,
     model_name: str = DEFAULT_EMBEDDING_MODEL,
-    tradition: Optional[str] = None,
-    language: Optional[str] = None,
-    url: Optional[str] = None,
+    tradition: str | None = None,
+    language: str | None = None,
+    url: str | None = None,
 ) -> list[dict[str, Any]]:
     from vedic_pipeline.search.embeddings import _load_st_model
 
@@ -185,6 +203,14 @@ def search_pgvector(
             c.language,
             c.license,
             c.char_count,
+            c.work,
+            c.verse_id,
+            c.locator,
+            c.book,
+            c.hymn,
+            c.verse,
+            c.verse_end,
+            c.heading,
             (1 - (e.embedding <=> %s::vector)) AS score
         FROM chunk_embeddings e
         JOIN chunks c ON c.chunk_id = e.chunk_id
@@ -195,10 +221,9 @@ def search_pgvector(
     # placeholders: score_vec, where..., order_vec, limit
     exec_params: list[Any] = [lit, *params, lit, top_k]
 
-    with get_connection(url) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, exec_params)
-            rows = cur.fetchall()
+    with get_connection(url) as conn, conn.cursor() as cur:
+        cur.execute(sql, exec_params)
+        rows = cur.fetchall()
 
     results: list[dict[str, Any]] = []
     for row in rows:

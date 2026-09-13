@@ -24,7 +24,7 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -33,9 +33,9 @@ sys.path.insert(0, str(ROOT))
 
 from vedic_pipeline.common.constants import DEFAULT_CORPUS, DEFAULT_EMBED_DIR, DEFAULT_RAW_DIR
 from vedic_pipeline.common.corpus import deduplicate_records, load_corpus, rewrite_corpus
+from vedic_pipeline.crawler.download import download_source
 from vedic_pipeline.crawler.ingest import build_record, load_manifest
 from vedic_pipeline.crawler.licenses import validate_source
-from vedic_pipeline.crawler.download import download_source
 from vedic_pipeline.etl.extractors import extract_text
 
 logging.basicConfig(
@@ -50,7 +50,7 @@ ERROR_LOG = ROOT / "data" / "bulk_errors.jsonl"
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def load_state(path: Path) -> dict[str, Any]:
