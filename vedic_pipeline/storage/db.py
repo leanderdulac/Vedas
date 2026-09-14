@@ -14,6 +14,20 @@ DEFAULT_DATABASE_URL = os.environ.get(
     "VEDIC_DEFAULT_DATABASE_URL", "postgresql://vedas:vedas@127.0.0.1:5433/vedas"
 )
 
+DEFAULT_EMBEDDING_DIM = 384
+
+
+def get_embedding_dim(default: int = DEFAULT_EMBEDDING_DIM) -> int:
+    """Dimensão do vetor pgvector. Configurável via VEDIC_EMBEDDING_DIM (64..3072)."""
+    raw = os.environ.get("VEDIC_EMBEDDING_DIM", str(default)).strip()
+    try:
+        dim = int(raw)
+    except ValueError:
+        return default
+    if 64 <= dim <= 3072:
+        return dim
+    return default
+
 
 def get_database_url() -> str | None:
     """None se DB desabilitado; string se configurado."""
@@ -50,8 +64,10 @@ def get_connection(url: str | None = None) -> Generator[Any, None, None]:
         ) from exc
 
     dsn = url or require_database_url()
-    conn = psycopg.connect(dsn, row_factory=dict_row)
+    conn = psycopg.connect(dsn, row_factory=dict_row, connect_timeout=5)
     try:
+        with conn.cursor() as _cur:
+            _cur.execute("SET statement_timeout = '15s'")
         yield conn
         conn.commit()
     except Exception:
@@ -109,18 +125,49 @@ CREATE TABLE IF NOT EXISTS chunks (
 CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks (doc_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_tradition ON chunks (tradition);
 CREATE INDEX IF NOT EXISTS idx_chunks_language ON chunks (language);
+"""
 
--- embedding dim default 384 (MiniLM multilingual); recriado se mudar o modelo
+
+def build_schema_sql(dim: int) -> str:
+    """DDL completo com vector(dim) validado (64..3072)."""
+    if not isinstance(dim, int) or isinstance(dim, bool) or not 64 <= dim <= 3072:
+        raise ValueError(f"embedding dim inválida: {dim!r} (esperado 64..3072)")
+    return (
+        SCHEMA_SQL
+        + f"""
 CREATE TABLE IF NOT EXISTS chunk_embeddings (
     chunk_id      TEXT PRIMARY KEY REFERENCES chunks(chunk_id) ON DELETE CASCADE,
     model_name    TEXT NOT NULL,
-    embedding     vector(384) NOT NULL,
+    embedding     vector({dim}) NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_model
     ON chunk_embeddings (model_name);
 """
+    )
+
+
+def get_embedding_column_dim(conn: Any) -> int | None:
+    """Retorna a dimensão atual da coluna chunk_embeddings.embedding, ou None se ausente."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT atttypmod
+            FROM pg_attribute
+            JOIN pg_class ON pg_class.oid = pg_attribute.attrelid
+            WHERE pg_class.relname = 'chunk_embeddings'
+              AND pg_attribute.attname = 'embedding'
+            """
+        )
+        row = cur.fetchone()
+    if not row:
+        return None
+    typmod = row["atttypmod"] if isinstance(row, dict) else row[0]
+    # pgvector/pg16 grava atttypmod = dimensão (ex.: vector(384) -> 384). -1 = sem typmod.
+    if typmod is None or typmod == -1:
+        return None
+    return int(typmod)
 
 
 _CHUNK_LOCATOR_COLUMNS_SQL = """
@@ -137,10 +184,54 @@ CREATE INDEX IF NOT EXISTS idx_chunks_work ON chunks (work);
 """
 
 
-def init_schema(url: str | None = None) -> dict[str, Any]:
+def init_schema(url: str | None = None, dim: int | None = None) -> dict[str, Any]:
+    target_dim = dim if dim is not None else get_embedding_dim()
+    if not isinstance(target_dim, int) or isinstance(target_dim, bool) or not 64 <= target_dim <= 3072:
+        raise ValueError(f"embedding dim inválida: {target_dim!r} (esperado 64..3072)")
     with get_connection(url) as conn, conn.cursor() as cur:
         cur.execute(SCHEMA_SQL)
         cur.execute(_CHUNK_LOCATOR_COLUMNS_SQL)
+        # Garante chunk_embeddings com a dimensão alvo; recria se divergir
+        # (índice é reconstruível via build-index --backend pgvector).
+        existing: int | None = None
+        try:
+            existing = get_embedding_column_dim(conn)
+        except Exception:  # noqa: BLE001
+            existing = None
+        if existing is None:
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS chunk_embeddings (
+                    chunk_id      TEXT PRIMARY KEY REFERENCES chunks(chunk_id) ON DELETE CASCADE,
+                    model_name    TEXT NOT NULL,
+                    embedding     vector({target_dim}) NOT NULL,
+                    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+        elif existing != target_dim:
+            logger.warning(
+                "Dimensão pgvector %s != alvo %s: recriando chunk_embeddings (reindex necessário)",
+                existing,
+                target_dim,
+            )
+            cur.execute("DROP TABLE IF EXISTS chunk_embeddings")
+            cur.execute(
+                f"""
+                CREATE TABLE chunk_embeddings (
+                    chunk_id      TEXT PRIMARY KEY REFERENCES chunks(chunk_id) ON DELETE CASCADE,
+                    model_name    TEXT NOT NULL,
+                    embedding     vector({target_dim}) NOT NULL,
+                    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_model
+                ON chunk_embeddings (model_name);
+            """
+        )
         # índice HNSW (pode falhar se tabela vazia em algumas versões — ok)
         try:
             cur.execute(
@@ -152,16 +243,21 @@ def init_schema(url: str | None = None) -> dict[str, Any]:
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning("Índice HNSW não criado agora: %s", exc)
-    logger.info("Schema PostgreSQL/pgvector inicializado")
-    return {"ok": True, "schema": "documents+chunks+chunk_embeddings"}
+    logger.info("Schema PostgreSQL/pgvector inicializado (dim=%s)", target_dim)
+    return {"ok": True, "schema": "documents+chunks+chunk_embeddings", "embedding_dim": target_dim}
 
 
 def _sanitize_db_error(exc: Exception) -> str:
     import re
     msg = str(exc)
+    # Remove credenciais/DSN completos — não expõe host/user/db em /health público.
+    msg = re.sub(r"postgresql(\+\w+)?://\S+", "postgresql://******", msg)
     msg = re.sub(r"://([^:]+):([^@]+)@", r"://\1:******@", msg)
     msg = re.sub(r"password=\S+", "password=******", msg)
-    return msg
+    msg = re.sub(r"host=\S+", "host=******", msg)
+    # Mensagem genérica + prefixo curto para diagnóstico sem vazar topologia.
+    short = msg.strip().splitlines()[0][:160] if msg.strip() else "erro de banco"
+    return f"indisponível ({type(exc).__name__}: {short})" if short else "indisponível"
 
 
 def check_db(url: str | None = None) -> dict[str, Any]:
@@ -186,6 +282,7 @@ def check_db(url: str | None = None) -> dict[str, Any]:
             regs = cur.fetchone() or {}
             schema_ready = all(regs.get(k) for k in ("documents", "chunks", "embeddings"))
             counts: dict[str, Any] = {}
+            embedding_dim: int | None = None
             if schema_ready:
                 cur.execute(
                     """
@@ -196,6 +293,10 @@ def check_db(url: str | None = None) -> dict[str, Any]:
                         """
                 )
                 counts = dict(cur.fetchone() or {})
+                try:
+                    embedding_dim = get_embedding_column_dim(conn)
+                except Exception:  # noqa: BLE001
+                    embedding_dim = None
             else:
                 counts = {"note": "schema ausente — rode db-init"}
         return {
@@ -204,6 +305,8 @@ def check_db(url: str | None = None) -> dict[str, Any]:
             "pgvector": has_vector,
             "schema_ready": schema_ready,
             "counts": counts,
+            "embedding_dim": embedding_dim,
+            "expected_embedding_dim": get_embedding_dim(),
         }
     except Exception as exc:  # noqa: BLE001
         sanitized = _sanitize_db_error(exc)
