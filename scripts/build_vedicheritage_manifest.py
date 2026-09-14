@@ -57,6 +57,13 @@ _DROP_EXACT = {
     "https://vedicheritage.gov.in/samhitas/samaveda-samhitas/ranayaniya-samhita",
     "https://vedicheritage.gov.in/samhitas/atharvaveda-samhitas/shaunaka-samhita",
     "https://vedicheritage.gov.in/samhitas/atharvaveda-samhitas/paippalada-samhita",
+    # índices de Upaniṣads/Brāhmaṇas/Āraṇyakas (menus, não texto)
+    "https://vedicheritage.gov.in/upanishads",
+    "https://vedicheritage.gov.in/upanishads/",
+    "https://vedicheritage.gov.in/brahmanas",
+    "https://vedicheritage.gov.in/brahmanas/",
+    "https://vedicheritage.gov.in/aranyakas",
+    "https://vedicheritage.gov.in/aranyakas/",
 }
 # Reprints/páginas numéricas ambíguas do RV que não correspondem a um sūkta limpo.
 _DROP_RV_REPRINT = re.compile(r"samhitas/rigveda/shakala-samhita/(\d+-2|mandal-\d+)$")
@@ -71,7 +78,29 @@ def _get(url: str, timeout: int = 40) -> str:
         return ""
 
 
-def collect_samhita_urls() -> list[str]:
+# Índices do portal (completam o sitemap, que não lista Upaniṣads/Brāhmaṇas/Āraṇyakas).
+_INDEX_PAGES = (
+    "https://vedicheritage.gov.in/upanishads/",
+    "https://vedicheritage.gov.in/brahmanas/",
+    "https://vedicheritage.gov.in/aranyakas/",
+)
+_INDEX_HREF = re.compile(r'href="(https://vedicheritage\.gov\.in/(?:upanishads|brahmanas|aranyakas)/[^"#?]*)"')
+
+
+def collect_from_indexes() -> set[str]:
+    """Coleta as folhas listadas nos índices de Upaniṣads/Brāhmaṇas/Āraṇyakas."""
+    out: set[str] = set()
+    for base in _INDEX_PAGES:
+        html = _get(base)
+        for m in _INDEX_HREF.finditer(html or ""):
+            u = m.group(1).rstrip("/")
+            if "/en/" in u or "/hi/" in u:
+                continue
+            out.add(u)
+    return out
+
+
+def collect_vedicheritage_urls() -> list[str]:
     index = _get(SITEMAP_INDEX)
     subs = re.findall(r"<loc>(.*?)</loc>", index)
     urls: set[str] = set()
@@ -81,7 +110,11 @@ def collect_samhita_urls() -> list[str]:
         xml = _get(sub)
         for loc in re.findall(r"<loc>(.*?)</loc>", xml):
             urls.add(loc.rstrip("/"))
-    return sorted(u for u in urls if "/samhitas/" in u)
+    # Saṃhitās + Upaniṣads + Brāhmaṇas + Āraṇyakas (texto Devanāgarī do portal).
+    keep = ("/samhitas/", "/upanishads/", "/brahmanas/", "/aranyakas/")
+    urls = {u for u in urls if any(p in u for p in keep)}
+    urls |= collect_from_indexes()
+    return sorted(u for u in urls if "vedicheritage.gov.in" in u)
 
 
 # --- identidade / título por Veda ----------------------------------------
@@ -121,6 +154,13 @@ def _title(url: str) -> str:
     return " ".join(w.capitalize() for w in re.split(r"[-_]", slug) if w)
 
 
+def _page_tradition(url: str) -> str:
+    path = url.split("vedicheritage.gov.in/", 1)[-1]
+    if path.startswith("upanishads/"):
+        return "upanishad"
+    return "vedic"
+
+
 def build_sources(urls: list[str]) -> list[dict]:
     rv_seen: dict[tuple[int, int], str] = {}
     sources: list[dict] = []
@@ -155,7 +195,7 @@ def build_sources(urls: list[str]) -> list[dict]:
             {
                 "url": url,
                 "title": _title(url),
-                "tradition": "vedic",
+                "tradition": _page_tradition(url),
                 "language": "sa",
                 "license": "gov-ind",
                 "source_class": "vedicheritage",
@@ -176,7 +216,7 @@ def main() -> int:
 
     import json
 
-    urls = collect_samhita_urls()
+    urls = collect_vedicheritage_urls()
     sources = build_sources(urls)
     payload = {
         "_meta": {
@@ -185,8 +225,9 @@ def main() -> int:
             "samhita_urls_collected": len(urls),
             "text_sources": len(sources),
             "note": (
-                "Manifest gerado a partir do sitemap oficial do Vedic Heritage Portal. "
-                "Texto Devanagari reutilizável com atribuição (licença gov-ind). "
+                "Manifest gerado a partir do sitemap oficial + índices do Vedic "
+                "Heritage Portal (Upaniṣads/Brāhmaṇas/Āraṇyakas incluidas). Texto "
+                "Devanagari reutilizável com atribuição (licença gov-ind). "
                 "Regenere com: python scripts/build_vedicheritage_manifest.py"
             ),
         },
@@ -195,7 +236,7 @@ def main() -> int:
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"coletadas {len(urls)} URLs de samhita; gravadas {len(sources)} fontes de texto em {out}")
+    print(f"coletadas {len(urls)} URLs do portal; gravadas {len(sources)} fontes de texto em {out}")
     return 0
 
 

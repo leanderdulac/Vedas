@@ -1,12 +1,52 @@
 {
   "_meta": {
-    "generated_at": "2026-09-14T00:12:06.910275+00:00",
+    "generated_at": "2026-09-14T23:02:19.170809+00:00",
     "portal": "https://vedicheritage.gov.in/sitemap.xml",
-    "samhita_urls_collected": 1915,
-    "text_sources": 1821,
-    "note": "Manifest gerado a partir do sitemap oficial do Vedic Heritage Portal. Texto Devanagari reutilizável com atribuição (licença gov-ind). Regenere com: python scripts/build_vedicheritage_manifest.py"
+    "samhita_urls_collected": 1951,
+    "text_sources": 1854,
+    "note": "Manifest gerado a partir do sitemap oficial + índices do Vedic Heritage Portal (Upaniṣads/Brāhmaṇas/Āraṇyakas incluidas). Texto Devanagari reutilizável com atribuição (licença gov-ind). Regenere com: python scripts/build_vedicheritage_manifest.py"
   },
   "sources": [
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/aarsheya-brahmana",
+      "title": "Aarsheya Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/aarsheyopanishad",
+      "title": "Aarsheyopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/aitareya-brahmana",
+      "title": "Aitareya Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/aranyakas/aitareyaranyaka",
+      "title": "Aitareyaranyaka",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/aitareyopanishad",
+      "title": "Aitareyopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
     {
       "url": "https://vedicheritage.gov.in/samhitas/atharvaveda-samhitas/shaunaka-samhita/kanda-01-sukta-001",
       "title": "Atharvaveda Shaunaka Samhita — Kanda 1, Sukta 1",
@@ -5856,6 +5896,118 @@
       "source_class": "vedicheritage"
     },
     {
+      "url": "https://vedicheritage.gov.in/aranyakas/brihadaranyaka",
+      "title": "Brihadaranyaka",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/brihadaranyakopanishad",
+      "title": "Brihadaranyakopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/chandogyopanishad",
+      "title": "Chandogyopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/chandogyopanishad-brahmana",
+      "title": "Chandogyopanishad Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/devatadhyaya-brahmana",
+      "title": "Devatadhyaya Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/gopatha-brhamana",
+      "title": "Gopatha Brhamana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/isavasyopanisad-of-vajasneyi-kanva-samhita-part-02",
+      "title": "Isavasyopanisad Of Vajasneyi Kanva Samhita Part 02",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/ishavasyopanishad",
+      "title": "Ishavasyopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/jaiminiya-brhamana",
+      "title": "Jaiminiya Brhamana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/jaiminiyopanishad-brahmana",
+      "title": "Jaiminiyopanishad Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/kanva-shatapatha-brahmanas",
+      "title": "Kanva Shatapatha Brahmanas",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/kathopanishad",
+      "title": "Kathopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/kausitaki-shankhyayana-brahmana",
+      "title": "Kausitaki Shankhyayana Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/kenopanisad",
+      "title": "Kenopanisad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/vajasaneyi-kanva-samhita/vajasaneyi-kanva-samhita-chapter-10",
       "title": "Krishna Yajurveda (Kanva) Samhita — Chapter 10",
       "tradition": "vedic",
@@ -6163,6 +6315,38 @@
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/vajasaneyi-kanva-samhita/vajasaneyi-kanva-samhita-chapter-09",
       "title": "Krishna Yajurveda (Kanva) Samhita — Chapter 9",
       "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/maitrayani-upanishad",
+      "title": "Maitrayani Upanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/mandukyopanishad",
+      "title": "Mandukyopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/mundakopanishad",
+      "title": "Mundakopanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/prashnopanishad",
+      "title": "Prashnopanishad",
+      "tradition": "upanishad",
       "language": "sa",
       "license": "gov-ind",
       "source_class": "vedicheritage"
@@ -14250,6 +14434,86 @@
     {
       "url": "https://vedicheritage.gov.in/samhitas/rigveda/shakala-samhita/mandal-09-sukta-099",
       "title": "Rigveda Shakala Samhita — Mandala 9, Sukta 99",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/samavidhana-brahmana",
+      "title": "Samavidhana Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/aranyakas/sankhyayana-aranyaka",
+      "title": "Sankhyayana Aranyaka",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/shadavimsa-brahmana",
+      "title": "Shadavimsa Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/shwetashwataropanishad",
+      "title": "Shwetashwataropanishad",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/aranyakas/taittiriya-aranyaka",
+      "title": "Taittiriya Aranyaka",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/taittiriya-brhamana",
+      "title": "Taittiriya Brhamana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/upanishads/taittiriya-upanishads",
+      "title": "Taittiriya Upanishads",
+      "tradition": "upanishad",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/aranyakas/talavakararanyaka",
+      "title": "Talavakararanyaka",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/tandya-brahmana",
+      "title": "Tandya Brahmana",
+      "tradition": "vedic",
+      "language": "sa",
+      "license": "gov-ind",
+      "source_class": "vedicheritage"
+    },
+    {
+      "url": "https://vedicheritage.gov.in/brahmanas/vansha-brahmana",
+      "title": "Vansha Brahmana",
       "tradition": "vedic",
       "language": "sa",
       "license": "gov-ind",
