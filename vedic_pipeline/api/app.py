@@ -347,8 +347,8 @@ def create_app():
             path = generate_verse_image(verse_id, force=refresh)
         except FileNotFoundError as exc:
             raise HTTPException(status_code=404, detail="Verso não encontrado") from exc
-        except RuntimeError:
-            raise HTTPException(status_code=503, detail="Serviço de imagem indisponível") from None
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         except Exception:  # noqa: BLE001
             logger.exception("Imagine imagem falhou para %s", verse_id)
             raise HTTPException(status_code=503, detail="Falha ao ilustrar o verso") from None
@@ -367,8 +367,8 @@ def create_app():
             return start_verse_video(verse_id)
         except FileNotFoundError as exc:
             raise HTTPException(status_code=404, detail="Verso não encontrado") from exc
-        except RuntimeError:
-            raise HTTPException(status_code=503, detail="Serviço de vídeo indisponível") from None
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         except Exception:  # noqa: BLE001
             logger.exception("Imagine vídeo falhou para %s", verse_id)
             raise HTTPException(status_code=503, detail="Falha ao gerar vídeo") from None
@@ -381,8 +381,8 @@ def create_app():
             return {"verse_id": verse_id, "status": "done", "ready": True}
         try:
             return poll_verse_video(verse_id)
-        except RuntimeError:
-            raise HTTPException(status_code=503, detail="Serviço de vídeo indisponível") from None
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.get("/api/v1/verses/{verse_id}/video/file")
     def api_verse_video_file(verse_id: str):
