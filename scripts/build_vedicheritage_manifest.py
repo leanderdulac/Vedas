@@ -26,6 +26,7 @@ SITEMAP_INDEX = "https://vedicheritage.gov.in/sitemap.xml"
 # Páginas que NÃO são texto de saṃhitā (menus, introduções, utilitários).
 _DROP_SUBSTR = (
     "-introduction",
+    "introduction-of-chapter",  # páginas YV "…/introduction-of-chapter-NN" (sem hífen antes)
     "-audio",
     "-video",
     "-learning-purpose",

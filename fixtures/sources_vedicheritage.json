@@ -1,9 +1,9 @@
 {
   "_meta": {
-    "generated_at": "2026-09-13T21:43:23.560125+00:00",
+    "generated_at": "2026-09-14T00:12:06.910275+00:00",
     "portal": "https://vedicheritage.gov.in/sitemap.xml",
     "samhita_urls_collected": 1915,
-    "text_sources": 1860,
+    "text_sources": 1821,
     "note": "Manifest gerado a partir do sitemap oficial do Vedic Heritage Portal. Texto Devanagari reutilizável com atribuição (licença gov-ind). Regenere com: python scripts/build_vedicheritage_manifest.py"
   },
   "sources": [
@@ -14272,23 +14272,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-10",
-      "title": "Yajurveda Samhita — Chapter 10",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-11",
-      "title": "Yajurveda Samhita — Chapter 11",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-11",
       "title": "Yajurveda Samhita — Chapter 11",
       "tradition": "vedic",
       "language": "sa",
@@ -14304,23 +14288,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-12",
-      "title": "Yajurveda Samhita — Chapter 12",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-13",
-      "title": "Yajurveda Samhita — Chapter 13",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-13",
       "title": "Yajurveda Samhita — Chapter 13",
       "tradition": "vedic",
       "language": "sa",
@@ -14336,23 +14304,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-14",
-      "title": "Yajurveda Samhita — Chapter 14",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-15",
-      "title": "Yajurveda Samhita — Chapter 15",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-15",
       "title": "Yajurveda Samhita — Chapter 15",
       "tradition": "vedic",
       "language": "sa",
@@ -14368,23 +14320,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-16",
-      "title": "Yajurveda Samhita — Chapter 16",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-17",
-      "title": "Yajurveda Samhita — Chapter 17",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-17",
       "title": "Yajurveda Samhita — Chapter 17",
       "tradition": "vedic",
       "language": "sa",
@@ -14400,23 +14336,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-18",
-      "title": "Yajurveda Samhita — Chapter 18",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-19",
-      "title": "Yajurveda Samhita — Chapter 19",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-19",
       "title": "Yajurveda Samhita — Chapter 19",
       "tradition": "vedic",
       "language": "sa",
@@ -14432,23 +14352,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-02",
-      "title": "Yajurveda Samhita — Chapter 2",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-20",
-      "title": "Yajurveda Samhita — Chapter 20",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-20",
       "title": "Yajurveda Samhita — Chapter 20",
       "tradition": "vedic",
       "language": "sa",
@@ -14464,23 +14368,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-21",
-      "title": "Yajurveda Samhita — Chapter 21",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-22",
-      "title": "Yajurveda Samhita — Chapter 22",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-22",
       "title": "Yajurveda Samhita — Chapter 22",
       "tradition": "vedic",
       "language": "sa",
@@ -14496,23 +14384,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-23",
-      "title": "Yajurveda Samhita — Chapter 23",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-24",
-      "title": "Yajurveda Samhita — Chapter 24",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-24",
       "title": "Yajurveda Samhita — Chapter 24",
       "tradition": "vedic",
       "language": "sa",
@@ -14528,23 +14400,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-25",
-      "title": "Yajurveda Samhita — Chapter 25",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-26",
-      "title": "Yajurveda Samhita — Chapter 26",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-26",
       "title": "Yajurveda Samhita — Chapter 26",
       "tradition": "vedic",
       "language": "sa",
@@ -14560,23 +14416,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-27",
-      "title": "Yajurveda Samhita — Chapter 27",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-28",
-      "title": "Yajurveda Samhita — Chapter 28",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-28",
       "title": "Yajurveda Samhita — Chapter 28",
       "tradition": "vedic",
       "language": "sa",
@@ -14592,23 +14432,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-29",
-      "title": "Yajurveda Samhita — Chapter 29",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-03",
-      "title": "Yajurveda Samhita — Chapter 3",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-03",
       "title": "Yajurveda Samhita — Chapter 3",
       "tradition": "vedic",
       "language": "sa",
@@ -14624,23 +14448,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-30",
-      "title": "Yajurveda Samhita — Chapter 30",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-31",
-      "title": "Yajurveda Samhita — Chapter 31",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-31",
       "title": "Yajurveda Samhita — Chapter 31",
       "tradition": "vedic",
       "language": "sa",
@@ -14656,23 +14464,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-32",
-      "title": "Yajurveda Samhita — Chapter 32",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-33",
-      "title": "Yajurveda Samhita — Chapter 33",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-33",
       "title": "Yajurveda Samhita — Chapter 33",
       "tradition": "vedic",
       "language": "sa",
@@ -14688,23 +14480,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-34",
-      "title": "Yajurveda Samhita — Chapter 34",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-35",
-      "title": "Yajurveda Samhita — Chapter 35",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-35",
       "title": "Yajurveda Samhita — Chapter 35",
       "tradition": "vedic",
       "language": "sa",
@@ -14720,23 +14496,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-36",
-      "title": "Yajurveda Samhita — Chapter 36",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-37",
-      "title": "Yajurveda Samhita — Chapter 37",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-37",
       "title": "Yajurveda Samhita — Chapter 37",
       "tradition": "vedic",
       "language": "sa",
@@ -14752,23 +14512,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-38",
-      "title": "Yajurveda Samhita — Chapter 38",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-39",
-      "title": "Yajurveda Samhita — Chapter 39",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-39",
       "title": "Yajurveda Samhita — Chapter 39",
       "tradition": "vedic",
       "language": "sa",
@@ -14784,23 +14528,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-04",
-      "title": "Yajurveda Samhita — Chapter 4",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-40",
-      "title": "Yajurveda Samhita — Chapter 40",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-40",
       "title": "Yajurveda Samhita — Chapter 40",
       "tradition": "vedic",
       "language": "sa",
@@ -14816,23 +14544,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-05",
-      "title": "Yajurveda Samhita — Chapter 5",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-06",
-      "title": "Yajurveda Samhita — Chapter 6",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-06",
       "title": "Yajurveda Samhita — Chapter 6",
       "tradition": "vedic",
       "language": "sa",
@@ -14848,14 +14560,6 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-07",
-      "title": "Yajurveda Samhita — Chapter 7",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-08",
       "title": "Yajurveda Samhita — Chapter 8",
       "tradition": "vedic",
@@ -14864,23 +14568,7 @@
       "source_class": "vedicheritage"
     },
     {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-08",
-      "title": "Yajurveda Samhita — Chapter 8",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
       "url": "https://vedicheritage.gov.in/samhitas/yajurveda/chapter-09",
-      "title": "Yajurveda Samhita — Chapter 9",
-      "tradition": "vedic",
-      "language": "sa",
-      "license": "gov-ind",
-      "source_class": "vedicheritage"
-    },
-    {
-      "url": "https://vedicheritage.gov.in/samhitas/yajurveda/introduction-of-chapter-09",
       "title": "Yajurveda Samhita — Chapter 9",
       "tradition": "vedic",
       "language": "sa",
