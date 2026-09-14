@@ -7,7 +7,11 @@ import re
 from collections import Counter
 from typing import Any
 
-from vedic_pipeline.common.sanskrit import fold_for_search, get_sanskrit_variants
+from vedic_pipeline.common.sanskrit import (
+    fold_for_search,
+    get_sanskrit_variants,
+    iast_to_ascii,
+)
 from vedic_pipeline.search.reranker import rerank_chunks
 
 # Sinônimos / equivalentes úteis para literatura védica (en-sa)
@@ -86,12 +90,25 @@ _CHUNK_TOKEN_CACHE: dict[str, list[str]] = {}
 
 
 def get_chunk_tokens(chunk: dict[str, Any]) -> list[str]:
-    """Retorna tokens do chunk com cache em memória."""
+    """Retorna tokens do chunk com cache em memória.
+
+    Indexa também o metadado (título/obra/localizador), nas formas nativa e
+    transliterada (IAST->ASCII), para que uma query em alfabeto latino
+    ("bhagavad", "gita", "yoga sutra") case com chunks cujo texto é Devanāgarī
+    e, por isso, não responderia ao BM25 puro sobre o corpo.
+    """
     cid = chunk.get("chunk_id")
     if cid and cid in _CHUNK_TOKEN_CACHE:
         return _CHUNK_TOKEN_CACHE[cid]
+
+    meta_bits = [str(chunk.get(key) or "") for key in ("title", "work", "locator", "heading")]
+    meta = " ".join(b for b in meta_bits if b).strip()
+    meta_ascii = iast_to_ascii(meta) if meta else ""
     text = chunk.get("text") or ""
-    tokens = tokenize(text)
+    # metadado aparece duas vezes (original + ascii) => df por token não muda
+    # (set() deduplica no cálculo), mas expõe a variante que casa com a query.
+    combined = f"{meta}\n{meta_ascii}\n{text}" if meta else text
+    tokens = tokenize(combined)
     if cid:
         if len(_CHUNK_TOKEN_CACHE) > 50_000:
             _CHUNK_TOKEN_CACHE.clear()
@@ -275,10 +292,15 @@ def hybrid_rerank(
         sem_score_map[cid] = float(h.get("score") or max(0.0, 1.0 - i * 0.02))
 
     lex = lexical_scores(query, pool)
+    # Candidatos trazidos só pela via léxica (não no topo semântico) não podem
+    # ser aniquilados por nota semântica 0: usam um piso = menor nota semântica
+    # presente. Sem isso, um match forte de título/texto (ex.: query em latim
+    # x chunk em Devanāgarī) nunca supera o ruído semântico de candidatos RV.
+    sem_floor = min(sem_score_map.values()) if sem_score_map else 0.0
     for i, ch in enumerate(pool):
         ch["_lex_score"] = lex[i]
         cid = str(ch.get("chunk_id") or "")
-        ch["_sem_score"] = sem_score_map.get(cid, 0.0)
+        ch["_sem_score"] = sem_score_map.get(cid, sem_floor)
 
     # normaliza
     max_lex = max((c["_lex_score"] for c in pool), default=1.0) or 1.0

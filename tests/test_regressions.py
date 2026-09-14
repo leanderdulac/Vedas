@@ -139,6 +139,33 @@ class RetrievalTests(unittest.TestCase):
             hits, _ = retrieve_hits('atman', backend='numpy', language='pt')
             self.assertEqual(hits, [])
 
+    def test_lexical_title_recall_surfaces_devanagari_document(self):
+        # Query em latim ("bhagavad gita") x chunk cujo texto é Devanāgarī:
+        # o chunk só casa pelo TÍTULO (via léxica). Sem título indexado e sem um
+        # piso de nota semântica para candidatos só-léxicos, o BG não aparece.
+        from vedic_pipeline.search.hybrid import hybrid_rerank
+
+        bg = {
+            "chunk_id": "bg2", "doc_id": "bg", "work": "bhagavad-gita", "locator": "BG 2.1",
+            "title": "Bhagavad-gītā 2 (Sanskrit, DharmicData)",
+            "text": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।",
+            "tradition": "vaishnava", "language": "sa", "score": 0.40,
+        }
+        rv = {
+            "chunk_id": "rv", "doc_id": "rv", "work": "rigveda", "locator": "RV 2.7.1",
+            "title": "Rigveda RV 2.7 (VedaWeb Zürich)", "text": "सोमं स्वरणं कृणुहि",
+            "tradition": "vedic", "language": "sa", "score": 0.80,
+        }
+        hits = hybrid_rerank(
+            "bhagavad gita chapter 2",
+            [dict(rv)],        # semântico: só RV (BG fora do topo semântico)
+            all_chunks=[rv, bg],  # BG entra só pela via léxica/título
+            top_k=2,
+            max_per_doc=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "bg2")
+
 
 if __name__ == '__main__':
     unittest.main()
