@@ -15,6 +15,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from vedic_pipeline.common.sanskrit import has_devanagari
+
 WORK_RIGVEDA = "rigveda"
 WORK_GITA = "bhagavad-gita"
 WORK_YOGA = "yoga-sutra"
@@ -710,6 +712,74 @@ def samaveda_ref_from_meta(
     )
 
 
+_DEV_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+_SUKTA_VERSE_END = re.compile(r"(?:॥|।।)\s*([0-9०-९]+)\s*(?:॥|।।)")
+_SUKTA_COUNT = re.compile(r"^[0-9०-९]+\s*")
+
+
+def _deva_int(token: str) -> int | None:
+    digits = (token or "").translate(_DEV_DIGITS).strip()
+    if not digits.isdigit():
+        return None
+    value = int(digits)
+    return value if value > 0 else None
+
+
+def _split_sukta_devanagari(text: str) -> tuple[str | None, list[tuple[int, str]]]:
+    """Divide um sūkta em Devanāgarī em (anukramaṇī, [(nº, verso)]).
+
+    A primeira linha que termina em danda (॥/।। não) e não tem marca de verso
+    é tratada como anukramaṇī/heading; cada verso termina com ``॥n॥`` (numeral
+    devanagárico). Espelha o comportamento de ``structured_json.split_sukta_text``.
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return None, []
+    lines = raw.split("\n")
+    heading: str | None = None
+    body = raw
+    first = lines[0].strip()
+    if first and "।" in first and "॥" not in first and "।।" not in first:
+        heading = _SUKTA_COUNT.sub("", first).strip(" ।")
+        body = "\n".join(lines[1:]).strip()
+    verses: list[tuple[int, str]] = []
+    pos = 0
+    for match in _SUKTA_VERSE_END.finditer(body):
+        number = _deva_int(match.group(1))
+        piece = body[pos : match.start()].strip()
+        if number and piece:
+            verses.append((number, piece))
+        pos = match.end()
+    return heading or None, verses
+
+
+def parse_devanagari_sukta(
+    text: str,
+    *,
+    work: str,
+    book: int | None,
+    hymn: int | None = None,
+) -> list[TextUnit]:
+    """Versos de uma página de sūkta do Vedic Heritage (Devanāgarī, ``॥n॥``)."""
+    heading, verses = _split_sukta_devanagari(text)
+    units: list[TextUnit] = []
+    for number, body in verses:
+        cleaned = " ".join(body.split())
+        units.append(
+            TextUnit(
+                work=work,
+                book=book,
+                hymn=hymn,
+                verse=number,
+                verse_id=format_verse_id(work, book, hymn, number),
+                locator=format_locator(work, book, hymn, number),
+                text=cleaned,
+                heading=heading,
+            )
+        )
+    return units
+
+
 def parse_document_units(record: dict[str, Any] | None = None, **meta: Any) -> list[TextUnit]:
     rec = dict(record or {})
     rec.update({k: v for k, v in meta.items() if v is not None})
@@ -720,6 +790,18 @@ def parse_document_units(record: dict[str, Any] | None = None, **meta: Any) -> l
     work = rec.get("work") or detect_work(title, url, tradition)
     if not work or not text.strip():
         return []
+    # Vedic Heritage: páginas em Devanāgarī com book/hymn já resolvidos viram
+    # unidades por verso (RV 1.10.1, AV 1.1.3). Fallback para os parsers ASCII.
+    if has_devanagari(text) and rec.get("book") is not None and work in (
+        WORK_RIGVEDA,
+        WORK_ATHARVAVEDA,
+        WORK_YAJURVEDA,
+    ):
+        units = parse_devanagari_sukta(
+            text, work=work, book=rec.get("book"), hymn=rec.get("hymn")
+        )
+        if units:
+            return units
     if work == WORK_RIGVEDA:
         book, hymn = rigveda_ref_from_meta(title, url)
         return parse_rigveda(text, book=book, hymn=hymn)

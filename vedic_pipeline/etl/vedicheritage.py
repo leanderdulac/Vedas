@@ -87,6 +87,28 @@ def _tradition_from_path(url: str) -> str:
     return "vedic"
 
 
+# Extratores de (livro/mandala-kanda, sūkta/capítulo) a partir da URL do portal.
+_RV_MNN = re.compile(r"/m(\d{2})-(\d{3})/?$", re.I)
+_RV_LONG = re.compile(r"rigveda-shakala-samhita-mandala?-(\d+)-sukta-(\d+)", re.I)
+_RV_SHORT = re.compile(r"rigveda-shakala-shakha-mandala-(\d+)-sukta-(\d+)", re.I)
+_RV_GEN = re.compile(r"mandala?-(\d+)-sukta-(\d+)", re.I)
+_AV = re.compile(r"kanda-(\d+)-sukta-(\d+)", re.I)
+_YV_KANVA = re.compile(r"kanva-samhita-chapter-(\d+)", re.I)
+_YV_CH = re.compile(r"chapter-(\d+)$", re.I)
+
+
+def _ref_from_url(url: str) -> tuple[int | None, int | None]:
+    """Extrai (book, hymn) da URL: (mandala, sūkta) ou (kanda, sūkta)/(cap., None)."""
+    for rx in (_RV_MNN, _RV_LONG, _RV_SHORT, _RV_GEN, _AV):
+        m = rx.search(url or "")
+        if m:
+            return int(m.group(1)), int(m.group(2))
+    m = _YV_KANVA.search(url or "") or _YV_CH.search((url or "").rstrip("/"))
+    if m:
+        return int(m.group(1)), None
+    return None, None
+
+
 def _devanagari_len(text: str) -> int:
     from vedic_pipeline.common.sanskrit import DEVANAGARI_RANGE
 
@@ -165,6 +187,7 @@ def build_record(
         stem = re.split(r"[_\-.]", Path(url).stem)[0]
         parsed_title = stem.title() or "Vedic Heritage text"
     work = detect_work(parsed_title, url)
+    book, hymn = _ref_from_url(url)
     fp = content_fingerprint(text)
     return {
         "id": stable_id(url, parsed_title, fp[:16]),
@@ -172,6 +195,8 @@ def build_record(
         "source_url": url,
         "title": parsed_title,
         "work": work,
+        "book": book,
+        "hymn": hymn,
         "tradition": (tradition or _tradition_from_path(url)).lower(),
         "language": "sa",
         "license": "gov-ind",

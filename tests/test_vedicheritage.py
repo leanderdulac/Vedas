@@ -8,8 +8,10 @@ import unittest
 from pathlib import Path
 
 from vedic_pipeline.common.sanskrit import has_devanagari
+from vedic_pipeline.etl.structure import WORK_RIGVEDA, parse_devanagari_sukta, parse_document_units
 from vedic_pipeline.etl.vedicheritage import (
     VEDICHERITAGE_ATTRIBUTION,
+    _ref_from_url,
     build_record,
     is_vedicheritage_url,
     looks_vedicheritage,
@@ -123,6 +125,56 @@ class IngestTests(unittest.TestCase):
         recs = parse_vedicheritage_file(FIXTURE, source={"url": "x", "title": "Ishavasyopanishad"})
         self.assertEqual(len(recs), 1)
         self.assertEqual(recs[0]["license"], "gov-ind")
+
+
+_SUKTA_TEXT = (
+    "१२ मधुच्छन्दा वैश्वामित्रः। इन्द्रः। अनुष्टुप्。\n"
+    "गाय॑न्ति त्वा गाय॒त्रिणः अर्चन्ति अर्कम् ॥१॥\n"
+    "यत् सानोः सानुम् आरुहत् भूरि अस्पष्ट कर्त्वम् ॥२॥\n"
+    "युक्ष्वा हि केशिना हरी वृषणा कक्ष्यप्रा ॥३॥\n"
+)
+
+
+class VerseAlignmentTests(unittest.TestCase):
+    def test_ref_from_url(self):
+        self.assertEqual(_ref_from_url(".../shakala-samhita/m01-010"), (1, 10))
+        self.assertEqual(_ref_from_url(".../rigveda-shakala-samhita-mandala-02-sukta-001"), (2, 1))
+        self.assertEqual(_ref_from_url(".../rigveda-shakala-shakha-mandala-03-sukta-042"), (3, 42))
+        self.assertEqual(_ref_from_url(".../shaunaka-samhita/kanda-01-sukta-001"), (1, 1))
+        self.assertEqual(_ref_from_url(".../yajurveda/chapter-27"), (27, None))
+        self.assertEqual(_ref_from_url(".../vajasaneyi-kanva-samhita/vajasaneyi-kanva-samhita-chapter-29"), (29, None))
+
+    def test_parse_devanagari_sukta(self):
+        units = parse_devanagari_sukta(_SUKTA_TEXT, work=WORK_RIGVEDA, book=1, hymn=10)
+        self.assertEqual(len(units), 3)
+        self.assertEqual([u.verse for u in units], [1, 2, 3])
+        self.assertEqual(units[0].verse_id, "RV.1.10.1")
+        self.assertEqual(units[0].locator, "RV 1.10.1")
+        # anukramaṇī removida: verso 1 não começa com "१२"
+        self.assertNotIn("मधुच्छन्दा", units[0].text)
+        self.assertIn("गाय॑न्ति", units[0].text)
+
+    def test_parse_document_units_uses_vedicheritage_record(self):
+        rec = {
+            "work": WORK_RIGVEDA,
+            "book": 1,
+            "hymn": 10,
+            "text": _SUKTA_TEXT,
+            "title": "Rigveda Shakala Samhita — Mandala 1, Sukta 10",
+        }
+        units = parse_document_units(rec)
+        self.assertEqual(len(units), 3)
+        self.assertEqual(units[-1].verse_id, "RV.1.10.3")
+
+    def test_build_record_sets_book_hymn(self):
+        rec = build_record(
+            "https://vedicheritage.gov.in/samhitas/rigveda/shakala-samhita/m01-010",
+            _fixture_html(),  # conteúdo não-devanagari não importa aqui (apenas ref)
+            title="Rigveda Shakala Samhita — Mandala 1, Sukta 10",
+        )
+        # fixture não tem sūkta; apenas confirmamos que book/hymn saem da URL quando há texto
+        self.assertEqual(rec["book"], 1)
+        self.assertEqual(rec["hymn"], 10)
 
 
 if __name__ == "__main__":
