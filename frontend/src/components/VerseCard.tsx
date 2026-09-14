@@ -11,6 +11,16 @@ function speakBrowser(text: string, lang: string) {
   window.speechSynthesis.speak(utter);
 }
 
+function revoke(url: string | null) {
+  if (url && url.startsWith("blob:")) {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 export default function VerseCard({
   unit,
   isTarget,
@@ -33,11 +43,27 @@ export default function VerseCard({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoNote, setVideoNote] = useState<string | null>(null);
+  const cancelled = useRef(false);
+
+  useEffect(() => {
+    cancelled.current = false;
+    return () => {
+      cancelled.current = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (hasImage) setImageUrl(api.verseImageUrl(unit.verse_id));
     if (hasVideo) setVideoUrl(api.verseVideoFileUrl(unit.verse_id));
   }, [hasImage, hasVideo, unit.verse_id]);
+
+  useEffect(() => {
+    return () => {
+      revoke(imageUrl);
+      stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function ensureBundle() {
     if (bundle) return bundle;
@@ -52,14 +78,20 @@ export default function VerseCard({
     try {
       await ensureBundle().catch(() => undefined);
       const url = api.verseAudioUrl(unit.verse_id);
-      const res = await fetch(url);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 30000);
+      const res = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timer);
       if (res.ok) {
         const blob = await res.blob();
         const src = URL.createObjectURL(blob);
         if (audioRef.current) {
           audioRef.current.pause();
         }
+        const prev = (audioRef.current as HTMLAudioElement & { __src?: string } | null)?.__src;
+        revoke(prev ?? null);
         const audio = new Audio(src);
+        (audio as HTMLAudioElement & { __src?: string }).__src = src;
         audioRef.current = audio;
         audio.onended = () => setPlaying(false);
         await audio.play();
@@ -88,13 +120,19 @@ export default function VerseCard({
     setBusy("image");
     try {
       await ensureBundle();
-      const res = await fetch(api.verseImageUrl(unit.verse_id));
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 60000);
+      const res = await fetch(api.verseImageUrl(unit.verse_id), { signal: ctrl.signal });
+      clearTimeout(timer);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(typeof body.detail === "string" ? body.detail : res.statusText);
       }
       const blob = await res.blob();
-      setImageUrl(URL.createObjectURL(blob));
+      setImageUrl((prev) => {
+        revoke(prev);
+        return URL.createObjectURL(blob);
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao ilustrar");
     } finally {
@@ -114,28 +152,37 @@ export default function VerseCard({
           throw new Error(typeof body.detail === "string" ? body.detail : "Não foi possível gerar o still");
         }
         const blob = await res.blob();
-        setImageUrl(URL.createObjectURL(blob));
+        if (cancelled.current) return;
+        setImageUrl((prev) => {
+          revoke(prev);
+          return URL.createObjectURL(blob);
+        });
       }
       await api.startVerseVideo(unit.verse_id);
       for (let i = 0; i < 40; i += 1) {
+        if (cancelled.current) return;
         const st = await api.verseVideoStatus(unit.verse_id);
         if (st.ready || st.status === "done") {
-          setVideoUrl(api.verseVideoFileUrl(unit.verse_id));
-          setVideoNote(null);
+          if (!cancelled.current) {
+            setVideoUrl(api.verseVideoFileUrl(unit.verse_id));
+            setVideoNote(null);
+          }
           return;
         }
         if (st.status === "failed" || st.status === "expired" || st.status === "error") {
           throw new Error(`Vídeo ${st.status}`);
         }
-        setVideoNote(`Vídeo ${st.status || "pendente"}…`);
+        if (!cancelled.current) setVideoNote(`Vídeo ${st.status || "pendente"}…`);
         await new Promise((r) => setTimeout(r, 4000));
       }
       throw new Error("Tempo esgotado à espera do vídeo");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha no vídeo");
-      setVideoNote(null);
+      if (!cancelled.current) {
+        setError(e instanceof Error ? e.message : "Falha no vídeo");
+        setVideoNote(null);
+      }
     } finally {
-      setBusy(null);
+      if (!cancelled.current) setBusy(null);
     }
   }
 

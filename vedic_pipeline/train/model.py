@@ -50,9 +50,9 @@ def train_causal_model(
     logger.info("Carregando base_model=%s (%d documentos)", base_model, len(texts))
 
     try:
-        tokenizer = AutoTokenizer.from_pretrained(base_model, use_fast=True)
+        tokenizer = AutoTokenizer.from_pretrained(base_model, use_fast=True, trust_remote_code=False)
     except Exception:
-        tokenizer = AutoTokenizer.from_pretrained(base_model, use_fast=False)
+        tokenizer = AutoTokenizer.from_pretrained(base_model, use_fast=False, trust_remote_code=False)
 
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or tokenizer.unk_token
@@ -65,7 +65,7 @@ def train_causal_model(
         )
 
     try:
-        model = AutoModelForCausalLM.from_pretrained(base_model)
+        model = AutoModelForCausalLM.from_pretrained(base_model, trust_remote_code=False)
     except Exception as exc:
         logger.warning(
             "AutoModelForCausalLM falhou para %s (%s). "

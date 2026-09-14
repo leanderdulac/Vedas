@@ -84,11 +84,17 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["numpy", "pgvector", "both"],
         default="numpy",
     )
+    p_idx.add_argument(
+        "--dim",
+        type=int,
+        default=None,
+        help="Dimensão pgvector (default: VEDIC_EMBEDDING_DIM ou dim do modelo)",
+    )
 
     p_search = sub.add_parser("search", help="Busca semântica no índice")
     p_search.add_argument("query", help="Consulta em linguagem natural")
     p_search.add_argument("--index", default=str(DEFAULT_EMBED_DIR))
-    p_search.add_argument("--top-k", type=int, default=5)
+    p_search.add_argument("--top-k", type=int, default=5, choices=range(1, 51), metavar="1-50")
     p_search.add_argument("--tradition", default=None)
     p_search.add_argument("--language", default=None)
     p_search.add_argument(
@@ -101,7 +107,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ask = sub.add_parser("ask", help="RAG + geração (xAI / local / extractive)")
     p_ask.add_argument("query", help="Pergunta")
     p_ask.add_argument("--index", default=str(DEFAULT_EMBED_DIR))
-    p_ask.add_argument("--top-k", type=int, default=5)
+    p_ask.add_argument("--top-k", type=int, default=5, choices=range(1, 31), metavar="1-30")
     p_ask.add_argument("--tradition", default=None)
     p_ask.add_argument("--language", default=None)
     p_ask.add_argument(
@@ -118,7 +124,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_ask.add_argument("--no-hits", action="store_true")
     p_ask.add_argument("--prompt", action="store_true")
 
-    sub.add_parser("db-init", help="Cria schema PostgreSQL/pgvector")
+    p_db_init = sub.add_parser("db-init", help="Cria schema PostgreSQL/pgvector")
+    p_db_init.add_argument(
+        "--dim",
+        type=int,
+        default=None,
+        help="Dimensão vector(N) (default: VEDIC_EMBEDDING_DIM ou 384)",
+    )
     p_db_sync = sub.add_parser("db-sync", help="Sincroniza corpus JSONL → PostgreSQL")
     p_db_sync.add_argument("--corpus", default=str(DEFAULT_CORPUS))
     p_db_sync.add_argument(
@@ -127,6 +139,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Não remove documentos órfãos ausentes no corpus",
     )
     sub.add_parser("db-check", help="Status da conexão PostgreSQL")
+    p_art = sub.add_parser("artifacts", help="Backup/restauração de raw e artefatos (S3/MinIO)")
+    art_sub = p_art.add_subparsers(dest="artifacts_action", required=True)
+    art_sub.add_parser("status", help="Mostra backend de objetos (local ou S3)")
+    p_push = art_sub.add_parser("push", help="Envia diretório local para o bucket S3")
+    p_push.add_argument("--dir", default="artifacts", help="Diretório local (ex.: artifacts, data/raw)")
+    p_push.add_argument("--prefix", default=None, help="Prefixo no bucket (default: nome do diretório)")
+    p_push.add_argument("--bucket", default=None)
+    p_push.add_argument("--dry-run", action="store_true")
+    p_pull = art_sub.add_parser("pull", help="Baixa prefixo do bucket para diretório local")
+    p_pull.add_argument("--prefix", required=True, help="Prefixo no bucket (ex.: artifacts)")
+    p_pull.add_argument("--dir", default="artifacts", help="Diretório local de destino")
+    p_pull.add_argument("--bucket", default=None)
+    p_pull.add_argument("--dry-run", action="store_true")
     p_serve = sub.add_parser("serve", help="Sobe a API FastAPI")
     p_serve.add_argument("--host", default="0.0.0.0")
     p_serve.add_argument("--port", type=int, default=8000)
@@ -218,6 +243,7 @@ def main(argv: list[str] | None = None) -> int:
                 chunk_size=args.chunk_size,
                 overlap=args.overlap,
                 batch_size=args.batch_size,
+                embedding_dim=args.dim,
             )
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
@@ -261,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "db-init":
         from vedic_pipeline.storage.db import init_schema
 
-        print(json.dumps(init_schema(), ensure_ascii=False, indent=2))
+        print(json.dumps(init_schema(dim=args.dim), ensure_ascii=False, indent=2))
         return 0
 
     if args.command == "db-sync":
@@ -284,12 +310,49 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(check_db(), ensure_ascii=False, indent=2))
         return 0
 
+    if args.command == "artifacts":
+        from vedic_pipeline.storage import objects as obj_store
+
+        if args.artifacts_action == "status":
+            print(json.dumps(obj_store.status(), ensure_ascii=False, indent=2))
+            return 0
+        if args.artifacts_action == "push":
+            prefix = args.prefix or Path(args.dir).name
+            try:
+                result = obj_store.push_dir(
+                    args.dir, prefix, bucket=args.bucket, dry_run=args.dry_run
+                )
+            except RuntimeError as exc:
+                print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False, indent=2))
+                return 2
+            print(json.dumps({"ok": True, **result}, ensure_ascii=False, indent=2))
+            return 0
+        if args.artifacts_action == "pull":
+            try:
+                result = obj_store.pull_dir(
+                    args.prefix, args.dir, bucket=args.bucket, dry_run=args.dry_run
+                )
+            except RuntimeError as exc:
+                print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False, indent=2))
+                return 2
+            print(json.dumps({"ok": True, **result}, ensure_ascii=False, indent=2))
+            return 0
+        parser.error(f"Ação desconhecida: {args.artifacts_action}")
+        return 2
+
     if args.command == "serve":
         import uvicorn
 
         from vedic_pipeline.api.app import create_app
 
-        uvicorn.run(create_app(), host=args.host, port=args.port, reload=False)
+        uvicorn.run(
+            create_app(),
+            host=args.host,
+            port=args.port,
+            reload=False,
+            proxy_headers=True,
+            forwarded_allow_ips="*",
+        )
         return 0
 
     parser.error(f"Comando desconhecido: {args.command}")

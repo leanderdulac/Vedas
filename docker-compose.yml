@@ -5,6 +5,10 @@
 #   vedic-pipeline db-init
 #   vedic-pipeline db-sync
 #   vedic-pipeline build-index --backend pgvector
+#
+# Perfis opcionais:
+#   docker compose --profile s3 up -d minio     # object store local (console :9001)
+#   docker compose --profile train run --rm train vedic-pipeline train-model --max-steps 10
 
 services:
   db:
@@ -29,6 +33,7 @@ services:
     build: .
     container_name: vedas-api
     restart: unless-stopped
+    user: "10001:10001"
     ports:
       - "8000:8000"
     environment:
@@ -36,6 +41,11 @@ services:
       VEDIC_PIPELINE_API_TOKEN: ${VEDIC_PIPELINE_API_TOKEN:-}
       VEDIC_GENERATION_API_TOKEN: ${VEDIC_GENERATION_API_TOKEN:-}
       VEDIC_API_INDEX_DIR: ${VEDIC_API_INDEX_DIR:-/app/artifacts/embeddings}
+      VEDIC_TRUST_PROXY_HEADERS: "false"
+      VEDIC_EMBEDDING_DIM: ${VEDIC_EMBEDDING_DIM:-384}
+      VEDIC_S3_BUCKET: ${VEDIC_S3_BUCKET:-}
+      VEDIC_S3_ENDPOINT: ${VEDIC_S3_ENDPOINT:-}
+      VEDIC_S3_PREFIX: ${VEDIC_S3_PREFIX:-}
       XAI_API_KEY: ${XAI_API_KEY:-}
       XAI_MODEL: ${XAI_MODEL:-grok-4.5}
       XAI_BASE_URL: ${XAI_BASE_URL:-https://api.x.ai/v1}
@@ -43,10 +53,64 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     volumes:
       - ./data:/app/data
       - ./artifacts:/app/artifacts
-      - ./fixtures:/app/fixtures
+      - ./fixtures:/app/fixtures:ro
+
+  minio:
+    image: minio/minio:latest
+    container_name: vedas-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vedas}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-vedas-minio-dev-only}
+    ports:
+      - "127.0.0.1:${MINIO_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - vedas_minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - s3
+
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile.train
+    container_name: vedas-train
+    user: "10001:10001"
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgresql://vedas:vedas@db:5432/vedas
+      VEDIC_API_INDEX_DIR: /app/artifacts/embeddings
+      VEDIC_EMBEDDING_DIM: ${VEDIC_EMBEDDING_DIM:-384}
+      VEDIC_S3_BUCKET: ${VEDIC_S3_BUCKET:-}
+      VEDIC_S3_ENDPOINT: ${VEDIC_S3_ENDPOINT:-http://minio:9000}
+      VEDIC_S3_PREFIX: ${VEDIC_S3_PREFIX:-}
+      HF_HOME: /app/artifacts/huggingface
+      XAI_API_KEY: ${XAI_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+      - ./fixtures:/app/fixtures:ro
+    profiles:
+      - train
 
 volumes:
   vedas_pgdata:
+  vedas_minio:

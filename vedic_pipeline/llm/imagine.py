@@ -93,8 +93,49 @@ def _client() -> httpx.Client:
 
 def _save_image_bytes(dest: Path, raw: bytes) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(raw)
+    if len(raw) > 25 * 1024 * 1024:
+        raise ValueError("Mídia excede limite de 25MB")
+    tmp = dest.with_suffix(dest.suffix + ".tmp")
+    tmp.write_bytes(raw)
+    tmp.replace(dest)
     return dest
+
+
+def _download_media_bytes(url: str, *, timeout: float = 60.0, limit: int = 25 * 1024 * 1024) -> bytes:
+    """Baixa mídia retornada pelo Imagine com validação SSRF + teto de tamanho."""
+    from urllib.parse import urlparse
+
+    from vedic_pipeline.crawler.download import is_safe_url
+
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("URL de mídia inválida")
+    safe, reason = is_safe_url(url)
+    if not safe:
+        raise ValueError(f"URL de mídia rejeitada: {reason}")
+    with httpx.Client(timeout=timeout, follow_redirects=False) as dl:
+        current = url
+        for _ in range(6):
+            s, r = is_safe_url(current)
+            if not s:
+                raise ValueError(f"Redirect de mídia rejeitado: {r}")
+            resp = dl.get(current)
+            if resp.status_code in (301, 302, 303, 307, 308):
+                loc = resp.headers.get("location")
+                if not loc:
+                    raise ValueError("Redirect de mídia sem Location")
+                from urllib.parse import urljoin
+
+                current = urljoin(current, loc)
+                continue
+            resp.raise_for_status()
+            data = resp.content
+            if len(data) > limit:
+                raise ValueError(f"Mídia excede limite de {limit} bytes")
+            if len(data) < 100:
+                raise ValueError("Mídia vazia retornada pelo provedor")
+            return data
+    raise ValueError("Muitos redirects ao baixar mídia")
 
 
 def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
@@ -132,10 +173,7 @@ def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
     url = data.get("url")
     if not url:
         raise RuntimeError("Imagine não devolveu imagem")
-    with httpx.Client(timeout=60.0) as dl:
-        img = dl.get(url)
-        img.raise_for_status()
-        return _save_image_bytes(dest, img.content)
+    return _save_image_bytes(dest, _download_media_bytes(url, timeout=60.0))
 
 
 def start_verse_video(verse_id: str, *, duration: int = 6) -> dict[str, Any]:
@@ -169,8 +207,11 @@ def start_verse_video(verse_id: str, *, duration: int = 6) -> dict[str, Any]:
     if not request_id:
         raise RuntimeError(f"Imagine vídeo sem request_id: {payload}")
     job = {"verse_id": verse_id, "request_id": request_id, "status": "pending"}
-    job_path(verse_id).parent.mkdir(parents=True, exist_ok=True)
-    job_path(verse_id).write_text(json.dumps(job), encoding="utf-8")
+    jp = job_path(verse_id)
+    jp.parent.mkdir(parents=True, exist_ok=True)
+    tmp = jp.with_suffix(".tmp")
+    tmp.write_text(json.dumps(job), encoding="utf-8")
+    tmp.replace(jp)
     return job
 
 
@@ -181,24 +222,27 @@ def poll_verse_video(verse_id: str) -> dict[str, Any]:
     meta = job_path(verse_id)
     if not meta.exists():
         return {"verse_id": verse_id, "status": "missing", "ready": False}
-    job = json.loads(meta.read_text(encoding="utf-8"))
+    try:
+        job = json.loads(meta.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {"verse_id": verse_id, "status": "missing", "ready": False}
     request_id = job.get("request_id")
+    if not request_id or not isinstance(request_id, str) or len(request_id) > 128:
+        return {"verse_id": verse_id, "status": "missing", "ready": False}
     with _client() as client:
         resp = client.get(f"/videos/{request_id}")
         resp.raise_for_status()
         payload = resp.json()
     status = (payload.get("status") or "").lower()
     job["status"] = status
-    meta.write_text(json.dumps(job), encoding="utf-8")
+    tmp = meta.with_suffix(".tmp")
+    tmp.write_text(json.dumps(job), encoding="utf-8")
+    tmp.replace(meta)
     if status in {"done", "completed", "succeeded"}:
         url = (payload.get("video") or {}).get("url") or payload.get("url")
         if not url:
             raise RuntimeError("Vídeo pronto sem URL")
-        with httpx.Client(timeout=120.0) as dl:
-            vid = dl.get(url)
-            vid.raise_for_status()
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(vid.content)
+        _save_image_bytes(dest, _download_media_bytes(url, timeout=120.0))
         return {"verse_id": verse_id, "status": "done", "ready": True}
     if status in {"failed", "expired", "error"}:
         return {"verse_id": verse_id, "status": status, "ready": False, "detail": payload}

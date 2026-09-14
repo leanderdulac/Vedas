@@ -7,7 +7,7 @@ import json
 import logging
 import re
 from collections.abc import Iterable, Iterator
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +15,7 @@ logger = logging.getLogger("vedic_pipeline.corpus")
 
 
 def utc_now_iso() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def stable_id(*parts: str) -> str:

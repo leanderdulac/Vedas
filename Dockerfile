@@ -14,20 +14,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# deps de sistema mínimas (psycopg, lxml)
+# deps de sistema mínimas (psycopg, lxml) — build-essential removido após build se possível
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      build-essential \
       libpq-dev \
       curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 10001 appuser && useradd -u 10001 -g appuser -s /bin/bash -m appuser
 
-COPY requirements_vedic_pipeline.txt pyproject.toml ./
-# torch CPU wheel é grande; em container de API preferimos instalar o que a API precisa.
-# Para treino use a imagem host / venv local.
+COPY requirements-api.txt pyproject.toml ./
+# Runtime slim: sem datasets/accelerate/sentencepiece (só treino local).
+# Embeddings (sentence-transformers) trazem torch+transformers transitivamente.
 RUN pip install --upgrade pip \
- && pip install -r requirements_vedic_pipeline.txt
+ && pip install -r requirements-api.txt
 
 COPY vedic_pipeline ./vedic_pipeline
 COPY vedic_knowledge_pipeline.py ./
@@ -45,4 +44,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS "http://127.0.0.1:${PORT}/api/v1/health" || exit 1
 
-CMD ["python", "-m", "uvicorn", "vedic_knowledge_pipeline:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "python -m uvicorn vedic_knowledge_pipeline:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"]

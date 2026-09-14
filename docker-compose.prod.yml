@@ -5,6 +5,10 @@
 # O Caddy (ingresso/HTTPS) está no perfil "ingress": use --profile ingress para
 # subir a stack completa com TLS. Sem o perfil, apenas db + api sobem.
 #
+# Perfis opcionais:
+#   --profile s3     MinIO interno (raw + artefatos; sem portas públicas)
+#   --profile train  worker de treino/pipeline (imagem completa, uso via `run`)
+#
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -35,12 +39,22 @@ services:
       dockerfile: Dockerfile
     container_name: vedas-prod-api
     restart: always
+    user: "10001:10001"
     environment:
+      # NOTA: senha com caracteres especiais exige URL-encode — prefira gerar
+      # POSTGRES_PASSWORD alfanumérico longo (ex.: openssl rand -hex 24).
       DATABASE_URL: postgresql://${POSTGRES_USER:-vedas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-vedas}
       VEDIC_PIPELINE_API_TOKEN: ${VEDIC_PIPELINE_API_TOKEN:-}
       VEDIC_GENERATION_API_TOKEN: ${VEDIC_GENERATION_API_TOKEN:-}
       VEDIC_API_INDEX_DIR: /app/artifacts/embeddings
       VEDIC_LOG_FORMAT: json
+      VEDIC_TRUST_PROXY_HEADERS: "true"
+      VEDIC_RATE_LIMIT_PER_MINUTE: ${VEDIC_RATE_LIMIT_PER_MINUTE:-120}
+      VEDIC_EMBEDDING_DIM: ${VEDIC_EMBEDDING_DIM:-384}
+      VEDIC_S3_BUCKET: ${VEDIC_S3_BUCKET:-}
+      VEDIC_S3_ENDPOINT: ${VEDIC_S3_ENDPOINT:-}
+      VEDIC_S3_PREFIX: ${VEDIC_S3_PREFIX:-}
+      VEDIC_S3_REGION: ${VEDIC_S3_REGION:-us-east-1}
       XAI_API_KEY: ${XAI_API_KEY:-}
       XAI_MODEL: ${XAI_MODEL:-grok-4.5}
       XAI_BASE_URL: ${XAI_BASE_URL:-https://api.x.ai/v1}
@@ -48,6 +62,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     volumes:
       - vedas_prod_data:/app/data
       - vedas_prod_artifacts:/app/artifacts
@@ -56,8 +76,6 @@ services:
       - vedas_public
     expose:
       - "8000"
-    ports:
-      - "${HOST_API_PORT:-8000}:8000"
     deploy:
       resources:
         limits:
@@ -83,6 +101,66 @@ services:
     profiles:
       - ingress
 
+  minio:
+    image: minio/minio:latest
+    container_name: vedas-prod-minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      # Obrigatórias quando o perfil `s3` está ativo (sem default por segurança).
+      # Defaults vazios aqui para não quebrar `up` sem o perfil (interpolação
+      # do compose avalia todos os serviços); o MinIO recusa subir sem elas.
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-}
+    volumes:
+      - vedas_prod_minio:/data
+    networks:
+      - vedas_internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    profiles:
+      - s3
+
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile.train
+    image: ${VEDAS_TRAIN_IMAGE:-ghcr.io/leanderdulac/vedas-train:latest}
+    container_name: vedas-prod-train
+    restart: "no"
+    user: "10001:10001"
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vedas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-vedas}
+      VEDIC_API_INDEX_DIR: /app/artifacts/embeddings
+      VEDIC_EMBEDDING_DIM: ${VEDIC_EMBEDDING_DIM:-384}
+      VEDIC_S3_BUCKET: ${VEDIC_S3_BUCKET:-}
+      VEDIC_S3_ENDPOINT: ${VEDIC_S3_ENDPOINT:-http://minio:9000}
+      VEDIC_S3_PREFIX: ${VEDIC_S3_PREFIX:-}
+      VEDIC_LOG_FORMAT: json
+      HF_HOME: /app/artifacts/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - vedas_prod_data:/app/data
+      - vedas_prod_artifacts:/app/artifacts
+    networks:
+      - vedas_internal
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    profiles:
+      - train
+
 networks:
   vedas_internal:
     internal: true
@@ -92,5 +170,6 @@ volumes:
   vedas_prod_pgdata:
   vedas_prod_data:
   vedas_prod_artifacts:
+  vedas_prod_minio:
   caddy_data:
   caddy_config:

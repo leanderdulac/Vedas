@@ -27,7 +27,15 @@ _RULES: tuple[tuple[str, str], ...] = (
     ("/api/v1/ask", "generation"),
     ("/api/v1/search", "generation"),
     ("/api/v1/verses", "media"),
+    ("/metrics", "metrics"),
 )
+
+# Limites por grupo (req/min). Geração/mídia são caras — teto menor.
+_GROUP_LIMITS: dict[str, int] = {
+    "generation": 60,
+    "media": 120,
+    "metrics": 30,
+}
 
 # (grupo, ip) -> (janela_inicio, contagem)
 _HITS: dict[tuple[str, str], tuple[float, int]] = defaultdict(lambda: (0.0, 0))
@@ -48,6 +56,25 @@ def per_minute_limit() -> int:
         return 180
 
 
+def limit_for_group(group: str) -> int:
+    """Teto por grupo: min(global, teto do grupo) para conter custo/DoS."""
+    base = per_minute_limit()
+    cap = _GROUP_LIMITS.get(group)
+    if cap is None:
+        return base
+    return min(base, cap)
+
+
+def _client_ip(request_or_ip: str | None, forwarded_for: str | None = None) -> str:
+    """Resolve IP do cliente respeitando proxy confiável (Caddy/uvicorn --proxy-headers)."""
+    if forwarded_for and os.environ.get("VEDIC_TRUST_PROXY_HEADERS", "true").strip().lower() not in {"0", "false", "off", "no"}:
+        # X-Forwarded-For: client, proxy1, proxy2 — primeiro é o cliente.
+        first = forwarded_for.split(",")[0].strip()
+        if first:
+            return first[:64]
+    return (request_or_ip or "unknown")[:64]
+
+
 def _group_for_path(path: str) -> str | None:
     for prefix, group in _RULES:
         if path.startswith(prefix):
@@ -55,7 +82,7 @@ def _group_for_path(path: str) -> str | None:
     return None
 
 
-def allow_request(client_ip: str | None, path: str) -> bool:
+def allow_request(client_ip: str | None, path: str, forwarded_for: str | None = None) -> bool:
     """Retorna True se a requisição pode prosseguir, False se estourou o limite."""
     if not rate_limit_enabled():
         return True
@@ -63,10 +90,16 @@ def allow_request(client_ip: str | None, path: str) -> bool:
     if group is None:
         return True
 
-    key = (group, client_ip or "unknown")
-    limit = per_minute_limit()
+    ip = _client_ip(client_ip, forwarded_for)
+    key = (group, ip)
+    limit = limit_for_group(group)
     now = time.monotonic()
     with _LOCK:
+        # Evita crescimento ilimitado: purga janelas expiradas ocasionalmente.
+        if len(_HITS) > 20000:
+            expired = [k for k, (s, _) in _HITS.items() if now - s >= _WINDOW_S]
+            for k in expired:
+                _HITS.pop(k, None)
         start, count = _HITS[key]
         if now - start >= _WINDOW_S:
             _HITS[key] = (now, 1)

@@ -8,11 +8,25 @@ export default function HitCard({ hit, index }: { hit: SearchHit; index: number 
   const href = documentHref(hit);
   const title = hitHeading(hit);
 
-  const handleCopyCitation = () => {
-    navigator.clipboard.writeText(copyCitationText(hit)).then(() => {
+  const handleCopyCitation = async () => {
+    const text = copyCitationText(hit);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    } catch {
+      // clipboard indisponível (http inseguro, permissão negada) — sem crash
+      setCopied(false);
+    }
   };
 
   return (

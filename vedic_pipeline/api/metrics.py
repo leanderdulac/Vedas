@@ -49,9 +49,30 @@ class MetricsCollector:
             tail = ":id"
             if rest and "/" in rest:
                 _verse_id, action = rest.split("/", 1)
-                tail = f":id/{action}"
+                # Allowlist de sufixos conhecidos — resto vira :id/action genérico.
+                first = action.split("/", 1)[0]
+                safe = first if first in {"explain", "audio", "image", "video"} else "other"
+                tail = f":id/{safe}"
             return f"/api/v1/verses/{tail}"
-        return path
+        # Capta apenas paths conhecidos; resto colapsa para evitar injeção/cardinalidade.
+        known = {
+            "/metrics", "/health", "/ask", "/search", "/ingest", "/tokenize",
+            "/train", "/build-index", "/db/init", "/db/sync",
+            "/api/v1/health", "/api/v1/stats", "/api/v1/traditions",
+            "/api/v1/documents", "/api/v1/search", "/api/v1/ask",
+            "/api/v1/ask/stream", "/api/v1/media/cached",
+        }
+        if path in known:
+            return path
+        if path.startswith("/api/v1/"):
+            return "/api/v1/other"
+        if path.startswith("/assets/"):
+            return "/assets/file"
+        return "/other"
+
+    @staticmethod
+    def _escape_label(value: str) -> str:
+        return value.replace("\\", r"\\").replace('"', r"\"").replace("\n", r"\n")
 
     def reset(self) -> None:
         with self._lock:
@@ -81,8 +102,10 @@ class MetricsCollector:
 
         with self._lock:
             for (method, path, status), count in sorted(self.http_requests.items()):
+                m = self._escape_label(method)
+                p = self._escape_label(path)
                 lines.append(
-                    f'vedas_http_requests_total{{method="{method}",path="{path}",status="{status}"}} {count}'
+                    f'vedas_http_requests_total{{method="{m}",path="{p}",status="{status}"}} {count}'
                 )
 
             lines.extend([
@@ -91,8 +114,10 @@ class MetricsCollector:
                 "# TYPE vedas_http_request_duration_seconds_total counter",
             ])
             for (method, path), total_dur in sorted(self.http_duration.items()):
+                m = self._escape_label(method)
+                p = self._escape_label(path)
                 lines.append(
-                    f'vedas_http_request_duration_seconds_total{{method="{method}",path="{path}"}} {total_dur:.4f}'
+                    f'vedas_http_request_duration_seconds_total{{method="{m}",path="{p}"}} {total_dur:.4f}'
                 )
 
             lines.extend([
@@ -101,7 +126,8 @@ class MetricsCollector:
                 "# TYPE vedas_search_requests_total counter",
             ])
             for backend, count in sorted(self.search_requests.items()):
-                lines.append(f'vedas_search_requests_total{{backend="{backend}"}} {count}')
+                b = self._escape_label(backend)
+                lines.append(f'vedas_search_requests_total{{backend="{b}"}} {count}')
 
             lines.extend([
                 "",
@@ -109,7 +135,8 @@ class MetricsCollector:
                 "# TYPE vedas_search_duration_seconds_total counter",
             ])
             for backend, total_dur in sorted(self.search_duration.items()):
-                lines.append(f'vedas_search_duration_seconds_total{{backend="{backend}"}} {total_dur:.4f}')
+                b = self._escape_label(backend)
+                lines.append(f'vedas_search_duration_seconds_total{{backend="{b}"}} {total_dur:.4f}')
 
         lines.append("")
         return "\n".join(lines)

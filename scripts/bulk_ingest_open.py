@@ -24,7 +24,7 @@ import json
 import logging
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +50,7 @@ ERROR_LOG = ROOT / "data" / "bulk_errors.jsonl"
 
 
 def utc_now() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def load_state(path: Path) -> dict[str, Any]:

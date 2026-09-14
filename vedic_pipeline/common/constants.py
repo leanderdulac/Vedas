@@ -22,11 +22,11 @@ ALLOWED_LICENSES = frozenset(
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CORPUS = Path("data/corpus.jsonl")
-DEFAULT_TOKENIZER_DIR = Path("artifacts/tokenizer")
-DEFAULT_MODEL_DIR = Path("artifacts/model")
-DEFAULT_RAW_DIR = Path("data/raw")
-DEFAULT_EMBED_DIR = Path("artifacts/embeddings")
+DEFAULT_CORPUS = PROJECT_ROOT / "data/corpus.jsonl"
+DEFAULT_TOKENIZER_DIR = PROJECT_ROOT / "artifacts/tokenizer"
+DEFAULT_MODEL_DIR = PROJECT_ROOT / "artifacts/model"
+DEFAULT_RAW_DIR = PROJECT_ROOT / "data/raw"
+DEFAULT_EMBED_DIR = PROJECT_ROOT / "artifacts/embeddings"
 
 # Decoder causal pequeno para smoke tests / fine-tune inicial.
 # IndicBARTSS é encoder-decoder e não serve em AutoModelForCausalLM.

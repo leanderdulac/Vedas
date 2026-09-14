@@ -58,13 +58,35 @@ def create_app():
         "CORS_ORIGINS",
         "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000",
     ).split(",")
+    clean_origins = [o.strip() for o in origins if o.strip() and o.strip() != "*"]
+    if "*" in [o.strip() for o in origins if o.strip()]:
+        logger.warning("CORS_ORIGINS contém '*': ignorado por segurança com allow_credentials")
+    if os.environ.get("XAI_API_KEY") and not os.environ.get("VEDIC_GENERATION_API_TOKEN"):
+        logger.warning(
+            "XAI_API_KEY configurada sem VEDIC_GENERATION_API_TOKEN: "
+            "/ask e mídia paga abertos — defina o token em API pública"
+        )
+    # Métodos/headers explícitos (evita '*' com credenciais).
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[o.strip() for o in origins if o.strip()],
+        allow_origins=clean_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "Accept"],
+        max_age=600,
     )
+
+    @app.middleware("http")
+    async def security_headers_middleware(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        # CSP conservador: API JSON + SPA estática local; sem inline scripts externos.
+        if request.url.path.startswith("/api/") or request.url.path in {"/metrics", "/health"}:
+            response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        return response
 
     @app.middleware("http")
     async def metrics_middleware(request: Request, call_next):
@@ -87,12 +109,15 @@ def create_app():
 
         from vedic_pipeline.api.rate_limit import allow_request
 
-        if not allow_request(request.client.host if request.client else None, request.url.path):
+        fwd = request.headers.get("x-forwarded-for")
+        client_ip = request.client.host if request.client else None
+        if not allow_request(client_ip, request.url.path, forwarded_for=fwd):
             # Middleware roda fora do ExceptionMiddleware do router: retorna Response
             # diretamente em vez de lançar HTTPException (que viraria 500).
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Muitas requisições — aguarde um instante"},
+                headers={"Retry-After": "60"},
             )
         return await call_next(request)
 
@@ -109,7 +134,10 @@ def create_app():
     def prometheus_metrics() -> Response:
         from vedic_pipeline.api.catalog_service import corpus_stats
 
-        stats = corpus_stats()
+        try:
+            stats = corpus_stats()
+        except Exception:
+            stats = {"documents": 0, "chunks": 0}
         content = METRICS.render_prometheus(
             doc_count=int(stats.get("documents") or 0),
             chunk_count=int(stats.get("chunks") or 0),
@@ -124,17 +152,39 @@ def create_app():
         from vedic_pipeline.storage.db import check_db, get_database_url
 
         stats = corpus_stats()
+        # Não expõe corpus_path nem contagens cruas em API pública.
+        public_corpus = {
+            "documents": stats.get("documents"),
+            "total_chars": stats.get("total_chars"),
+            "by_tradition": stats.get("by_tradition"),
+            "by_language": stats.get("by_language"),
+            "corpus_exists": stats.get("corpus_exists"),
+        }
         embed_ok = (DEFAULT_EMBED_DIR / "embeddings.npy").exists()
+        db = check_db()
+        db_public = {"reachable": db.get("reachable"), "configured": db.get("configured")}
+        # Compat: mantém chaves antigas sem vazar detalhes.
+        if db.get("counts") is not None:
+            db_public["counts"] = db.get("counts")
+        if db.get("embedding_dim") is not None:
+            db_public["embedding_dim"] = db.get("embedding_dim")
+        if db.get("expected_embedding_dim") is not None:
+            db_public["expected_embedding_dim"] = db.get("expected_embedding_dim")
+        configured = bool(get_database_url())
         return {
             "status": "ok",
             "service": "veda-knowledge",
             "version": _app_version,
             "time": utc_now_iso(),
-            "corpus": stats,
+            "corpus": public_corpus,
             "embedding_index_numpy": embed_ok,
-            "database_url_set": bool(get_database_url()),
-            "database": check_db(),
-            "llm_providers": list_providers(),
+            "database_configured": configured,
+            "database_url_set": configured,
+            "database": db_public,
+            "llm_providers": {
+                k: {"available": bool(v.get("available")), "model": v.get("model")}
+                for k, v in list_providers().items()
+            },
             "allowed_licenses": sorted(ALLOWED_LICENSES),
             "default_base_model": DEFAULT_BASE_MODEL,
         }
@@ -145,12 +195,17 @@ def create_app():
         from vedic_pipeline.api.catalog_service import corpus_stats
 
         stats = corpus_stats()
+        stats.pop("corpus_path", None)
         embed_meta = {}
         meta_path = DEFAULT_EMBED_DIR / "index_meta.json"
         if meta_path.exists():
             import json
 
-            embed_meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            try:
+                embed_meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                logger.warning("index_meta.json corrompido — ignorado")
+                embed_meta = {}
         return {
             **stats,
             "embeddings": embed_meta,
@@ -230,9 +285,9 @@ def create_app():
         try:
             return explain_verse(verse_id, lang=body.lang, provider=provider, model=model)
         except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+            raise HTTPException(status_code=404, detail="Verso não encontrado") from exc
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Serviço de explicação indisponível") from None
 
     @app.get("/api/v1/verses/{verse_id}/audio")
     def api_verse_audio(verse_id: str, authorization: str | None = Header(default=None)):
@@ -258,9 +313,9 @@ def create_app():
         lang = "sa" if bundle.get("has_sanskrit") else "en"
         try:
             path = cached_verse_audio(verse_id, text, language=lang)
-        except Exception as exc:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             logger.exception("TTS falhou para %s", verse_id)
-            raise HTTPException(status_code=503, detail=f"Falha ao narrar o verso: {exc}") from exc
+            raise HTTPException(status_code=503, detail="Falha ao narrar o verso") from None
         return FileResponse(path, media_type="audio/mpeg", filename=f"{verse_id}.mp3")
 
     @app.get("/api/v1/media/cached")
@@ -291,12 +346,12 @@ def create_app():
         try:
             path = generate_verse_image(verse_id, force=refresh)
         except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=404, detail="Verso não encontrado") from exc
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Serviço de imagem indisponível") from None
+        except Exception:  # noqa: BLE001
             logger.exception("Imagine imagem falhou para %s", verse_id)
-            raise HTTPException(status_code=503, detail=f"Falha ao ilustrar o verso: {exc}") from exc
+            raise HTTPException(status_code=503, detail="Falha ao ilustrar o verso") from None
         return FileResponse(path, media_type="image/jpeg")
 
     @app.post("/api/v1/verses/{verse_id}/video")
@@ -311,12 +366,12 @@ def create_app():
         try:
             return start_verse_video(verse_id)
         except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=404, detail="Verso não encontrado") from exc
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Serviço de vídeo indisponível") from None
+        except Exception:  # noqa: BLE001
             logger.exception("Imagine vídeo falhou para %s", verse_id)
-            raise HTTPException(status_code=503, detail=f"Falha ao gerar vídeo: {exc}") from exc
+            raise HTTPException(status_code=503, detail="Falha ao gerar vídeo") from None
 
     @app.get("/api/v1/verses/{verse_id}/video")
     def api_verse_video_status(verse_id: str) -> dict[str, Any]:
@@ -326,8 +381,8 @@ def create_app():
             return {"verse_id": verse_id, "status": "done", "ready": True}
         try:
             return poll_verse_video(verse_id)
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Serviço de vídeo indisponível") from None
 
     @app.get("/api/v1/verses/{verse_id}/video/file")
     def api_verse_video_file(verse_id: str):
@@ -405,8 +460,8 @@ def create_app():
                     "python -m vedic_pipeline build-index"
                 ),
             ) from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Serviço de geração indisponível") from None
         except Exception as exc:  # noqa: BLE001
             logger.exception("Erro em /ask")
             raise HTTPException(status_code=500, detail="Erro interno ao processar a pergunta") from exc
@@ -501,6 +556,11 @@ def create_app():
             }
         except FileNotFoundError as exc:
             raise HTTPException(status_code=404, detail="Corpus não encontrado para tokenização") from exc
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=501,
+                detail="Dependências de treino ausentes na imagem de API; execute via CLI com requirements_vedic_pipeline.txt",
+            ) from exc
         except Exception as exc:  # noqa: BLE001
             logger.exception("Erro em /tokenize")
             raise HTTPException(status_code=500, detail="Erro interno durante o treinamento do tokenizador") from exc
@@ -527,6 +587,11 @@ def create_app():
             raise HTTPException(status_code=404, detail="Corpus ou diretório não encontrado para treino") from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=501,
+                detail="Dependências de treino ausentes na imagem de API; execute via CLI com requirements_vedic_pipeline.txt",
+            ) from exc
         except Exception as exc:  # noqa: BLE001
             logger.exception("Erro em /train")
             raise HTTPException(status_code=500, detail="Erro interno durante o treinamento do modelo") from exc
@@ -557,6 +622,7 @@ def create_app():
                     model_name=body.model_name,
                     chunk_size=body.chunk_size,
                     overlap=body.overlap,
+                    embedding_dim=body.embedding_dim,
                 )
             if backend not in {"numpy", "pgvector", "both"}:
                 raise HTTPException(
@@ -573,24 +639,179 @@ def create_app():
             raise HTTPException(status_code=500, detail="Erro interno durante a construção do índice") from exc
 
     @app.post("/db/init", dependencies=[Depends(require_pipeline_token)])
-    def api_db_init() -> dict[str, Any]:
+    def api_db_init(dim: int | None = Query(default=None, ge=64, le=3072)) -> dict[str, Any]:
         from vedic_pipeline.storage.db import init_schema
 
         try:
-            return init_schema()
+            return init_schema(dim=dim)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:  # noqa: BLE001
             logger.exception("Erro em /db/init")
             raise HTTPException(status_code=503, detail="Serviço de banco de dados indisponível") from exc
 
     @app.post("/db/sync", dependencies=[Depends(require_pipeline_token)])
     def api_db_sync(corpus: str = str(DEFAULT_CORPUS)) -> dict[str, Any]:
+        from vedic_pipeline.api.request_policy import validate_project_path
         from vedic_pipeline.storage.catalog import sync_corpus_to_db
 
         try:
-            return sync_corpus_to_db(Path(corpus))
+            safe = validate_project_path(corpus, field="corpus")
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        try:
+            return sync_corpus_to_db(Path(safe))
         except Exception as exc:  # noqa: BLE001
             logger.exception("Erro em /db/sync")
             raise HTTPException(status_code=503, detail="Serviço de banco de dados indisponível") from exc
+
+    # ------------------------------------------------- pipeline ops assíncronas
+    @app.post("/ingest/async", dependencies=[Depends(require_pipeline_token)], status_code=202)
+    def api_ingest_async(body: IngestRequest) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import submit_job
+        from vedic_pipeline.crawler.ingest import ingest_manifest
+
+        manifest, corpus, min_chars, sync_db = body.manifest, body.corpus, body.min_chars, body.sync_db
+
+        def _run() -> dict[str, Any]:
+            stats = ingest_manifest(manifest, corpus_path=Path(corpus), min_chars=min_chars)
+            if sync_db:
+                from vedic_pipeline.storage.catalog import sync_corpus_to_db
+
+                stats["db_sync"] = sync_corpus_to_db(Path(corpus))
+            return stats
+
+        return submit_job("ingest", _run, {"manifest": manifest, "corpus": corpus})
+
+    @app.post("/tokenize/async", dependencies=[Depends(require_pipeline_token)], status_code=202)
+    def api_tokenize_async(body: TokenizeRequest) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import submit_job
+        from vedic_pipeline.train.tokenizer import (
+            evaluate_tokenizer_compression,
+            train_bpe_tokenizer,
+        )
+
+        corpus, out_dir, vocab_size, min_frequency = (
+            body.corpus,
+            body.out_dir,
+            body.vocab_size,
+            body.min_frequency,
+        )
+
+        def _run() -> dict[str, Any]:
+            out = train_bpe_tokenizer(
+                corpus_path=Path(corpus),
+                out_dir=Path(out_dir),
+                vocab_size=vocab_size,
+                min_frequency=min_frequency,
+            )
+            return {
+                "tokenizer_dir": str(out),
+                "vocab_size": vocab_size,
+                "compression": evaluate_tokenizer_compression(out, Path(corpus)),
+            }
+
+        return submit_job("tokenize", _run, {"corpus": corpus, "out_dir": out_dir})
+
+    @app.post("/train/async", dependencies=[Depends(require_pipeline_token)], status_code=202)
+    def api_train_async(body: TrainRequest) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import submit_job
+        from vedic_pipeline.train.model import train_causal_model
+
+        payload = body.model_dump()
+
+        def _run() -> dict[str, Any]:
+            out = train_causal_model(
+                corpus_path=Path(payload["corpus"]),
+                out_dir=Path(payload["out_dir"]),
+                base_model=payload["base_model"],
+                tokenizer_dir=Path(payload["tokenizer_dir"]),
+                epochs=payload["epochs"],
+                block_size=payload["block_size"],
+                batch_size=payload["batch_size"],
+                learning_rate=payload["learning_rate"],
+                max_steps=payload["max_steps"],
+                fp16=payload["fp16"],
+            )
+            return {"model_dir": str(out), "base_model": payload["base_model"]}
+
+        return submit_job("train", _run, {"base_model": payload["base_model"]})
+
+    @app.post("/build-index/async", dependencies=[Depends(require_pipeline_token)], status_code=202)
+    def api_build_index_async(body: BuildIndexRequest) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import submit_job
+        from vedic_pipeline.search.embeddings import build_embedding_index
+        from vedic_pipeline.search.rag import get_index
+
+        payload = body.model_dump()
+        backend = str(payload["backend"]).lower()
+
+        def _run() -> dict[str, Any]:
+            result: dict[str, Any] = {"backend": backend}
+            if backend in {"numpy", "both"}:
+                meta = build_embedding_index(
+                    corpus_path=Path(payload["corpus"]),
+                    out_dir=Path(payload["out_dir"]),
+                    model_name=payload["model_name"],
+                    chunk_size=payload["chunk_size"],
+                    overlap=payload["overlap"],
+                )
+                get_index(Path(payload["out_dir"]), reload=True)
+                result["numpy"] = meta
+            if backend in {"pgvector", "both"}:
+                from vedic_pipeline.storage.vectors import build_pgvector_index
+
+                result["pgvector"] = build_pgvector_index(
+                    corpus_path=Path(payload["corpus"]),
+                    model_name=payload["model_name"],
+                    chunk_size=payload["chunk_size"],
+                    overlap=payload["overlap"],
+                    embedding_dim=payload.get("embedding_dim"),
+                )
+            return result
+
+        return submit_job("build-index", _run, {"backend": backend})
+
+    @app.post("/db/init/async", dependencies=[Depends(require_pipeline_token)], status_code=202)
+    def api_db_init_async(dim: int | None = Query(default=None, ge=64, le=3072)) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import submit_job
+        from vedic_pipeline.storage.db import init_schema
+
+        def _run() -> dict[str, Any]:
+            return init_schema(dim=dim)
+
+        return submit_job("db-init", _run, {"dim": dim})
+
+    @app.post("/db/sync/async", dependencies=[Depends(require_pipeline_token)], status_code=202)
+    def api_db_sync_async(corpus: str = str(DEFAULT_CORPUS)) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import submit_job
+        from vedic_pipeline.api.request_policy import validate_project_path
+        from vedic_pipeline.storage.catalog import sync_corpus_to_db
+
+        try:
+            safe = validate_project_path(corpus, field="corpus")
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        def _run() -> dict[str, Any]:
+            return sync_corpus_to_db(Path(safe))
+
+        return submit_job("db-sync", _run, {"corpus": safe})
+
+    @app.get("/jobs", dependencies=[Depends(require_pipeline_token)])
+    def api_jobs_list(limit: int = Query(default=20, ge=1, le=100)) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import list_jobs
+
+        return {"items": list_jobs(limit)}
+
+    @app.get("/jobs/{job_id}", dependencies=[Depends(require_pipeline_token)])
+    def api_job_detail(job_id: str) -> dict[str, Any]:
+        from vedic_pipeline.api.jobs import get_job
+
+        job = get_job(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job não encontrado")
+        return job
 
     # -------------------------------------------------------- static frontend
     if FRONTEND_DIST.exists():
@@ -610,6 +831,7 @@ def create_app():
                 "db",
                 "ask",
                 "health",
+                "metrics",
                 "docs",
                 "openapi.json",
                 "redoc",
@@ -618,6 +840,7 @@ def create_app():
                 "train",
                 "build-index",
                 "search",
+                "jobs",
             )
             for p in api_prefixes:
                 if full_path == p or full_path.startswith(f"{p}/"):

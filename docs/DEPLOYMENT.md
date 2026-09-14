@@ -59,17 +59,54 @@ docker compose -f docker-compose.prod.yml --profile ingress up -d
 ### 3.2. Carga Inicial do Catálogo e Índices
 
 Na primeira execução, execute os comandos do pipeline dentro do container da API:
-
 ```bash
 # 1. Inicializar tabelas e extensão vector no PostgreSQL
 docker compose -f docker-compose.prod.yml exec api vedic-pipeline db-init
+# Com dimensão explícita (default 384; deve coincidir com VEDIC_EMBEDDING_DIM e o modelo):
+# docker compose -f docker-compose.prod.yml exec api vedic-pipeline db-init --dim 768
 
 # 2. Sincronizar os documentos do corpus com o banco
 docker compose -f docker-compose.prod.yml exec api vedic-pipeline db-sync
 
 # 3. Gerar os índices de embeddings (pgvector e numpy)
 docker compose -f docker-compose.prod.yml exec api vedic-pipeline build-index --backend both
+# Com dimensão explícita:
+# docker compose -f docker-compose.prod.yml exec api vedic-pipeline build-index --backend both --dim 768
 ```
+
+Ops pesadas também têm variante assíncrona via HTTP (`POST .../async` → 202 com
+`job_id`, acompanhe com `GET /jobs/{id}`), útil para `build-index`/`train` sem
+estourar timeout. Mesma autenticação `VEDIC_PIPELINE_API_TOKEN`.
+
+### 3.3. Treino Isolado (perfil `train`)
+
+A imagem da API é slim (sem deps de treino). Use o worker de treino:
+
+```bash
+docker compose -f docker-compose.prod.yml --profile train run --rm train \
+  vedic-pipeline train-model --max-steps 10
+```
+
+O serviço `train` compartilha os volumes de dados/artefatos e a rede interna
+do banco; é efêmero (`restart: "no"`, comando `sleep infinity` para `run`).
+
+### 3.4. Object Store S3/MinIO (perfil `s3`, opcional)
+
+Backup/restauração de `data/raw` e `artifacts/` (operação segue local-first):
+
+```bash
+# .env: VEDIC_S3_BUCKET=vedas, VEDIC_S3_ENDPOINT=http://minio:9000,
+# MINIO_ROOT_USER / MINIO_ROOT_PASSWORD fortes
+docker compose -f docker-compose.prod.yml --profile s3 up -d minio
+
+docker compose -f docker-compose.prod.yml exec api vedic-pipeline artifacts status
+docker compose -f docker-compose.prod.yml exec api vedic-pipeline artifacts push --dir artifacts
+docker compose -f docker-compose.prod.yml exec api vedic-pipeline artifacts push --dir data/raw --prefix raw
+```
+
+O MinIO de produção não publica portas (só rede interna). Sem `VEDIC_S3_BUCKET`,
+os comandos informam backend desabilitado. A API slim não inclui `boto3`;
+rode `artifacts` pela CLI local (`pip install -e ".[s3]"`) ou pelo `train`.
 
 ---
 

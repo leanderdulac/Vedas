@@ -1,4 +1,6 @@
-# Vedic Knowledge Pipeline — dependencies
+# Vedic Knowledge — runtime da API (sem dependências exclusivas de treino)
+# Imagem Docker e deploy usam este arquivo. Para treino/tokenização local,
+# instale também requirements_vedic_pipeline.txt ou: pip install -e ".[train]"
 # Python >= 3.10 recommended
 
 # Web / API
@@ -7,31 +9,20 @@ uvicorn[standard]>=0.27.0
 httpx>=0.27.0
 pydantic>=2.5.0
 
-# Text extraction
+# Text extraction (ingestão via /ingest e CLI)
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
 pypdf>=4.0.0
 ebooklib>=0.18
 html2text>=2024.2.26
 
-# Tokenization & training (Hugging Face)
-tokenizers>=0.15.0
-transformers>=4.38.0
-datasets>=2.16.0
-accelerate>=0.27.0
-torch>=2.1.0
-sentencepiece>=0.1.99
-
-# Semantic search / RAG
+# Semantic search / RAG (traz torch+transformers via dependência)
 sentence-transformers>=2.3.0
 numpy>=1.26.0
 
 # PostgreSQL + pgvector
 psycopg[binary]>=3.1.0
 pgvector>=0.3.0
-
-# Object store S3/MinIO (raw + artefatos) — opcional, extra "s3"
-boto3>=1.28.0
 
 # LLM (SpaceXAI / xAI — OpenAI-compatible client)
 openai>=1.40.0

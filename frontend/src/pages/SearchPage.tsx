@@ -110,7 +110,10 @@ export default function SearchPage() {
               min={1}
               max={20}
               value={topK}
-              onChange={(e) => setTopK(Number(e.target.value) || 5)}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                setTopK(Number.isFinite(n) ? Math.min(20, Math.max(1, Math.floor(n))) : 5);
+              }}
             />
           </div>
         </div>

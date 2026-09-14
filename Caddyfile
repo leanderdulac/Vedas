@@ -1,11 +1,15 @@
 {$DOMAIN:localhost} {
     encode gzip zstd
 
-    # Métricas restritas para rede interna ou autorização se necessário
-    handle /metrics {
-        reverse_proxy api:8000
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self'"
     }
 
+    # /metrics não exposto publicamente — scrape interno via rede vedas_internal.
     handle /api/* {
         reverse_proxy api:8000
     }

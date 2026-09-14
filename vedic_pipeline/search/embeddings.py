@@ -130,17 +130,24 @@ def load_embedding_index(index_dir: Path = DEFAULT_EMBED_DIR) -> dict[str, Any]:
             f"Índice incompleto em {index_dir}. Execute build-index primeiro."
         )
 
-    vectors = np.load(emb_path)
+    vectors = np.load(emb_path, allow_pickle=False)
     chunks: list[dict[str, Any]] = []
     with chunks_path.open("r", encoding="utf-8") as f:
-        for line in f:
+        for line_no, line in enumerate(f, 1):
             line = line.strip()
             if line:
-                chunks.append(json.loads(line))
+                try:
+                    chunks.append(json.loads(line))
+                except json.JSONDecodeError:
+                    logger.warning("Linha %d inválida em %s — ignorada", line_no, chunks_path)
 
     meta: dict[str, Any] = {}
     if meta_path.exists():
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            logger.warning("index_meta.json corrompido em %s — ignorado", index_dir)
+            meta = {}
 
     if len(chunks) != len(vectors):
         raise ValueError(

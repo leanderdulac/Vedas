@@ -18,7 +18,7 @@ from vedic_pipeline.common.constants import (
 from vedic_pipeline.common.corpus import load_corpus
 from vedic_pipeline.etl.chunking import chunk_records
 from vedic_pipeline.storage.catalog import sync_corpus_to_db
-from vedic_pipeline.storage.db import get_connection, init_schema
+from vedic_pipeline.storage.db import get_connection, get_embedding_dim, init_schema
 
 logger = logging.getLogger("vedic_pipeline.storage.vectors")
 
@@ -112,12 +112,10 @@ def build_pgvector_index(
     overlap: int = DEFAULT_CHUNK_OVERLAP,
     batch_size: int = 32,
     url: str | None = None,
+    embedding_dim: int | None = None,
 ) -> dict[str, Any]:
     """Chunka corpus, gera embeddings e grava em PostgreSQL/pgvector."""
     from vedic_pipeline.search.embeddings import _load_st_model
-
-    init_schema(url)
-    sync_corpus_to_db(corpus_path, url=url, init=False, purge=True)
 
     records = load_corpus(Path(corpus_path))
     if not records:
@@ -126,13 +124,6 @@ def build_pgvector_index(
     chunks = list(chunk_records(records, chunk_size=chunk_size, overlap=overlap))
     if not chunks:
         raise ValueError("Nenhum chunk gerado.")
-
-    doc_ids = [r["id"] for r in records if r.get("id")]
-    # remove chunks antigos dos docs do corpus (evita órfãos se chunking mudou)
-    with get_connection(url) as conn, conn.cursor() as cur:
-        if doc_ids:
-            cur.execute("DELETE FROM chunks WHERE doc_id = ANY(%s)", (doc_ids,))
-            logger.info("Chunks antigos removidos para %d docs", len(doc_ids))
 
     model = _load_st_model(model_name)
     texts = [c["text"] for c in chunks]
@@ -145,11 +136,25 @@ def build_pgvector_index(
         normalize_embeddings=True,
     )
     vectors = np.asarray(vectors, dtype=np.float32)
-    if vectors.shape[1] != 384:
+    actual_dim = int(vectors.shape[1])
+    target_dim = embedding_dim if embedding_dim is not None else get_embedding_dim(actual_dim)
+    if not 64 <= target_dim <= 3072:
+        raise ValueError(f"embedding dim inválida: {target_dim!r} (esperado 64..3072)")
+    if actual_dim != target_dim:
         raise ValueError(
-            f"Dimensão {vectors.shape[1]} != 384. "
-            "Ajuste o schema vector(N) se usar outro modelo."
+            f"Dimensão do modelo ({actual_dim}) != alvo ({target_dim}). "
+            "Ajuste VEDIC_EMBEDDING_DIM ou troque o modelo e rode db-init."
         )
+
+    init_schema(url, dim=target_dim)
+    sync_corpus_to_db(corpus_path, url=url, init=False, purge=True)
+
+    doc_ids = [r["id"] for r in records if r.get("id")]
+    # remove chunks antigos dos docs do corpus (evita órfãos se chunking mudou)
+    with get_connection(url) as conn, conn.cursor() as cur:
+        if doc_ids:
+            cur.execute("DELETE FROM chunks WHERE doc_id = ANY(%s)", (doc_ids,))
+            logger.info("Chunks antigos removidos para %d docs", len(doc_ids))
 
     n = upsert_chunk_embeddings(chunks, vectors, model_name, url=url)
     return {
@@ -222,8 +227,17 @@ def search_pgvector(
     exec_params: list[Any] = [lit, *params, lit, top_k]
 
     with get_connection(url) as conn, conn.cursor() as cur:
-        cur.execute(sql, exec_params)
-        rows = cur.fetchall()
+        try:
+            cur.execute(sql, exec_params)
+            rows = cur.fetchall()
+        except Exception as exc:  # noqa: BLE001
+            msg = str(exc).lower()
+            if "vector" in msg and ("dimension" in msg or "length" in msg):
+                raise RuntimeError(
+                    "Índice pgvector com dimensão incompatível — "
+                    "rode db-init e build-index com a mesma dimensão do modelo"
+                ) from exc
+            raise
 
     results: list[dict[str, Any]] = []
     for row in rows:

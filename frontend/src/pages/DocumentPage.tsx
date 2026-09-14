@@ -8,7 +8,13 @@ export default function DocumentPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const highlightQuery = searchParams.get("highlight")?.trim() || "";
-  const hashId = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+  const hashId = (() => {
+    try {
+      return decodeURIComponent((location.hash || "").replace(/^#/, ""));
+    } catch {
+      return "";
+    }
+  })();
 
   const [doc, setDoc] = useState<DocumentSummary | null>(null);
   const [error, setError] = useState<string | null>(null);

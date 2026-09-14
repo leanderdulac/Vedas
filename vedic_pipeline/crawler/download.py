@@ -34,10 +34,6 @@ def is_safe_url(url: str) -> tuple[bool, str]:
     if lower_host in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
         return False, f"Acesso a loopback bloqueado por segurança: {hostname}"
 
-    # Permite desabilitar verificação estrita de DNS em ambiente de teste via flag
-    if os.environ.get("VEDIC_DISABLE_SSRF_DNS_CHECK") == "1":
-        return True, "ok"
-
     try:
         addr_info = socket.getaddrinfo(hostname, None)
     except socket.gaierror as exc:
@@ -53,6 +49,15 @@ def is_safe_url(url: str) -> tuple[bool, str]:
             return False, f"Endereço IP inválido retornado: {ip_str}"
 
     return True, "ok"
+
+
+def max_download_bytes() -> int:
+    """Limite de download (bytes). Default 25MB; configurável via VEDIC_MAX_DOWNLOAD_BYTES."""
+    raw = os.environ.get("VEDIC_MAX_DOWNLOAD_BYTES", "26214400").strip()
+    try:
+        return max(1024, int(raw))
+    except ValueError:
+        return 26214400
 
 
 def is_safe_local_path(path: str | Path, base_dir: Path | None = None) -> tuple[bool, Path | None, str]:
@@ -136,11 +141,55 @@ def download_source(
         "User-Agent": "VedicKnowledgePipeline/2.0 (+research; authorized sources only)"
     }
     logger.info("Baixando: %s", url)
-    with httpx.Client(follow_redirects=True, timeout=timeout, headers=headers) as client:
-        resp = client.get(url)
-        resp.raise_for_status()
-        ext = guess_extension(url, resp.headers.get("content-type"))
-        dest = raw_dir / f"{title_slug}_{stable_id(url)}{ext}"
-        dest.write_bytes(resp.content)
-        logger.info("Salvo em %s (%d bytes)", dest, len(resp.content))
-        return dest
+    limit = max_download_bytes()
+    current = url
+    content: bytes | None = None
+    content_type: str | None = None
+    # Redirects manuais com revalidação SSRF a cada salto (máx 5).
+    with httpx.Client(follow_redirects=False, timeout=timeout, headers=headers) as client:
+        for _ in range(6):
+            safe, reason = is_safe_url(current)
+            if not safe:
+                raise ValueError(f"URL rejeitada por segurança (SSRF): {reason}")
+            resp = client.get(current)
+            if resp.status_code in (301, 302, 303, 307, 308):
+                location = resp.headers.get("location")
+                if not location:
+                    raise ValueError(f"Redirect sem Location em {current}")
+                from urllib.parse import urljoin
+
+                nxt = urljoin(current, location)
+                logger.info("Redirect %s -> %s", current, nxt)
+                current = canonicalize_source_url(nxt)
+                continue
+            resp.raise_for_status()
+            declared = resp.headers.get("content-length")
+            if declared:
+                try:
+                    if int(declared) > limit:
+                        raise ValueError(f"Conteúdo excede limite de {limit} bytes (Content-Length={declared})")
+                except ValueError as exc:
+                    if "excede limite" in str(exc):
+                        raise
+            content_type = resp.headers.get("content-type")
+            # Streaming com teto para evitar OOM/disco.
+            chunks: list[bytes] = []
+            total = 0
+            for piece in resp.iter_bytes(chunk_size=65536):
+                if not piece:
+                    continue
+                total += len(piece)
+                if total > limit:
+                    raise ValueError(f"Conteúdo excede limite de {limit} bytes durante download de {current}")
+                chunks.append(piece)
+            content = b"".join(chunks)
+            break
+        else:
+            raise ValueError("Muitos redirects (limite 5)")
+    if content is None:
+        raise ValueError(f"Download falhou para {url}")
+    ext = guess_extension(current, content_type)
+    dest = raw_dir / f"{title_slug}_{stable_id(url)}{ext}"
+    dest.write_bytes(content)
+    logger.info("Salvo em %s (%d bytes)", dest, len(content))
+    return dest

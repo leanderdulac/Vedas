@@ -17,7 +17,7 @@ from __future__ import annotations
 import argparse
 import re
 import urllib.request
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 UA = "VedaKnowledgePipeline/2.0 (+research; authorized sources only)"
@@ -180,7 +180,7 @@ def main() -> int:
     sources = build_sources(urls)
     payload = {
         "_meta": {
-            "generated_at": datetime.now(UTC).isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "portal": "https://vedicheritage.gov.in/sitemap.xml",
             "samhita_urls_collected": len(urls),
             "text_sources": len(sources),

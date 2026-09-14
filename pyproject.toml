@@ -32,6 +32,9 @@ db = [
     "psycopg[binary]>=3.1.0",
     "pgvector>=0.3.0",
 ]
+s3 = [
+    "boto3>=1.28.0",
+]
 train = [
     "tokenizers>=0.15.0",
     "transformers>=4.38.0",
@@ -43,6 +46,7 @@ train = [
 all = [
     "psycopg[binary]>=3.1.0",
     "pgvector>=0.3.0",
+    "boto3>=1.28.0",
     "tokenizers>=0.15.0",
     "transformers>=4.38.0",
     "datasets>=2.16.0",
@@ -68,7 +72,7 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
-ignore = ["E501"]
+ignore = ["E501", "UP017"]
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["E402"]

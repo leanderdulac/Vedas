@@ -1,26 +1,40 @@
 import { createSseParser } from './sse';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+const RAW_BASE = import.meta.env.VITE_API_BASE ?? "";
+// Normaliza trailing-slash para evitar `${BASE}//api/...`.
+const API_BASE = RAW_BASE.replace(/\/+$/, "");
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
-    ...init,
-  });
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const body = await res.json();
-      detail = body.detail || JSON.stringify(body);
-    } catch {
-      /* ignore */
+async function request<T>(path: string, init?: RequestInit, timeoutMs = 30000): Promise<T> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers || {}),
+      },
+      signal: ctrl.signal,
+      ...init,
+    });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const body = await res.json();
+        detail = body.detail || JSON.stringify(body);
+      } catch {
+        /* ignore */
+      }
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
     }
-    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    return res.json() as Promise<T>;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new Error("Tempo esgotado — tente novamente");
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json() as Promise<T>;
 }
 
 export type Tradition = {

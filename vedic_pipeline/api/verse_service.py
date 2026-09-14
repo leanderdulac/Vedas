@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR
 from vedic_pipeline.etl.structure import format_locator, parse_verse_id
 from vedic_pipeline.storage.db import get_connection, get_database_url
+
+logger = logging.getLogger("vedic_pipeline.api.verse")
 
 EXPLAIN_SYSTEM_PT = """Você é um preceptor de estudos védicos.
 
@@ -120,11 +123,13 @@ def load_witness_rows(verse_id: str) -> list[dict[str, Any]]:
         try:
             rows = _fetch_pg(parsed)
         except Exception:
+            logger.warning("Falha ao buscar verso %s no PG — fallback numpy", verse_id)
             rows = []
     if not rows:
         try:
             rows = _fetch_numpy(parsed)
         except Exception:
+            logger.warning("Falha ao buscar verso %s no índice numpy", verse_id)
             rows = []
     return [row for row in rows if _covers_verse(row, parsed)]
 

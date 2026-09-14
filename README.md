@@ -193,11 +193,67 @@ python -m vedic_pipeline serve --port 8000
 | POST | `/ingest` | manifesto → corpus (+ `sync_db`) |
 | POST | `/tokenize` | treina BPE |
 | POST | `/train` | fine-tune causal |
-| POST | `/build-index` | `numpy` \| `pgvector` \| `both` |
+| POST | `/build-index` | `numpy` \| `pgvector` \| `both` (+ `embedding_dim`) |
 | POST | `/search` | busca semântica |
 | POST | `/ask` | RAG + geração |
-| POST | `/db/init` | schema PG |
+| POST | `/db/init` | schema PG (`?dim=` configura `vector(N)`) |
 | POST | `/db/sync` | JSONL → PG |
+| POST | `/*/async` | mesma op acima, assíncrona (202 + `job_id`) |
+| GET | `/jobs` | lista jobs |
+| GET | `/jobs/{id}` | status/resultado do job |
+
+Ops pesadas (`ingest`, `tokenize`, `train`, `build-index`, `db/init`, `db/sync`)
+têm variante `POST .../async` que retorna `202 {"job_id", "status":"queued"}`;
+acompanhe com `GET /jobs/{id}` até `done`/`error`. Mesma autenticação
+(`Authorization: Bearer <VEDIC_PIPELINE_API_TOKEN>`).
+
+```bash
+# exemplo async
+curl -X POST http://localhost:8000/build-index/async \
+  -H "Authorization: Bearer $VEDIC_PIPELINE_API_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"backend":"pgvector","embedding_dim":384}'
+curl -H "Authorization: Bearer $VEDIC_PIPELINE_API_TOKEN" \
+  http://localhost:8000/jobs/<job_id>
+```
+
+Dimensão pgvector configurável via `VEDIC_EMBEDDING_DIM` (default 384),
+`--dim` na CLI (`db-init`, `build-index`) ou `embedding_dim`/`?dim=` na API.
+Trocou o modelo de embeddings → `db-init` com a nova dim + `build-index --backend pgvector`.
+
+Runtime slim: a imagem Docker instala `requirements-api.txt` (sem
+`datasets`/`accelerate`/`sentencepiece` de treino). Para treino local use
+`pip install -r requirements_vedic_pipeline.txt` ou `pip install -e ".[train]"`;
+`/tokenize` e `/train` na imagem de API respondem 501.
+
+## Artefatos remotos (S3/MinIO) + treino isolado
+
+Operação é local-first; o S3 serve de backup/restauração de `data/raw` e `artifacts/`:
+
+```bash
+# status do backend (local por padrão)
+vedic-pipeline artifacts status
+
+# com MinIO local (console em http://localhost:9001)
+docker compose --profile s3 up -d minio
+export VEDIC_S3_BUCKET=vedas VEDIC_S3_ENDPOINT=http://localhost:9000
+export AWS_ACCESS_KEY_ID=vedas AWS_SECRET_ACCESS_KEY=vedas-minio-dev-only
+
+vedic-pipeline artifacts push --dir artifacts --dry-run
+vedic-pipeline artifacts push --dir artifacts
+vedic-pipeline artifacts push --dir data/raw --prefix raw
+vedic-pipeline artifacts pull --prefix artifacts --dir /tmp/restore
+```
+
+Sem `VEDIC_S3_BUCKET`, os comandos explicam que o backend está desabilitado
+(em vez de traceback). `boto3` é opcional: `pip install -e ".[s3]"`.
+
+Treino e pipeline pesado rodam isolados do perfil `train` (imagem completa):
+
+```bash
+docker compose --profile train run --rm train vedic-pipeline train-model --max-steps 10
+docker compose --profile train run --rm train vedic-pipeline build-index --backend pgvector
+```
 
 ```bash
 curl -X POST http://localhost:8000/ask \
@@ -255,16 +311,17 @@ Eventos SSE: `meta` → `token*` → `done` (ou `error`). UI: página **Pergunta
 
 ## Próximos passos
 
-- MinIO/S3 para raw e artefatos  
-- Deploy multi-container (crawler / etl / train / api)  
-- Dimensão de embedding configurável no schema  
-- Rerank cross-encoder opcional  
+- ~~MinIO/S3 para raw e artefatos~~ ✅ (`vedic-pipeline artifacts` + perfil `s3`)
+- ~~Deploy multi-container (crawler / etl / train / api)~~ ✅ parcial (API slim + `train` isolado; fila de jobs em-processo)
+- ~~Dimensão de embedding configurável no schema~~ ✅ (`VEDIC_EMBEDDING_DIM` / `--dim`)  
+- ~~Rerank cross-encoder opcional~~ ✅ (`VEDIC_ENABLE_RERANKER` / `VEDIC_RERANKER_MODEL`)  
+- ~~Fila de jobs para ops pesadas~~ ✅ (`POST .../async` + `GET /jobs`)  
 
 ## Desenvolvimento local revisado
 
 Veja `docs/DEVELOPMENT_REVIEW.md` para correções, prioridades, execução local e validação.
 
-As operações HTTP `/ingest`, `/tokenize`, `/train`, `/build-index`, `/db/init` e `/db/sync` exigem `VEDIC_PIPELINE_API_TOKEN` e o cabeçalho `Authorization: Bearer <token>`. Sem token configurado, ficam desabilitadas (503). Os comandos da CLI continuam disponíveis sem esse token.
+As operações HTTP `/ingest`, `/tokenize`, `/train`, `/build-index`, `/db/init` e `/db/sync` (e suas variantes `/async`, mais `GET /jobs`) exigem `VEDIC_PIPELINE_API_TOKEN` e o cabeçalho `Authorization: Bearer <token>`. Sem token configurado, ficam desabilitadas (503). Os comandos da CLI continuam disponíveis sem esse token.
 
 Testes & Qualidade: `pytest -v` (ou `python -m unittest discover -s tests -v`) e linter via `ruff check .`; frontend: `npm run lint`, `npm test` e `npm audit` dentro de `frontend/` (Node.js 22+). O score mostrado nas fontes é uma pontuação de ordenação, não uma probabilidade.
 

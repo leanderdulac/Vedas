@@ -64,6 +64,7 @@ def _generate_xai(
     client = OpenAI(
         api_key=api_key,
         base_url=os.environ.get("XAI_BASE_URL", DEFAULT_XAI_BASE_URL),
+        timeout=60.0,
     )
     model_name = model or os.environ.get("XAI_MODEL", DEFAULT_XAI_MODEL)
     messages = _chat_messages(system, user, history)
@@ -228,6 +229,7 @@ def _stream_xai(
     client = OpenAI(
         api_key=api_key,
         base_url=os.environ.get("XAI_BASE_URL", DEFAULT_XAI_BASE_URL),
+        timeout=60.0,
     )
     model_name = model or os.environ.get("XAI_MODEL", DEFAULT_XAI_MODEL)
     yield {"type": "meta", "provider": "xai", "model": model_name}
