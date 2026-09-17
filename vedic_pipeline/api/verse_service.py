@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -263,3 +264,59 @@ def recitation_text(bundle: dict[str, Any]) -> str | None:
             if w.get("role") == role and (w.get("text") or "").strip():
                 return w["text"].strip()
     return None
+
+
+# daṇḍas que marcam pausa de pāda no texto védico: । ॥ (devanāgarī) e | ||
+_PADA_SPLIT_RE = re.compile(r"[।॥|]+")
+
+
+def padas_of(bundle: dict[str, Any]) -> list[dict[str, Any]]:
+    """Segmenta o verso em pāda (unidades de recitação entre daṇḍas).
+
+    Determinístico (sem LLM): usa o texto sânscrito (fallback IAST) e divide
+    pelos daṇḍas. Um pāda final sem daṇḍa terminal também entra (a última
+    unidade costuma fechar em ॥ no hino inteiro, não por verso).
+    """
+    source: dict[str, str] = {}
+    for w in bundle.get("witnesses") or []:
+        role = w.get("role")
+        text = (w.get("text") or "").strip()
+        if role in {"sa", "iast"} and text and role not in source:
+            source[role] = text
+    sa_text = source.get("sa")
+    iast_text = source.get("iast")
+    if not sa_text and not iast_text:
+        return []
+
+    def split(text: str) -> list[str]:
+        parts = [p.strip() for p in _PADA_SPLIT_RE.split(text) if p.strip()]
+        return parts
+
+    sa_parts = split(sa_text) if sa_text else []
+    iast_parts = split(iast_text) if iast_text else []
+    if not sa_parts and not iast_parts:
+        # texto sem nenhum daṇḍa: verso inteiro é um pāda
+        return [
+            {
+                "index": 1,
+                "sa": sa_text or "",
+                "iast": iast_text or "",
+            }
+        ]
+
+    # Quando sa e iast divergem no número de pādas (fontes usam daṇḍas
+    # diferentes: । ॥ vs | ||), prioriza sa — alinhar por índice produzia
+    # pares errados. IAST só entra se a contagem coincidir.
+    if sa_parts and len(sa_parts) != len(iast_parts):
+        iast_parts = []
+    base = sa_parts or iast_parts
+    padas: list[dict[str, Any]] = []
+    for i, text in enumerate(base):
+        padas.append(
+            {
+                "index": i + 1,
+                "sa": text if sa_parts else "",
+                "iast": iast_parts[i] if iast_parts else "",
+            }
+        )
+    return padas

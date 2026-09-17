@@ -140,6 +140,30 @@ export type VerseTranslation = {
   cached?: boolean;
 };
 
+export type Pada = {
+  index: number;
+  sa: string;
+  iast: string;
+};
+
+export type VerseAnalysis = {
+  verse_id: string;
+  locator?: string;
+  lang: "pt" | "en";
+  provider?: string;
+  model?: string | null;
+  padas: Pada[];
+  words: {
+    pada: number;
+    form: string;
+    iast?: string;
+    grammar?: string;
+    gloss?: string;
+  }[];
+  note?: string | null;
+  cached?: boolean;
+};
+
 export type AskResponse = {
   query: string;
   answer: string;
@@ -204,6 +228,11 @@ export const api = {
     }),
   translateVerse: (verseId: string, lang: "pt" | "en" = "pt", provider = "auto") =>
     request<VerseTranslation>(`/api/v1/verses/${encodeURIComponent(verseId)}/translate`, {
+      method: "POST",
+      body: JSON.stringify({ lang, provider }),
+    }),
+  analyzeVerse: (verseId: string, lang: "pt" | "en" = "pt", provider = "auto") =>
+    request<VerseAnalysis>(`/api/v1/verses/${encodeURIComponent(verseId)}/analyze`, {
       method: "POST",
       body: JSON.stringify({ lang, provider }),
     }),

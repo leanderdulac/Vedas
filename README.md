@@ -56,6 +56,7 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 | GET | `/api/v1/verses/{id}/audio` | recitação TTS (cache em disco) |
 | POST | `/api/v1/verses/{id}/explain` | explicação PT/EN (LLM ou extrativa) |
 | POST | `/api/v1/verses/{id}/translate` | **tradução do sânscrito** para PT/EN (LLM; cache aberto) |
+| POST | `/api/v1/verses/{id}/analyze` | **vyākaraṇa interlinear**: pāda + análise palavra-por-palavra (LLM; cache aberto) |
 
 A tradução (`/translate`) usa o texto sânscrito como fonte (fallback IAST→EN),
 apoia-se nas testemunhas IAST/EN e cacheia o resultado em `data/translations/`.

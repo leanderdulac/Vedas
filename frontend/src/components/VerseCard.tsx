@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, VerseBundle, VerseTranslation, VerseUnit } from "../api/client";
+import { api, VerseAnalysis, VerseBundle, VerseTranslation, VerseUnit } from "../api/client";
 
 function speakBrowser(text: string, lang: string) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -36,11 +36,12 @@ export default function VerseCard({
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [busy, setBusy] = useState<"audio" | "pt" | "en" | "trad" | "image" | "video" | null>(null);
+  const [busy, setBusy] = useState<"audio" | "pt" | "en" | "trad" | "anlz" | "image" | "video" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bundle, setBundle] = useState<VerseBundle | null>(null);
   const [explanation, setExplanation] = useState<{ lang: "pt" | "en"; text: string } | null>(null);
   const [translation, setTranslation] = useState<VerseTranslation | null>(null);
+  const [analysis, setAnalysis] = useState<VerseAnalysis | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoNote, setVideoNote] = useState<string | null>(null);
@@ -228,6 +229,20 @@ export default function VerseCard({
     }
   }
 
+  async function analyze() {
+    setError(null);
+    setBusy("anlz");
+    try {
+      await ensureBundle();
+      const res = await api.analyzeVerse(unit.verse_id, "pt", "auto");
+      setAnalysis(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao analisar");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const aligned = (bundle?.witnesses || []).filter((w) => w.role !== "sa" && w.text && w.text !== unit.text);
 
   return (
@@ -252,6 +267,9 @@ export default function VerseCard({
           </button>
           <button type="button" className="btn btn-ghost verse-btn" onClick={() => translate()} disabled={busy === "trad"} title="Traduzir o verso para português">
             {busy === "trad" ? "…" : "Traduzir"}
+          </button>
+          <button type="button" className="btn btn-ghost verse-btn" onClick={() => analyze()} disabled={busy === "anlz"} title="Análise palavra-por-palavra (vyākaraṇa)">
+            {busy === "anlz" ? "…" : "Analisar"}
           </button>
           <button type="button" className="btn btn-ghost verse-btn" onClick={() => illustrate()} disabled={busy === "image"}>
             {busy === "image" ? "…" : "Imagem"}
@@ -312,6 +330,43 @@ export default function VerseCard({
                 </p>
               ))}
             </div>
+          )}
+        </div>
+      )}
+      {analysis && (
+        <div className="verse-explain verse-analysis">
+          <div className="verse-explain-lang">
+            Vyākaraṇa — análise palavra por palavra
+            {analysis.cached ? " · em cache" : ""}
+          </div>
+          {analysis.padas.length > 1 && (
+            <div className="analysis-padas">
+              {analysis.padas.map((p) => (
+                <div key={p.index} className="analysis-pada">
+                  <span className="analysis-pada-num">{p.index}</span>
+                  <span className="analysis-pada-sa deva">{p.sa}</span>
+                  {p.iast && <span className="analysis-pada-iast">{p.iast}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+          {analysis.words.length > 0 ? (
+            <table className="analysis-table">
+              <tbody>
+                {analysis.words.map((wd, i) => (
+                  <tr key={`${wd.form}-${i}`}>
+                    <td className="analysis-word-deva" onClick={() => speakBrowser(wd.form, "hi-IN")} title="Ouvir">
+                      {wd.form}
+                    </td>
+                    <td className="analysis-word-iast">{wd.iast}</td>
+                    <td className="analysis-word-grammar">{wd.grammar}</td>
+                    <td className="analysis-word-gloss">{wd.gloss}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            analysis.note && <p className="muted">{analysis.note}</p>
           )}
         </div>
       )}

@@ -327,6 +327,31 @@ def create_app():
         except RuntimeError:
             raise HTTPException(status_code=503, detail="Serviço de tradução indisponível") from None
 
+    @app.post("/api/v1/verses/{verse_id}/analyze")
+    def api_verse_analyze(
+        verse_id: str,
+        body: ExplainRequest,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        from vedic_pipeline.api.verse_service import get_verse, padas_of
+        from vedic_pipeline.llm.analyze import generate_analysis, load_cached_analysis
+
+        bundle = get_verse(verse_id)
+        if not bundle:
+            raise HTTPException(status_code=404, detail="Verso não encontrado no índice")
+        padas = padas_of(bundle)
+        if not padas:
+            raise HTTPException(status_code=422, detail="Verso sem texto em sânscrito/IAST para análise")
+        # Leitura do cache é aberta (sem custo); geração nova é paga e gateada.
+        cached = load_cached_analysis(bundle, padas, body.lang)
+        if cached is not None:
+            return cached
+        provider, model = authorize_generation(body.provider, body.model, authorization)
+        try:
+            return generate_analysis(bundle, padas, body.lang, provider=provider, model=model)
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Serviço de análise indisponível") from None
+
     @app.get("/api/v1/verses/{verse_id}/audio")
     def api_verse_audio(verse_id: str, authorization: str | None = Header(default=None)):
         from fastapi.responses import FileResponse

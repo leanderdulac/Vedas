@@ -1156,3 +1156,69 @@ h3 {
   color: var(--saffron-bright);
   font-size: 0.95rem;
 }
+
+/* Análise interlinear (vyākaraṇa) */
+.analysis-padas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.75rem;
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius-sm);
+}
+.analysis-pada {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.analysis-pada-num {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  min-width: 1.1rem;
+}
+.analysis-pada-sa {
+  font-family: var(--font-deva);
+  font-size: 1.25rem;
+  color: var(--gold-soft);
+}
+.analysis-pada-iast {
+  color: var(--saffron-bright);
+  font-size: 0.88rem;
+}
+.analysis-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+.analysis-table td {
+  padding: 0.4rem 0.6rem;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+.analysis-table tr:first-child td {
+  border-top: none;
+}
+.analysis-word-deva {
+  font-family: var(--font-deva);
+  font-size: 1.15rem;
+  color: var(--gold-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.analysis-word-deva:hover {
+  color: var(--saffron-bright);
+}
+.analysis-word-iast {
+  color: var(--saffron-bright);
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+.analysis-word-grammar {
+  color: var(--text-muted);
+}
+.analysis-word-gloss {
+  color: var(--text);
+}
