@@ -4,6 +4,7 @@ data/raw/
 data/structured/
 data/audio/
 data/media/
+data/jobs/
 data/bulk_state.json
 data/bulk_errors.jsonl
 data/*.log
