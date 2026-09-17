@@ -7,13 +7,19 @@ import {
   LESSONS,
   speakSanskrit,
 } from "../data/sanskrit";
+import RecitationCard from "../components/RecitationCard";
 
-type Tab = "varna" | "vocab" | "licoes";
+type Tab = "varna" | "vocab" | "licoes" | "recitacao";
 
 const TABS: { id: Tab; label: string; hint: string }[] = [
   { id: "varna", label: "Varṇamālā", hint: "O alfabeto: sons e pontos de articulação" },
   { id: "vocab", label: "Vocabulário", hint: "Palavras vivas do corpus védico" },
   { id: "licoes", label: "Lições", hint: "Sandhi, casos e verbos pelo próprio verso" },
+  {
+    id: "recitacao",
+    label: "Recitação",
+    hint: "Modo eco: o app recita um pāda, você repete",
+  },
 ];
 
 function VarnaCard({ v }: { v: (typeof VARNA_GROUPS)[0]["items"][0] }) {
@@ -188,6 +194,8 @@ export default function LearnPage() {
           ))}
         </div>
       )}
+
+      {tab === "recitacao" && <RecitationCard />}
     </div>
   );
 }

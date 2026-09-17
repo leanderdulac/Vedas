@@ -268,6 +268,31 @@ def recitation_text(bundle: dict[str, Any]) -> str | None:
 
 # daṇḍas que marcam pausa de pāda no texto védico: । ॥ (devanāgarī) e | ||
 _PADA_SPLIT_RE = re.compile(r"[।॥|]+")
+# marcador de verso embutido no chunk (ex.: "[RV 1.1.2]"): chunks trazem o
+# verso pedido seguido dos consecutivos; só o corpo do primeiro é recitável.
+_VERSE_TAG_RE = re.compile(r"\[([A-Za-z]{2,4}\s\d[\dp.]*)\]")
+# algarismos devanāgarī aparecem só em numeração de verso/rubrica — nunca no
+# texto a recitar.
+_DEVA_DIGIT_RE = re.compile(r"[०-९]")
+# acentos védicos (udātta/anudātta): o verso recitável vem acentuado nas
+# edições védicas; a rubrica de anukramaṇí, não.
+_ACCENT_RE = re.compile(r"[॒॑]")
+
+
+def _verse_body(text: str, verse_id: str) -> str:
+    matches = list(_VERSE_TAG_RE.finditer(text))
+    if not matches:
+        return text.strip()
+    wanted = (verse_id or "").strip().replace(".", " ", 1).upper()
+    for i, m in enumerate(matches):
+        if m.group(1).strip().upper() == wanted:
+            nxt = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+            return text[m.end():nxt].strip()
+    # verso pedido sem tag própria: chunk primário vem primeiro no texto
+    if matches[0].start() > 0:
+        return text[:matches[0].start()].strip()
+    nxt = matches[1].start() if len(matches) > 1 else len(text)
+    return text[matches[0].end():nxt].strip()
 
 
 def padas_of(bundle: dict[str, Any]) -> list[dict[str, Any]]:
@@ -275,21 +300,38 @@ def padas_of(bundle: dict[str, Any]) -> list[dict[str, Any]]:
 
     Determinístico (sem LLM): usa o texto sânscrito (fallback IAST) e divide
     pelos daṇḍas. Um pāda final sem daṇḍa terminal também entra (a última
-    unidade costuma fechar em ॥ no hino inteiro, não por verso).
+    unidade costuma fechar em ॥ no hino inteiro, não por verso). Chunk com
+    versos consecutivos marcados ([RV 1.1.2] …) contribui só com o corpo do
+    verso pedido; partes com numeração devanāgarī (rubrica de anukramaṇí,
+    १॥ २॥) são descartadas na divisão.
     """
+    verse_id = str(bundle.get("verse_id") or "")
+
+    def clean(text: str) -> str:
+        return _verse_body(text, verse_id).strip()
+
     source: dict[str, str] = {}
     for w in bundle.get("witnesses") or []:
         role = w.get("role")
         text = (w.get("text") or "").strip()
         if role in {"sa", "iast"} and text and role not in source:
             source[role] = text
-    sa_text = source.get("sa")
-    iast_text = source.get("iast")
+    sa_text = clean(source["sa"]) if source.get("sa") else ""
+    iast_text = clean(source["iast"]) if source.get("iast") else ""
     if not sa_text and not iast_text:
         return []
 
     def split(text: str) -> list[str]:
-        parts = [p.strip() for p in _PADA_SPLIT_RE.split(text) if p.strip()]
+        parts = [
+            p.strip()
+            for p in _PADA_SPLIT_RE.split(text)
+            if p.strip() and not _DEVA_DIGIT_RE.search(p)
+        ]
+        if len(parts) > 1 and any(_ACCENT_RE.search(p) for p in parts):
+            # edição védica: partes sem nenhum acento na frente de partes
+            # acentuadas são rubrica de anukramaṇí, não verso.
+            while parts and not _ACCENT_RE.search(parts[0]):
+                parts = parts[1:]
         return parts
 
     sa_parts = split(sa_text) if sa_text else []

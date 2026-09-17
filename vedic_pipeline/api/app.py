@@ -352,6 +352,22 @@ def create_app():
         except RuntimeError:
             raise HTTPException(status_code=503, detail="Serviço de análise indisponível") from None
 
+    @app.get("/api/v1/verses/{verse_id}/padas")
+    def api_verse_padas(verse_id: str) -> dict[str, Any]:
+        from vedic_pipeline.api.verse_service import get_verse, padas_of
+
+        bundle = get_verse(verse_id)
+        if not bundle:
+            raise HTTPException(status_code=404, detail="Verso não encontrado no índice")
+        padas = padas_of(bundle)
+        if not padas:
+            raise HTTPException(status_code=422, detail="Verso sem texto em sânscrito/IAST para segmentar")
+        return {
+            "verse_id": bundle.get("verse_id"),
+            "locator": bundle.get("locator"),
+            "padas": padas,
+        }
+
     @app.get("/api/v1/verses/{verse_id}/audio")
     def api_verse_audio(verse_id: str, authorization: str | None = Header(default=None)):
         from fastapi.responses import FileResponse

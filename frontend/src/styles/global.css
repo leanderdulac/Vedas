@@ -1222,3 +1222,80 @@ h3 {
 .analysis-word-gloss {
   color: var(--text);
 }
+
+/* Modo eco de recitação */
+.recite-card h2 {
+  margin: 0 0 0.25rem;
+}
+.recite-picker {
+  margin: 0.75rem 0 0.5rem;
+}
+.recite-custom {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.recite-custom input {
+  flex: 1;
+  min-width: 0;
+}
+.recite-note {
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+.recite-padas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+}
+.recite-pada {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.14);
+  transition: background 0.25s, box-shadow 0.25s;
+  cursor: default;
+}
+.recite-pada.is-active {
+  background: rgba(255, 179, 71, 0.14);
+  box-shadow: 0 0 0 1px var(--saffron-bright);
+  cursor: pointer;
+}
+.recite-pada.is-done {
+  opacity: 0.55;
+}
+.recite-pada-num {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  min-width: 1.1rem;
+}
+.recite-pada-sa {
+  font-size: 1.3rem;
+  color: var(--gold-soft);
+}
+.recite-pada.is-active .recite-pada-sa {
+  color: var(--saffron-bright);
+}
+.recite-pada-iast {
+  color: var(--saffron-bright);
+  font-size: 0.85rem;
+}
+.recite-controls {
+  margin-top: 0.5rem;
+}
+.recite-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+.recite-phase {
+  color: var(--gold-soft);
+}

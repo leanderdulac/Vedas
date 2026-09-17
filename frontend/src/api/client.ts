@@ -221,6 +221,10 @@ export const api = {
     request<DocumentSummary>(`/api/v1/documents/${encodeURIComponent(id)}`),
   verse: (verseId: string) =>
     request<VerseBundle>(`/api/v1/verses/${encodeURIComponent(verseId)}`),
+  versePadas: (verseId: string) =>
+    request<{ verse_id: string; locator?: string; padas: Pada[] }>(
+      `/api/v1/verses/${encodeURIComponent(verseId)}/padas`
+    ),
   explainVerse: (verseId: string, lang: "pt" | "en", provider = "auto") =>
     request<VerseExplanation>(`/api/v1/verses/${encodeURIComponent(verseId)}/explain`, {
       method: "POST",

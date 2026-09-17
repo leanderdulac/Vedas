@@ -109,6 +109,37 @@ class PadasOfTests(unittest.TestCase):
         padas = padas_of(bundle)
         self.assertEqual(len(padas), 2)
 
+    def test_trims_embedded_next_verse(self):
+        # chunks trazem o verso seguido do consecutivo marcado ([RV 1.1.2])
+        b = _bundle(
+            witnesses=[
+                {
+                    "role": "sa",
+                    "title": "t",
+                    "text": "[RV 1.1.1] प प । प प ॥\n\n[RV 1.1.2] क क । क क ॥",
+                }
+            ]
+        )
+        padas = padas_of(b)
+        self.assertEqual([p["sa"] for p in padas], ["प प", "प प"])
+
+    def test_drops_anukramani_rubric(self):
+        # rubrica da edição védica: mesma linha do verso, com algarismos
+        # devanāgarī e nome do ṛṣi sem acento, antes das partes acentuadas
+        b = _bundle(
+            witnesses=[
+                {
+                    "role": "sa",
+                    "title": "t",
+                    "text": "१-४ अथर्वा। वाचस्पतिः। ये॑ त्रिषप्ताः । वा॒चस्प॒तिर्बला॒ ॥",
+                }
+            ]
+        )
+        padas = padas_of(b)
+        self.assertEqual(len(padas), 2)
+        self.assertEqual(padas[0]["sa"], "ये॑ त्रिषप्ताः")
+        self.assertEqual(padas[1]["sa"], "वा॒चस्प॒तिर्बला॒")
+
 
 class AnalysisCacheTests(unittest.TestCase):
     def setUp(self):
@@ -210,6 +241,42 @@ class AnalyzeEndpointTests(unittest.TestCase):
                 # cache miss (en) + geração paga sem token → 401 antes de gerar
                 res = client.post("/api/v1/verses/RV.1.1.1/analyze", json={"lang": "en", "provider": "xai"})
             self.assertEqual(res.status_code, 401, res.text)
+
+
+class PadasEndpointTests(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self._env = patch.dict("os.environ", {"VEDIC_PIPELINE_API_TOKEN": "pipe-tok"})
+        self._env.start()
+
+    def tearDown(self):
+        self._env.stop()
+        self._tmp.cleanup()
+
+    def _client(self):
+        from vedic_pipeline.api.app import create_app
+
+        return TestClient(create_app())
+
+    def test_padas_open_deterministic(self):
+        client = self._client()
+        with patch("vedic_pipeline.api.verse_service.get_verse", return_value=_bundle()):
+            res = client.get("/api/v1/verses/RV.1.1.1/padas")
+        self.assertEqual(res.status_code, 200, res.text)
+        data = res.json()
+        self.assertEqual(data["verse_id"], "RV.1.1.1")
+        self.assertEqual(len(data["padas"]), 3)
+        self.assertEqual(data["padas"][0]["sa"], "अग्निमीळे पुरोहितं")
+        self.assertEqual(data["padas"][0]["iast"], "agním īḷe puróhitaṃ")
+
+    def test_padas_404_and_422(self):
+        client = self._client()
+        with patch("vedic_pipeline.api.verse_service.get_verse", return_value=None):
+            res = client.get("/api/v1/verses/NOPE.1.1/padas")
+        self.assertEqual(res.status_code, 404)
+        with patch("vedic_pipeline.api.verse_service.get_verse", return_value={"witnesses": []}):
+            res = client.get("/api/v1/verses/EMPTY.1.1/padas")
+        self.assertEqual(res.status_code, 422)
 
 
 if __name__ == "__main__":

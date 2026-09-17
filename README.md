@@ -53,6 +53,7 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 | POST | `/api/v1/search` | busca semântica |
 | POST | `/api/v1/ask` | Q&A RAG |
 | GET | `/api/v1/verses/{id}` | bundle do verso (testemunhas sa/IAST/EN) |
+| GET | `/api/v1/verses/{id}/padas` | **pāda do verso** (segmentação determinística; alimenta o modo eco) |
 | GET | `/api/v1/verses/{id}/audio` | recitação TTS (cache em disco) |
 | POST | `/api/v1/verses/{id}/explain` | explicação PT/EN (LLM ou extrativa) |
 | POST | `/api/v1/verses/{id}/translate` | **tradução do sânscrito** para PT/EN (LLM; cache aberto) |
