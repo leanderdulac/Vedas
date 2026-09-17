@@ -51,6 +51,16 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 | GET | `/api/v1/documents/{id}` | documento completo |
 | POST | `/api/v1/search` | busca semântica |
 | POST | `/api/v1/ask` | Q&A RAG |
+| GET | `/api/v1/verses/{id}` | bundle do verso (testemunhas sa/IAST/EN) |
+| GET | `/api/v1/verses/{id}/audio` | recitação TTS (cache em disco) |
+| POST | `/api/v1/verses/{id}/explain` | explicação PT/EN (LLM ou extrativa) |
+| POST | `/api/v1/verses/{id}/translate` | **tradução do sânscrito** para PT/EN (LLM; cache aberto) |
+
+A tradução (`/translate`) usa o texto sânscrito como fonte (fallback IAST→EN),
+apoia-se nas testemunhas IAST/EN e cacheia o resultado em `data/translations/`.
+Leitura do cache é aberta (sem custo); geração nova passa pela política de
+geração (`VEDIC_GENERATION_API_TOKEN`). Sem LLM configurado, devolve as
+testemunhas alinhadas como referência — nunca uma tradução inventada.
 
 ---
 

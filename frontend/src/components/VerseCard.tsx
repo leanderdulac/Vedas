@@ -116,6 +116,19 @@ export default function VerseCard({
     setPlaying(false);
   }
 
+  function speakTranslation() {
+    if (!translation?.translation) return;
+    setError(null);
+    stop();
+    speakBrowser(translation.translation, "pt-BR");
+    setPlaying(true);
+    const done = () => setPlaying(false);
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      // utterance.onend dispara só se o texto ainda existir; fallback por tempo.
+      setTimeout(done, Math.max(4000, translation.translation.length * 90));
+    }
+  }
+
   async function illustrate() {
     setError(null);
     setBusy("image");
@@ -278,6 +291,17 @@ export default function VerseCard({
             {translation.cached ? " · em cache" : ""}
           </div>
           {translation.translation && <p>{translation.translation}</p>}
+          {translation.translation && (
+            <button
+              type="button"
+              className="btn btn-ghost verse-btn"
+              onClick={speakTranslation}
+              disabled={playing}
+              title="Ouvir a tradução em português"
+            >
+              {playing ? "■ Parar" : "▶ Ouvir tradução"}
+            </button>
+          )}
           {!translation.translation && translation.note && <p className="muted">{translation.note}</p>}
           {translation.references && translation.references.length > 0 && (
             <div className="verse-witnesses">
