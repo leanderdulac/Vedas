@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, VerseBundle, VerseUnit } from "../api/client";
+import { api, VerseBundle, VerseTranslation, VerseUnit } from "../api/client";
 
 function speakBrowser(text: string, lang: string) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -36,10 +36,11 @@ export default function VerseCard({
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [busy, setBusy] = useState<"audio" | "pt" | "en" | "image" | "video" | null>(null);
+  const [busy, setBusy] = useState<"audio" | "pt" | "en" | "trad" | "image" | "video" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bundle, setBundle] = useState<VerseBundle | null>(null);
   const [explanation, setExplanation] = useState<{ lang: "pt" | "en"; text: string } | null>(null);
+  const [translation, setTranslation] = useState<VerseTranslation | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoNote, setVideoNote] = useState<string | null>(null);
@@ -200,6 +201,20 @@ export default function VerseCard({
     }
   }
 
+  async function translate() {
+    setError(null);
+    setBusy("trad");
+    try {
+      await ensureBundle();
+      const res = await api.translateVerse(unit.verse_id, "pt", "auto");
+      setTranslation(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao traduzir");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const aligned = (bundle?.witnesses || []).filter((w) => w.role !== "sa" && w.text && w.text !== unit.text);
 
   return (
@@ -221,6 +236,9 @@ export default function VerseCard({
           </button>
           <button type="button" className="btn btn-ghost verse-btn" onClick={() => explain("en")} disabled={busy === "en"}>
             {busy === "en" ? "…" : "EN"}
+          </button>
+          <button type="button" className="btn btn-ghost verse-btn" onClick={() => translate()} disabled={busy === "trad"} title="Traduzir o verso para português">
+            {busy === "trad" ? "…" : "Traduzir"}
           </button>
           <button type="button" className="btn btn-ghost verse-btn" onClick={() => illustrate()} disabled={busy === "image"}>
             {busy === "image" ? "…" : "Imagem"}
@@ -251,6 +269,26 @@ export default function VerseCard({
         <div className="verse-explain">
           <div className="verse-explain-lang">{explanation.lang === "pt" ? "Explicação" : "Explanation"}</div>
           <p>{explanation.text}</p>
+        </div>
+      )}
+      {translation && (
+        <div className="verse-explain verse-translation">
+          <div className="verse-explain-lang">
+            Tradução ({translation.source_role === "sa" ? "do sânscrito" : translation.source_role})
+            {translation.cached ? " · em cache" : ""}
+          </div>
+          {translation.translation && <p>{translation.translation}</p>}
+          {!translation.translation && translation.note && <p className="muted">{translation.note}</p>}
+          {translation.references && translation.references.length > 0 && (
+            <div className="verse-witnesses">
+              {translation.references.map((w, i) => (
+                <p key={`${w.role}-${i}`} className={`verse-witness verse-witness-${w.role}`}>
+                  <span className="verse-witness-label">{w.role}</span>
+                  {w.text}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {imageUrl && (

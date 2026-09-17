@@ -125,6 +125,20 @@ export type VerseExplanation = {
   witnesses?: VerseWitness[];
 };
 
+export type VerseTranslation = {
+  verse_id: string;
+  locator?: string;
+  lang: "pt" | "en";
+  provider?: string;
+  model?: string | null;
+  translation: string | null;
+  note?: string;
+  source_role?: string;
+  source_text?: string;
+  references?: VerseWitness[];
+  cached?: boolean;
+};
+
 export type AskResponse = {
   query: string;
   answer: string;
@@ -184,6 +198,11 @@ export const api = {
     request<VerseBundle>(`/api/v1/verses/${encodeURIComponent(verseId)}`),
   explainVerse: (verseId: string, lang: "pt" | "en", provider = "auto") =>
     request<VerseExplanation>(`/api/v1/verses/${encodeURIComponent(verseId)}/explain`, {
+      method: "POST",
+      body: JSON.stringify({ lang, provider }),
+    }),
+  translateVerse: (verseId: string, lang: "pt" | "en" = "pt", provider = "auto") =>
+    request<VerseTranslation>(`/api/v1/verses/${encodeURIComponent(verseId)}/translate`, {
       method: "POST",
       body: JSON.stringify({ lang, provider }),
     }),

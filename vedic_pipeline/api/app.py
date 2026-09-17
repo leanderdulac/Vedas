@@ -289,6 +289,30 @@ def create_app():
         except RuntimeError:
             raise HTTPException(status_code=503, detail="Serviço de explicação indisponível") from None
 
+    @app.post("/api/v1/verses/{verse_id}/translate")
+    def api_verse_translate(
+        verse_id: str,
+        body: ExplainRequest,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        from vedic_pipeline.api.verse_service import get_verse
+        from vedic_pipeline.llm.translate import generate_translation, load_cached_translation
+
+        bundle = get_verse(verse_id)
+        if not bundle:
+            raise HTTPException(status_code=404, detail="Verso não encontrado no índice")
+        # Leitura do cache é aberta (sem custo); geração nova é paga e gateada.
+        cached = load_cached_translation(bundle, body.lang)
+        if cached is not None:
+            return cached
+        provider, model = authorize_generation(body.provider, body.model, authorization)
+        try:
+            return generate_translation(bundle, body.lang, provider=provider, model=model)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except RuntimeError:
+            raise HTTPException(status_code=503, detail="Serviço de tradução indisponível") from None
+
     @app.get("/api/v1/verses/{verse_id}/audio")
     def api_verse_audio(verse_id: str, authorization: str | None = Header(default=None)):
         from fastapi.responses import FileResponse
