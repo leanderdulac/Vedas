@@ -37,6 +37,7 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 - **Busca** — recuperação semântica com scores
 - **Perguntar** — chat RAG + painel de fontes
 - **Documento** — leitor com Devanāgarī
+- **Operações** — fila de jobs do pipeline (ingest/index/db/treino) com token no `sessionStorage`
 - **Sobre** — licenças e health do sistema
 
 ### API da UI (`/api/v1`)

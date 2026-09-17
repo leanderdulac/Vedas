@@ -1,4 +1,5 @@
 import { createSseParser } from './sse';
+import { getStoredToken, storeToken } from './pipelineToken';
 
 const RAW_BASE = import.meta.env.VITE_API_BASE ?? "";
 // Normaliza trailing-slash para evitar `${BASE}//api/...`.
@@ -321,4 +322,80 @@ export const api = {
       reader.releaseLock();
     }
   },
+};
+
+export type PipelineJob = {
+  job_id: string;
+  kind: string;
+  status: "queued" | "running" | "done" | "error";
+  created_at: string | null;
+  finished_at: string | null;
+  params: Record<string, unknown>;
+  result: Record<string, unknown> | null;
+  error: string | null;
+};
+
+const TOKEN_STORAGE = (): Storage | null =>
+  typeof window === "undefined" ? null : window.sessionStorage;
+
+/**
+ * Operações do pipeline (fila de jobs). Exigem VEDIC_PIPELINE_API_TOKEN no
+ * servidor e o cabeçalho Authorization. O token vive em sessionStorage —
+ * nunca em VITE_* nem no bundle público.
+ */
+export const pipelineApi = {
+  getStoredToken: (): string => getStoredToken(TOKEN_STORAGE()),
+  storeToken: (token: string): void => storeToken(token, TOKEN_STORAGE()),
+  auth: (token: string): HeadersInit => ({ Authorization: `Bearer ${token}` }),
+  listJobs: (token: string, limit = 40) =>
+    request<{ items: PipelineJob[] }>(
+      `/jobs?limit=${limit}`,
+      { headers: pipelineApi.auth(token) },
+      15000
+    ),
+  getJob: (token: string, jobId: string) =>
+    request<PipelineJob>(
+      `/jobs/${encodeURIComponent(jobId)}`,
+      { headers: pipelineApi.auth(token) },
+      15000
+    ),
+  submit: (token: string, path: string, body?: unknown) =>
+    request<PipelineJob>(
+      path,
+      {
+        method: "POST",
+        headers: pipelineApi.auth(token),
+        body: body === undefined ? undefined : JSON.stringify(body),
+      },
+      20000
+    ),
+  ingest: (
+    token: string,
+    body: { manifest: string; corpus?: string; min_chars?: number; sync_db?: boolean }
+  ) => pipelineApi.submit(token, "/ingest/async", body),
+  tokenize: (
+    token: string,
+    body: { corpus?: string; out_dir?: string; vocab_size?: number; min_frequency?: number }
+  ) => pipelineApi.submit(token, "/tokenize/async", body),
+  train: (
+    token: string,
+    body: {
+      base_model?: string;
+      epochs?: number;
+      block_size?: number;
+      batch_size?: number;
+      max_steps?: number | null;
+    }
+  ) => pipelineApi.submit(token, "/train/async", body),
+  buildIndex: (
+    token: string,
+    body: { backend: string; model_name?: string; embedding_dim?: number | null }
+  ) => pipelineApi.submit(token, "/build-index/async", body),
+  dbInit: (token: string, dim?: number) =>
+    pipelineApi.submit(token, dim ? `/db/init/async?dim=${dim}` : "/db/init/async"),
+  dbSync: (token: string, corpus?: string) =>
+    pipelineApi.submit(
+      token,
+      corpus ? `/db/sync/async?corpus=${encodeURIComponent(corpus)}` : "/db/sync/async"
+    ),
 };

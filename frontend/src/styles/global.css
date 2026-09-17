@@ -378,6 +378,53 @@ h3 {
   color: var(--gold-soft);
   border-color: rgba(212, 168, 75, 0.45);
 }
+.chip-red {
+  background: rgba(178, 62, 62, 0.18);
+  color: #e8a9a9;
+  border-color: rgba(178, 62, 62, 0.4);
+}
+.chip-blue {
+  background: rgba(74, 110, 160, 0.2);
+  color: #a9c4e8;
+  border-color: rgba(74, 110, 160, 0.4);
+}
+
+/* Painel de operações (jobs) */
+.ops-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+.ops-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ops-job {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.ops-job-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.ops-job-result {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  margin: 0;
+}
 
 /* Grid */
 .grid {

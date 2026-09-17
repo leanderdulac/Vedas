@@ -129,18 +129,32 @@ def create_app():
         if not secrets.compare_digest(supplied.encode(), expected.encode()):
             raise HTTPException(status_code=401, detail="Token do pipeline inválido", headers={"WWW-Authenticate": "Bearer"})
 
+    if os.environ.get("VEDIC_JOBS_RESTORE", "").strip().lower() in {"1", "true", "on", "yes"}:
+        from vedic_pipeline.api.jobs import load_jobs_from_disk
+
+        try:
+            load_jobs_from_disk()
+        except Exception:  # noqa: BLE001
+            logger.exception("Falha ao restaurar jobs do disco")
+
     # ------------------------------------------------------------------ metrics & health
     @app.get("/metrics")
     def prometheus_metrics() -> Response:
         from vedic_pipeline.api.catalog_service import corpus_stats
+        from vedic_pipeline.api.jobs import job_counts
 
         try:
             stats = corpus_stats()
         except Exception:
             stats = {"documents": 0, "chunks": 0}
+        try:
+            jobs = job_counts()
+        except Exception:
+            jobs = {}
         content = METRICS.render_prometheus(
             doc_count=int(stats.get("documents") or 0),
             chunk_count=int(stats.get("chunks") or 0),
+            job_counts=jobs or None,
         )
         return Response(content=content, media_type="text/plain; version=0.0.4; charset=utf-8")
 

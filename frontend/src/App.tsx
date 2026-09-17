@@ -6,6 +6,7 @@ import SearchPage from "./pages/SearchPage";
 import AskPage from "./pages/AskPage";
 import DocumentPage from "./pages/DocumentPage";
 import AboutPage from "./pages/AboutPage";
+import OperationsPage from "./pages/OperationsPage";
 
 function NotFound() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="perguntar" element={<AskPage />} />
         <Route path="documento/:id" element={<DocumentPage />} />
         <Route path="sobre" element={<AboutPage />} />
+        <Route path="operacoes" element={<OperationsPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

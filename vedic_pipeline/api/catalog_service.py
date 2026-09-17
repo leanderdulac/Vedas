@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,7 @@ from vedic_pipeline.common.corpus import load_corpus
 from vedic_pipeline.etl.structure import detect_work, parse_document_units
 
 _CORPUS_CACHE: dict[str, tuple[float, int, list[dict[str, Any]]]] = {}
+_CORPUS_CACHE_LOCK = threading.Lock()
 
 
 def get_cached_corpus(corpus_path: Path = DEFAULT_CORPUS, reload: bool = False) -> list[dict[str, Any]]:
@@ -20,23 +22,27 @@ def get_cached_corpus(corpus_path: Path = DEFAULT_CORPUS, reload: bool = False) 
         return []
     stat = path.stat()
     key = str(path.resolve())
-    cached = _CORPUS_CACHE.get(key)
+    with _CORPUS_CACHE_LOCK:
+        cached = _CORPUS_CACHE.get(key)
     if not reload and cached is not None:
         cached_mtime, cached_size, records = cached
         if cached_mtime == stat.st_mtime and cached_size == stat.st_size:
             return records
 
+    # Leitura fora do lock (I/O caro); duplicação benigna sob concorrência.
     records = load_corpus(path)
-    _CORPUS_CACHE[key] = (stat.st_mtime, stat.st_size, records)
+    with _CORPUS_CACHE_LOCK:
+        _CORPUS_CACHE[key] = (stat.st_mtime, stat.st_size, records)
     return records
 
 
 def invalidate_corpus_cache(corpus_path: Path | None = None) -> None:
     """Invalida o cache do catálogo em memória."""
-    if corpus_path is None:
-        _CORPUS_CACHE.clear()
-    else:
-        _CORPUS_CACHE.pop(str(Path(corpus_path).resolve()), None)
+    with _CORPUS_CACHE_LOCK:
+        if corpus_path is None:
+            _CORPUS_CACHE.clear()
+        else:
+            _CORPUS_CACHE.pop(str(Path(corpus_path).resolve()), None)
 
 
 def _preview(text: str, n: int = 280) -> str:

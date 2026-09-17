@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 import time
 from collections import defaultdict
+from typing import Any
 
 
 class MetricsCollector:
@@ -82,7 +83,12 @@ class MetricsCollector:
             self.search_duration.clear()
             self.start_time = time.time()
 
-    def render_prometheus(self, doc_count: int = 0, chunk_count: int = 0) -> str:
+    def render_prometheus(
+        self,
+        doc_count: int = 0,
+        chunk_count: int = 0,
+        job_counts: dict[str, Any] | None = None,
+    ) -> str:
         lines: list[str] = [
             "# HELP vedas_uptime_seconds Tempo de atividade da aplicação em segundos.",
             "# TYPE vedas_uptime_seconds gauge",
@@ -99,6 +105,32 @@ class MetricsCollector:
             "# HELP vedas_http_requests_total Total de requisições HTTP recebidas.",
             "# TYPE vedas_http_requests_total counter",
         ]
+
+        if job_counts:
+            lines.extend(
+                [
+                    "",
+                    "# HELP vedas_jobs_total Jobs do pipeline por status.",
+                    "# TYPE vedas_jobs_total gauge",
+                    f"vedas_jobs_total {int(job_counts.get('total') or 0)}",
+                    "",
+                    "# HELP vedas_jobs_by_status_total Jobs do pipeline agrupados por status.",
+                    "# TYPE vedas_jobs_by_status_total gauge",
+                ]
+            )
+            for status, count in sorted((job_counts.get("by_status") or {}).items()):
+                s = self._escape_label(str(status))
+                lines.append(f'vedas_jobs_by_status_total{{status="{s}"}} {int(count)}')
+            lines.extend(
+                [
+                    "",
+                    "# HELP vedas_jobs_by_kind_total Jobs do pipeline agrupados por tipo.",
+                    "# TYPE vedas_jobs_by_kind_total gauge",
+                ]
+            )
+            for kind, count in sorted((job_counts.get("by_kind") or {}).items()):
+                k = self._escape_label(str(kind))
+                lines.append(f'vedas_jobs_by_kind_total{{kind="{k}"}} {int(count)}')
 
         with self._lock:
             for (method, path, status), count in sorted(self.http_requests.items()):
