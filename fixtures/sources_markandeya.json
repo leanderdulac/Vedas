@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "note": "Mārkaṇḍeya Purāṇa — inglês (Pargiter 1904, scan Cornell/archive.org com OCR, PD) + sânscrito Devanāgarī (scan archive.org com OCR, PD Mark 1.0). Tamanho/qualidade do OCR variam; mantidos por serem os únicos etexts integrais em domínio público.",
+    "generated_at": "2026-09-17T00:00:00+00:00"
+  },
+  "sources": [
+    {
+      "url": "https://archive.org/download/cu31924022991974/cu31924022991974.pdf",
+      "title": "The Markandeya Purana (Pargiter, 1904, Cornell scan OCR)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "archive-org"
+    },
+    {
+      "url": "https://archive.org/download/MarkandeyaPuranSanskrit/Markandeya%20Puran%20-%20Sanskrit_djvu.txt",
+      "title": "Mārkaṇḍeya Purāṇa (Devanāgarī, scan OCR)",
+      "tradition": "purana",
+      "language": "sa",
+      "license": "public-domain",
+      "source_class": "archive-org"
+    }
+  ]
+}

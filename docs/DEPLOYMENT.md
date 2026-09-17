@@ -27,9 +27,9 @@ cp .env.example .env
 Edite o `/opt/vedas/.env` com valores fortes de produção:
 
 ```env
-# Banco de dados
+# Banco de dados (senha alfanumérica; caracteres especiais exigem URL-encode)
 POSTGRES_USER=vedas_prod
-POSTGRES_PASSWORD=GereUmaSenhaForteComPeloMenos32CaracteresAqui!
+POSTGRES_PASSWORD=GereUmaSenhaForteAlfanumericaComPeloMenos32Caracteres
 POSTGRES_DB=vedas
 
 # Chaves de API e Tokens de Segurança
@@ -114,10 +114,19 @@ rode `artifacts` pela CLI local (`pip install -e ".[s3]"`) ou pelo `train`.
 
 ### 4.1. Endpoint Prometheus (`/metrics`)
 
-A API expõe nativamente métricas no formato padrão do Prometheus:
+A API expõe métricas no formato Prometheus. Por segurança, `/metrics` **não** é
+publicado pelo Caddy — scrape dentro da rede interna do compose ou via exec:
+
 ```bash
-curl http://localhost:8000/metrics
+# dentro da rede interna (apenas outro container/agente em vedas_internal):
+#   curl http://api:8000/metrics
+
+# ou a partir do host:
+docker compose -f docker-compose.prod.yml exec api curl -s http://127.0.0.1:8000/metrics
 ```
+
+Para expor externamente, adicione `basic_auth`/rede restrita no Caddy antes de
+rotear `/metrics`.
 
 Métricas disponíveis:
 - `vedas_uptime_seconds`: Tempo de atividade do processo.

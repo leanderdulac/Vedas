@@ -56,6 +56,8 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 
 ## Pipeline de dados / ML
 
+Abaixo, a arquitetura de módulos e os comandos de ingestão/treino/busca.
+
 ## Arquitetura
 
 ```text
@@ -115,11 +117,23 @@ python -m vedic_pipeline build-index --backend both
 # ou:
 python scripts/bulk_ingest_open.py --rebuild-index --backend both --limit 0
 
+# SBE/Purāṇas completos (Chāndogya, Bṛhadāraṇyaka, Viṣṇu, Garuḍa…)
+python scripts/build_sbe_manifest.py
+python scripts/bulk_ingest_open.py --manifest fixtures/sources_sbe_complete.json --sync-db
+
+# Mārkaṇḍeya Purāṇa (inglês Pargiter 1904 + sânscrito Devanāgarī, scans OCR)
+VEDIC_MAX_DOWNLOAD_BYTES=134217728 \
+python scripts/bulk_ingest_open.py --manifest fixtures/sources_markandeya.json --sync-db
+
 # Smoke + 10 queries gold de regressão de retrieval
 python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 ```
 
 ### Contagens canônicas (snapshot 2026-08-07/08)
+
+> Snapshot de um ambiente específico (bulk ingest completo). Deploys novos
+> partem de `fixtures/` e crescem conforme o manifesto usado — os números
+> abaixo não são automáticos nem garantidos.
 
 | Métrica | Valor |
 |---------|-------|
@@ -132,7 +146,7 @@ python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 | Ask | JSON + **SSE** `/api/v1/ask/stream` |
 | Smoke retrieval | **10/10** (`python scripts/smoke_rag.py --strict`) |
 
-**Obras de base:** Mahābhārata Ganguli vols. 1–4, Rāmāyaṇa Valmiki, Upaniṣads (Müller + páginas SBE/sacred-texts), Gītā Arnold, Yoga-sūtra Johnston, Manu, Viṣṇu Purāṇa (abertura), Ṛgveda Griffith completo.
+**Obras de base:** Mahābhārata Ganguli vols. 1–4, Rāmāyaṇa Valmiki, Upaniṣads (Müller + páginas SBE/sacred-texts), Gītā Arnold, Yoga-sūtra Johnston, Manu, Viṣṇu Purāṇa integral (Wilson), Garuḍa Purāṇa (Wood), Mārkaṇḍeya Purāṇa (Pargiter en + Devanāgarī, scans OCR), Ṛgveda Griffith completo, Chāndogya e Bṛhadāraṇyaka integrais (SBE01/SBE15), saṃhitās Vedic Heritage em sânscrito.
 
 ```bash
 # Ṛgveda mandalas 2–9

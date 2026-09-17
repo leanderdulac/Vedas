@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+import threading
 from collections import Counter
 from typing import Any
 
@@ -87,6 +88,7 @@ def expand_query(query: str) -> list[str]:
 
 
 _CHUNK_TOKEN_CACHE: dict[str, list[str]] = {}
+_CHUNK_TOKEN_CACHE_LOCK = threading.Lock()
 
 
 def get_chunk_tokens(chunk: dict[str, Any]) -> list[str]:
@@ -98,8 +100,11 @@ def get_chunk_tokens(chunk: dict[str, Any]) -> list[str]:
     e, por isso, não responderia ao BM25 puro sobre o corpo.
     """
     cid = chunk.get("chunk_id")
-    if cid and cid in _CHUNK_TOKEN_CACHE:
-        return _CHUNK_TOKEN_CACHE[cid]
+    if cid:
+        with _CHUNK_TOKEN_CACHE_LOCK:
+            cached = _CHUNK_TOKEN_CACHE.get(cid)
+        if cached is not None:
+            return cached
 
     meta_bits = [str(chunk.get(key) or "") for key in ("title", "work", "locator", "heading")]
     meta = " ".join(b for b in meta_bits if b).strip()
@@ -110,9 +115,10 @@ def get_chunk_tokens(chunk: dict[str, Any]) -> list[str]:
     combined = f"{meta}\n{meta_ascii}\n{text}" if meta else text
     tokens = tokenize(combined)
     if cid:
-        if len(_CHUNK_TOKEN_CACHE) > 50_000:
-            _CHUNK_TOKEN_CACHE.clear()
-        _CHUNK_TOKEN_CACHE[cid] = tokens
+        with _CHUNK_TOKEN_CACHE_LOCK:
+            if len(_CHUNK_TOKEN_CACHE) > 50_000:
+                _CHUNK_TOKEN_CACHE.clear()
+            _CHUNK_TOKEN_CACHE[cid] = tokens
     return tokens
 
 

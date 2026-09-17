@@ -1,0 +1,3265 @@
+{
+  "_meta": {
+    "generated_at": "2026-09-17T01:52:48.110403+00:00",
+    "note": "Manifesto gerado a partir dos índices verificados de archive.sacred-texts.com (SBE01, SBE15, vp, gpu). Traduções em domínio público (Müller 1879/1884, Wilson 1840, Wood 1911). Regenere com: python scripts/build_sbe_manifest.py",
+    "text_sources": 407
+  },
+  "sources": [
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01022.htm",
+      "title": "Chandogya Upanishad I.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01023.htm",
+      "title": "Chandogya Upanishad I.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01024.htm",
+      "title": "Chandogya Upanishad I.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01025.htm",
+      "title": "Chandogya Upanishad I.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01026.htm",
+      "title": "Chandogya Upanishad I.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01027.htm",
+      "title": "Chandogya Upanishad I.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01028.htm",
+      "title": "Chandogya Upanishad I.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01029.htm",
+      "title": "Chandogya Upanishad I.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01030.htm",
+      "title": "Chandogya Upanishad I.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01031.htm",
+      "title": "Chandogya Upanishad I.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01032.htm",
+      "title": "Chandogya Upanishad I.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01033.htm",
+      "title": "Chandogya Upanishad I.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01034.htm",
+      "title": "Chandogya Upanishad I.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01035.htm",
+      "title": "Chandogya Upanishad II.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01036.htm",
+      "title": "Chandogya Upanishad II.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01037.htm",
+      "title": "Chandogya Upanishad II.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01038.htm",
+      "title": "Chandogya Upanishad II.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01039.htm",
+      "title": "Chandogya Upanishad II.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01040.htm",
+      "title": "Chandogya Upanishad II.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01041.htm",
+      "title": "Chandogya Upanishad II.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01042.htm",
+      "title": "Chandogya Upanishad II.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01043.htm",
+      "title": "Chandogya Upanishad II.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01044.htm",
+      "title": "Chandogya Upanishad II.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01045.htm",
+      "title": "Chandogya Upanishad II.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01046.htm",
+      "title": "Chandogya Upanishad II.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01047.htm",
+      "title": "Chandogya Upanishad II.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01048.htm",
+      "title": "Chandogya Upanishad II.14 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01049.htm",
+      "title": "Chandogya Upanishad II.15 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01050.htm",
+      "title": "Chandogya Upanishad II.16 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01051.htm",
+      "title": "Chandogya Upanishad II.17 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01052.htm",
+      "title": "Chandogya Upanishad II.18 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01053.htm",
+      "title": "Chandogya Upanishad II.19 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01054.htm",
+      "title": "Chandogya Upanishad II.20 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01055.htm",
+      "title": "Chandogya Upanishad II.21 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01056.htm",
+      "title": "Chandogya Upanishad II.22 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01057.htm",
+      "title": "Chandogya Upanishad II.23 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01058.htm",
+      "title": "Chandogya Upanishad II.24 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01059.htm",
+      "title": "Chandogya Upanishad III.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01060.htm",
+      "title": "Chandogya Upanishad III.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01061.htm",
+      "title": "Chandogya Upanishad III.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01062.htm",
+      "title": "Chandogya Upanishad III.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01063.htm",
+      "title": "Chandogya Upanishad III.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01064.htm",
+      "title": "Chandogya Upanishad III.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01065.htm",
+      "title": "Chandogya Upanishad III.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01066.htm",
+      "title": "Chandogya Upanishad III.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01067.htm",
+      "title": "Chandogya Upanishad III.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01068.htm",
+      "title": "Chandogya Upanishad III.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01069.htm",
+      "title": "Chandogya Upanishad III.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01070.htm",
+      "title": "Chandogya Upanishad III.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01071.htm",
+      "title": "Chandogya Upanishad III.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01072.htm",
+      "title": "Chandogya Upanishad III.14 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01073.htm",
+      "title": "Chandogya Upanishad III.15 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01074.htm",
+      "title": "Chandogya Upanishad III.16 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01075.htm",
+      "title": "Chandogya Upanishad III.17 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01076.htm",
+      "title": "Chandogya Upanishad III.18 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01077.htm",
+      "title": "Chandogya Upanishad III.19 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01078.htm",
+      "title": "Chandogya Upanishad IV.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01079.htm",
+      "title": "Chandogya Upanishad IV.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01080.htm",
+      "title": "Chandogya Upanishad IV.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01081.htm",
+      "title": "Chandogya Upanishad IV.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01082.htm",
+      "title": "Chandogya Upanishad IV.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01083.htm",
+      "title": "Chandogya Upanishad IV.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01084.htm",
+      "title": "Chandogya Upanishad IV.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01085.htm",
+      "title": "Chandogya Upanishad IV.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01086.htm",
+      "title": "Chandogya Upanishad IV.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01087.htm",
+      "title": "Chandogya Upanishad IV.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01088.htm",
+      "title": "Chandogya Upanishad IV.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01089.htm",
+      "title": "Chandogya Upanishad IV.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01090.htm",
+      "title": "Chandogya Upanishad IV.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01091.htm",
+      "title": "Chandogya Upanishad IV.14 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01092.htm",
+      "title": "Chandogya Upanishad IV.15 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01093.htm",
+      "title": "Chandogya Upanishad IV.16 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01094.htm",
+      "title": "Chandogya Upanishad IV.17 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01095.htm",
+      "title": "Chandogya Upanishad V.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01096.htm",
+      "title": "Chandogya Upanishad V.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01097.htm",
+      "title": "Chandogya Upanishad V.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01098.htm",
+      "title": "Chandogya Upanishad V.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01099.htm",
+      "title": "Chandogya Upanishad V.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01100.htm",
+      "title": "Chandogya Upanishad V.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01101.htm",
+      "title": "Chandogya Upanishad V.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01102.htm",
+      "title": "Chandogya Upanishad V.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01103.htm",
+      "title": "Chandogya Upanishad V.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01104.htm",
+      "title": "Chandogya Upanishad V.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01105.htm",
+      "title": "Chandogya Upanishad V.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01106.htm",
+      "title": "Chandogya Upanishad V.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01107.htm",
+      "title": "Chandogya Upanishad V.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01108.htm",
+      "title": "Chandogya Upanishad V.14 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01109.htm",
+      "title": "Chandogya Upanishad V.15 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01110.htm",
+      "title": "Chandogya Upanishad V.16 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01111.htm",
+      "title": "Chandogya Upanishad V.17 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01112.htm",
+      "title": "Chandogya Upanishad V.18 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01113.htm",
+      "title": "Chandogya Upanishad V.19 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01114.htm",
+      "title": "Chandogya Upanishad V.20 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01115.htm",
+      "title": "Chandogya Upanishad V.21 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01116.htm",
+      "title": "Chandogya Upanishad V.22 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01117.htm",
+      "title": "Chandogya Upanishad V.23 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01118.htm",
+      "title": "Chandogya Upanishad V.24 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01119.htm",
+      "title": "Chandogya Upanishad VI.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01120.htm",
+      "title": "Chandogya Upanishad VI.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01121.htm",
+      "title": "Chandogya Upanishad VI.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01122.htm",
+      "title": "Chandogya Upanishad VI.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01123.htm",
+      "title": "Chandogya Upanishad VI.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01124.htm",
+      "title": "Chandogya Upanishad VI.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01125.htm",
+      "title": "Chandogya Upanishad VI.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01126.htm",
+      "title": "Chandogya Upanishad VI.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01127.htm",
+      "title": "Chandogya Upanishad VI.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01128.htm",
+      "title": "Chandogya Upanishad VI.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01129.htm",
+      "title": "Chandogya Upanishad VI.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01130.htm",
+      "title": "Chandogya Upanishad VI.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01131.htm",
+      "title": "Chandogya Upanishad VI.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01132.htm",
+      "title": "Chandogya Upanishad VI.14 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01133.htm",
+      "title": "Chandogya Upanishad VI.15 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01134.htm",
+      "title": "Chandogya Upanishad VI.16 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01135.htm",
+      "title": "Chandogya Upanishad VII.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01136.htm",
+      "title": "Chandogya Upanishad VII.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01137.htm",
+      "title": "Chandogya Upanishad VII.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01138.htm",
+      "title": "Chandogya Upanishad VII.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01139.htm",
+      "title": "Chandogya Upanishad VII.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01140.htm",
+      "title": "Chandogya Upanishad VII.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01141.htm",
+      "title": "Chandogya Upanishad VII.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01142.htm",
+      "title": "Chandogya Upanishad VII.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01143.htm",
+      "title": "Chandogya Upanishad VII.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01144.htm",
+      "title": "Chandogya Upanishad VII.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01145.htm",
+      "title": "Chandogya Upanishad VII.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01146.htm",
+      "title": "Chandogya Upanishad VII.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01147.htm",
+      "title": "Chandogya Upanishad VII.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01148.htm",
+      "title": "Chandogya Upanishad VII.14 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01149.htm",
+      "title": "Chandogya Upanishad VII.15 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01150.htm",
+      "title": "Chandogya Upanishad VII.16 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01151.htm",
+      "title": "Chandogya Upanishad VII.17 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01152.htm",
+      "title": "Chandogya Upanishad VII.18 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01153.htm",
+      "title": "Chandogya Upanishad VII.19 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01154.htm",
+      "title": "Chandogya Upanishad VII.20 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01155.htm",
+      "title": "Chandogya Upanishad VII.21 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01156.htm",
+      "title": "Chandogya Upanishad VII.22 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01157.htm",
+      "title": "Chandogya Upanishad VII.23 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01158.htm",
+      "title": "Chandogya Upanishad VII.24 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01159.htm",
+      "title": "Chandogya Upanishad VII.25 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01160.htm",
+      "title": "Chandogya Upanishad VII.26 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01161.htm",
+      "title": "Chandogya Upanishad VIII.1 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01162.htm",
+      "title": "Chandogya Upanishad VIII.2 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01163.htm",
+      "title": "Chandogya Upanishad VIII.3 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01164.htm",
+      "title": "Chandogya Upanishad VIII.4 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01165.htm",
+      "title": "Chandogya Upanishad VIII.5 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01166.htm",
+      "title": "Chandogya Upanishad VIII.6 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01167.htm",
+      "title": "Chandogya Upanishad VIII.7 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01168.htm",
+      "title": "Chandogya Upanishad VIII.8 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01169.htm",
+      "title": "Chandogya Upanishad VIII.9 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01170.htm",
+      "title": "Chandogya Upanishad VIII.10 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01171.htm",
+      "title": "Chandogya Upanishad VIII.11 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01172.htm",
+      "title": "Chandogya Upanishad VIII.12 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01173.htm",
+      "title": "Chandogya Upanishad VIII.13 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01174.htm",
+      "title": "Chandogya Upanishad VIII.14 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe01/sbe01175.htm",
+      "title": "Chandogya Upanishad VIII.15 (Müller, SBE01, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15010.htm",
+      "title": "Katha Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15011.htm",
+      "title": "Katha Upanishad — seção 2 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15012.htm",
+      "title": "Katha Upanishad — seção 3 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15013.htm",
+      "title": "Katha Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15014.htm",
+      "title": "Katha Upanishad — seção 5 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15015.htm",
+      "title": "Katha Upanishad — seção 6 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15016.htm",
+      "title": "Mundaka Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15017.htm",
+      "title": "Mundaka Upanishad — seção 2 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15018.htm",
+      "title": "Mundaka Upanishad — seção 3 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15019.htm",
+      "title": "Mundaka Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15020.htm",
+      "title": "Mundaka Upanishad — seção 5 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15021.htm",
+      "title": "Mundaka Upanishad — seção 6 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15022.htm",
+      "title": "Taittiriya Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15023.htm",
+      "title": "Taittiriya Upanishad — seção 2 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15024.htm",
+      "title": "Taittiriya Upanishad — seção 3 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15025.htm",
+      "title": "Taittiriya Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15026.htm",
+      "title": "Taittiriya Upanishad — seção 5 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15027.htm",
+      "title": "Taittiriya Upanishad — seção 6 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15028.htm",
+      "title": "Taittiriya Upanishad — seção 7 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15029.htm",
+      "title": "Taittiriya Upanishad — seção 8 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15030.htm",
+      "title": "Taittiriya Upanishad — seção 9 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15031.htm",
+      "title": "Taittiriya Upanishad — seção 10 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15032.htm",
+      "title": "Taittiriya Upanishad — seção 11 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15033.htm",
+      "title": "Taittiriya Upanishad — seção 12 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15034.htm",
+      "title": "Taittiriya Upanishad — seção 13 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15035.htm",
+      "title": "Taittiriya Upanishad — seção 14 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15036.htm",
+      "title": "Taittiriya Upanishad — seção 15 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15037.htm",
+      "title": "Taittiriya Upanishad — seção 16 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15038.htm",
+      "title": "Taittiriya Upanishad — seção 17 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15039.htm",
+      "title": "Taittiriya Upanishad — seção 18 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15040.htm",
+      "title": "Taittiriya Upanishad — seção 19 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15041.htm",
+      "title": "Taittiriya Upanishad — seção 20 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15042.htm",
+      "title": "Taittiriya Upanishad — seção 21 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15043.htm",
+      "title": "Taittiriya Upanishad — seção 22 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15044.htm",
+      "title": "Taittiriya Upanishad — seção 23 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15045.htm",
+      "title": "Taittiriya Upanishad — seção 24 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15046.htm",
+      "title": "Taittiriya Upanishad — seção 25 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15047.htm",
+      "title": "Taittiriya Upanishad — seção 26 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15048.htm",
+      "title": "Taittiriya Upanishad — seção 27 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15049.htm",
+      "title": "Taittiriya Upanishad — seção 28 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15050.htm",
+      "title": "Taittiriya Upanishad — seção 29 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15051.htm",
+      "title": "Taittiriya Upanishad — seção 30 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15052.htm",
+      "title": "Taittiriya Upanishad — seção 31 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15053.htm",
+      "title": "Brihadaranyaka Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15054.htm",
+      "title": "Brihadaranyaka Upanishad — seção 2 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15055.htm",
+      "title": "Brihadaranyaka Upanishad — seção 3 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15056.htm",
+      "title": "Brihadaranyaka Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15057.htm",
+      "title": "Brihadaranyaka Upanishad — seção 5 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15058.htm",
+      "title": "Brihadaranyaka Upanishad — seção 6 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15059.htm",
+      "title": "Brihadaranyaka Upanishad — seção 7 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15060.htm",
+      "title": "Brihadaranyaka Upanishad — seção 8 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15061.htm",
+      "title": "Brihadaranyaka Upanishad — seção 9 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15062.htm",
+      "title": "Brihadaranyaka Upanishad — seção 10 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15063.htm",
+      "title": "Brihadaranyaka Upanishad — seção 11 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15064.htm",
+      "title": "Brihadaranyaka Upanishad — seção 12 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15065.htm",
+      "title": "Brihadaranyaka Upanishad — seção 13 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15066.htm",
+      "title": "Brihadaranyaka Upanishad — seção 14 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15067.htm",
+      "title": "Brihadaranyaka Upanishad — seção 15 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15068.htm",
+      "title": "Brihadaranyaka Upanishad — seção 16 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15069.htm",
+      "title": "Brihadaranyaka Upanishad — seção 17 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15070.htm",
+      "title": "Brihadaranyaka Upanishad — seção 18 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15071.htm",
+      "title": "Brihadaranyaka Upanishad — seção 19 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15072.htm",
+      "title": "Brihadaranyaka Upanishad — seção 20 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15073.htm",
+      "title": "Brihadaranyaka Upanishad — seção 21 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15074.htm",
+      "title": "Brihadaranyaka Upanishad — seção 22 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15075.htm",
+      "title": "Brihadaranyaka Upanishad — seção 23 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15076.htm",
+      "title": "Brihadaranyaka Upanishad — seção 24 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15077.htm",
+      "title": "Brihadaranyaka Upanishad — seção 25 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15078.htm",
+      "title": "Brihadaranyaka Upanishad — seção 26 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15079.htm",
+      "title": "Brihadaranyaka Upanishad — seção 27 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15080.htm",
+      "title": "Brihadaranyaka Upanishad — seção 28 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15081.htm",
+      "title": "Brihadaranyaka Upanishad — seção 29 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15082.htm",
+      "title": "Brihadaranyaka Upanishad — seção 30 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15083.htm",
+      "title": "Brihadaranyaka Upanishad — seção 31 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15084.htm",
+      "title": "Brihadaranyaka Upanishad — seção 32 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15085.htm",
+      "title": "Brihadaranyaka Upanishad — seção 33 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15086.htm",
+      "title": "Brihadaranyaka Upanishad — seção 34 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15087.htm",
+      "title": "Brihadaranyaka Upanishad — seção 35 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15088.htm",
+      "title": "Brihadaranyaka Upanishad — seção 36 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15089.htm",
+      "title": "Brihadaranyaka Upanishad — seção 37 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15090.htm",
+      "title": "Brihadaranyaka Upanishad — seção 38 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15091.htm",
+      "title": "Brihadaranyaka Upanishad — seção 39 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15092.htm",
+      "title": "Brihadaranyaka Upanishad — seção 40 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15093.htm",
+      "title": "Brihadaranyaka Upanishad — seção 41 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15094.htm",
+      "title": "Brihadaranyaka Upanishad — seção 42 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15095.htm",
+      "title": "Brihadaranyaka Upanishad — seção 43 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15096.htm",
+      "title": "Brihadaranyaka Upanishad — seção 44 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15097.htm",
+      "title": "Brihadaranyaka Upanishad — seção 45 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15099.htm",
+      "title": "Brihadaranyaka Upanishad — seção 46 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15100.htm",
+      "title": "Svetasvatara Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15101.htm",
+      "title": "Svetasvatara Upanishad — seção 2 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15102.htm",
+      "title": "Svetasvatara Upanishad — seção 3 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15103.htm",
+      "title": "Svetasvatara Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15104.htm",
+      "title": "Svetasvatara Upanishad — seção 5 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15105.htm",
+      "title": "Svetasvatara Upanishad — seção 6 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15106.htm",
+      "title": "Prasna Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15107.htm",
+      "title": "Prasna Upanishad — seção 2 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15108.htm",
+      "title": "Prasna Upanishad — seção 3 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15109.htm",
+      "title": "Prasna Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15110.htm",
+      "title": "Prasna Upanishad — seção 5 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15111.htm",
+      "title": "Prasna Upanishad — seção 6 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15112.htm",
+      "title": "Maitrayana Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15113.htm",
+      "title": "Maitrayana Upanishad — seção 2 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15114.htm",
+      "title": "Maitrayana Upanishad — seção 3 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15115.htm",
+      "title": "Maitrayana Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15116.htm",
+      "title": "Maitrayana Upanishad — seção 5 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15117.htm",
+      "title": "Maitrayana Upanishad — seção 6 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/sbe15/sbe15118.htm",
+      "title": "Maitrayana Upanishad — seção 7 (Müller, SBE15, sacred-texts)",
+      "tradition": "upanishad",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp035.htm",
+      "title": "Vishnu Purana — Book I, página 35 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp036.htm",
+      "title": "Vishnu Purana — Book I, página 36 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp037.htm",
+      "title": "Vishnu Purana — Book I, página 37 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp038.htm",
+      "title": "Vishnu Purana — Book I, página 38 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp039.htm",
+      "title": "Vishnu Purana — Book I, página 39 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp040.htm",
+      "title": "Vishnu Purana — Book I, página 40 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp041.htm",
+      "title": "Vishnu Purana — Book I, página 41 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp042.htm",
+      "title": "Vishnu Purana — Book I, página 42 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp043.htm",
+      "title": "Vishnu Purana — Book I, página 43 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp044.htm",
+      "title": "Vishnu Purana — Book I, página 44 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp045.htm",
+      "title": "Vishnu Purana — Book I, página 45 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp046.htm",
+      "title": "Vishnu Purana — Book I, página 46 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp047.htm",
+      "title": "Vishnu Purana — Book I, página 47 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp048.htm",
+      "title": "Vishnu Purana — Book I, página 48 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp049.htm",
+      "title": "Vishnu Purana — Book I, página 49 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp050.htm",
+      "title": "Vishnu Purana — Book I, página 50 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp051.htm",
+      "title": "Vishnu Purana — Book I, página 51 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp052.htm",
+      "title": "Vishnu Purana — Book I, página 52 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp053.htm",
+      "title": "Vishnu Purana — Book I, página 53 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp054.htm",
+      "title": "Vishnu Purana — Book I, página 54 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp055.htm",
+      "title": "Vishnu Purana — Book I, página 55 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp056.htm",
+      "title": "Vishnu Purana — Book I, página 56 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp057.htm",
+      "title": "Vishnu Purana — Book I, página 57 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp058.htm",
+      "title": "Vishnu Purana — Book II, página 58 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp059.htm",
+      "title": "Vishnu Purana — Book II, página 59 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp060.htm",
+      "title": "Vishnu Purana — Book II, página 60 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp061.htm",
+      "title": "Vishnu Purana — Book II, página 61 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp062.htm",
+      "title": "Vishnu Purana — Book II, página 62 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp063.htm",
+      "title": "Vishnu Purana — Book II, página 63 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp064.htm",
+      "title": "Vishnu Purana — Book II, página 64 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp065.htm",
+      "title": "Vishnu Purana — Book II, página 65 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp066.htm",
+      "title": "Vishnu Purana — Book II, página 66 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp067.htm",
+      "title": "Vishnu Purana — Book II, página 67 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp068.htm",
+      "title": "Vishnu Purana — Book II, página 68 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp069.htm",
+      "title": "Vishnu Purana — Book II, página 69 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp070.htm",
+      "title": "Vishnu Purana — Book II, página 70 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp071.htm",
+      "title": "Vishnu Purana — Book II, página 71 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp072.htm",
+      "title": "Vishnu Purana — Book II, página 72 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp073.htm",
+      "title": "Vishnu Purana — Book II, página 73 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp074.htm",
+      "title": "Vishnu Purana — Book II, página 74 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp075.htm",
+      "title": "Vishnu Purana — Book III, página 75 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp076.htm",
+      "title": "Vishnu Purana — Book III, página 76 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp077.htm",
+      "title": "Vishnu Purana — Book III, página 77 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp078.htm",
+      "title": "Vishnu Purana — Book III, página 78 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp079.htm",
+      "title": "Vishnu Purana — Book III, página 79 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp080.htm",
+      "title": "Vishnu Purana — Book III, página 80 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp081.htm",
+      "title": "Vishnu Purana — Book III, página 81 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp082.htm",
+      "title": "Vishnu Purana — Book III, página 82 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp083.htm",
+      "title": "Vishnu Purana — Book III, página 83 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp084.htm",
+      "title": "Vishnu Purana — Book III, página 84 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp085.htm",
+      "title": "Vishnu Purana — Book III, página 85 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp086.htm",
+      "title": "Vishnu Purana — Book III, página 86 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp087.htm",
+      "title": "Vishnu Purana — Book III, página 87 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp088.htm",
+      "title": "Vishnu Purana — Book III, página 88 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp089.htm",
+      "title": "Vishnu Purana — Book III, página 89 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp090.htm",
+      "title": "Vishnu Purana — Book III, página 90 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp091.htm",
+      "title": "Vishnu Purana — Book III, página 91 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp092.htm",
+      "title": "Vishnu Purana — Book III, página 92 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp093.htm",
+      "title": "Vishnu Purana — Book IV, página 93 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp094.htm",
+      "title": "Vishnu Purana — Book IV, página 94 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp095.htm",
+      "title": "Vishnu Purana — Book IV, página 95 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp096.htm",
+      "title": "Vishnu Purana — Book IV, página 96 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp097.htm",
+      "title": "Vishnu Purana — Book IV, página 97 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp098.htm",
+      "title": "Vishnu Purana — Book IV, página 98 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp099.htm",
+      "title": "Vishnu Purana — Book IV, página 99 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp100.htm",
+      "title": "Vishnu Purana — Book IV, página 100 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp101.htm",
+      "title": "Vishnu Purana — Book IV, página 101 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp102.htm",
+      "title": "Vishnu Purana — Book IV, página 102 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp103.htm",
+      "title": "Vishnu Purana — Book IV, página 103 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp104.htm",
+      "title": "Vishnu Purana — Book IV, página 104 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp105.htm",
+      "title": "Vishnu Purana — Book IV, página 105 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp106.htm",
+      "title": "Vishnu Purana — Book IV, página 106 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp107.htm",
+      "title": "Vishnu Purana — Book IV, página 107 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp108.htm",
+      "title": "Vishnu Purana — Book IV, página 108 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp109.htm",
+      "title": "Vishnu Purana — Book IV, página 109 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp110.htm",
+      "title": "Vishnu Purana — Book IV, página 110 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp111.htm",
+      "title": "Vishnu Purana — Book IV, página 111 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp112.htm",
+      "title": "Vishnu Purana — Book IV, página 112 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp113.htm",
+      "title": "Vishnu Purana — Book IV, página 113 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp114.htm",
+      "title": "Vishnu Purana — Book IV, página 114 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp115.htm",
+      "title": "Vishnu Purana — Book IV, página 115 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp116.htm",
+      "title": "Vishnu Purana — Book IV, página 116 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp117.htm",
+      "title": "Vishnu Purana — Book IV, página 117 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp118.htm",
+      "title": "Vishnu Purana — Book V, página 118 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp119.htm",
+      "title": "Vishnu Purana — Book V, página 119 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp120.htm",
+      "title": "Vishnu Purana — Book V, página 120 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp121.htm",
+      "title": "Vishnu Purana — Book V, página 121 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp122.htm",
+      "title": "Vishnu Purana — Book V, página 122 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp123.htm",
+      "title": "Vishnu Purana — Book V, página 123 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp124.htm",
+      "title": "Vishnu Purana — Book V, página 124 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp125.htm",
+      "title": "Vishnu Purana — Book V, página 125 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp126.htm",
+      "title": "Vishnu Purana — Book V, página 126 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp127.htm",
+      "title": "Vishnu Purana — Book V, página 127 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp128.htm",
+      "title": "Vishnu Purana — Book V, página 128 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp129.htm",
+      "title": "Vishnu Purana — Book V, página 129 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp130.htm",
+      "title": "Vishnu Purana — Book V, página 130 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp131.htm",
+      "title": "Vishnu Purana — Book V, página 131 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp132.htm",
+      "title": "Vishnu Purana — Book V, página 132 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp133.htm",
+      "title": "Vishnu Purana — Book V, página 133 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp134.htm",
+      "title": "Vishnu Purana — Book V, página 134 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp135.htm",
+      "title": "Vishnu Purana — Book V, página 135 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp136.htm",
+      "title": "Vishnu Purana — Book V, página 136 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp137.htm",
+      "title": "Vishnu Purana — Book V, página 137 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp138.htm",
+      "title": "Vishnu Purana — Book V, página 138 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp139.htm",
+      "title": "Vishnu Purana — Book V, página 139 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp140.htm",
+      "title": "Vishnu Purana — Book V, página 140 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp141.htm",
+      "title": "Vishnu Purana — Book V, página 141 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp142.htm",
+      "title": "Vishnu Purana — Book V, página 142 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp143.htm",
+      "title": "Vishnu Purana — Book V, página 143 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp144.htm",
+      "title": "Vishnu Purana — Book V, página 144 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp145.htm",
+      "title": "Vishnu Purana — Book V, página 145 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp146.htm",
+      "title": "Vishnu Purana — Book V, página 146 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp147.htm",
+      "title": "Vishnu Purana — Book V, página 147 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp148.htm",
+      "title": "Vishnu Purana — Book V, página 148 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp149.htm",
+      "title": "Vishnu Purana — Book V, página 149 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp150.htm",
+      "title": "Vishnu Purana — Book V, página 150 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp151.htm",
+      "title": "Vishnu Purana — Book V, página 151 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp152.htm",
+      "title": "Vishnu Purana — Book V, página 152 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp153.htm",
+      "title": "Vishnu Purana — Book V, página 153 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp154.htm",
+      "title": "Vishnu Purana — Book V, página 154 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp155.htm",
+      "title": "Vishnu Purana — Book V, página 155 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp156.htm",
+      "title": "Vishnu Purana — Book VI, página 156 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp157.htm",
+      "title": "Vishnu Purana — Book VI, página 157 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp158.htm",
+      "title": "Vishnu Purana — Book VI, página 158 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp159.htm",
+      "title": "Vishnu Purana — Book VI, página 159 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp160.htm",
+      "title": "Vishnu Purana — Book VI, página 160 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp161.htm",
+      "title": "Vishnu Purana — Book VI, página 161 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp162.htm",
+      "title": "Vishnu Purana — Book VI, página 162 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/vp/vp163.htm",
+      "title": "Vishnu Purana — Book VI, página 163 (Wilson, 1840, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu03.htm",
+      "title": "Garuda Purana — capítulo 1 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu04.htm",
+      "title": "Garuda Purana — capítulo 2 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu05.htm",
+      "title": "Garuda Purana — capítulo 3 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu06.htm",
+      "title": "Garuda Purana — capítulo 4 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu07.htm",
+      "title": "Garuda Purana — capítulo 5 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu08.htm",
+      "title": "Garuda Purana — capítulo 6 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu09.htm",
+      "title": "Garuda Purana — capítulo 7 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu10.htm",
+      "title": "Garuda Purana — capítulo 8 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu11.htm",
+      "title": "Garuda Purana — capítulo 9 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu12.htm",
+      "title": "Garuda Purana — capítulo 10 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu13.htm",
+      "title": "Garuda Purana — capítulo 11 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu14.htm",
+      "title": "Garuda Purana — capítulo 12 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu15.htm",
+      "title": "Garuda Purana — capítulo 13 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu16.htm",
+      "title": "Garuda Purana — capítulo 14 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu17.htm",
+      "title": "Garuda Purana — capítulo 15 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    },
+    {
+      "url": "https://www.sacred-texts.com/hin/gpu/gpu18.htm",
+      "title": "Garuda Purana — capítulo 16 (Wood & Subrahmanyam, 1911, sacred-texts)",
+      "tradition": "purana",
+      "language": "en",
+      "license": "public-domain",
+      "source_class": "sacred-texts-sbe"
+    }
+  ]
+}

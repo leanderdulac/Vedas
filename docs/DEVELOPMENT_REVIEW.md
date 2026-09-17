@@ -1,5 +1,11 @@
 # SexyAds e Vedas — análise e desenvolvimento local
 
+> **Nota histórica.** Este documento é um registro da revisão de 7/set/2026 e
+> mistura dois projetos (SexyAds e Vedas). Muitos detalhes estão desatualizados:
+> o Vedas hoje não usa a porta 8100, o corpus não é o de "11 documentos" (snapshot
+> local) e boa parte do hardening descrito nas seções finais já foi implementado e
+> commitado. Para o estado atual, veja o `README.md` e `docs/DEPLOYMENT.md`.
+
 Data: 7 de setembro de 2026. Revisão inicial de arquitetura, autenticação, APIs, persistência, busca, clientes web, testes e execução. Não é uma auditoria exaustiva de todas as funcionalidades.
 
 ## Resultado disponível neste computador

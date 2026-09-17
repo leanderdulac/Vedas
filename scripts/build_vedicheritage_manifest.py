@@ -19,6 +19,7 @@ import re
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 UA = "VedaKnowledgePipeline/2.0 (+research; authorized sources only)"
 SITEMAP_INDEX = "https://vedicheritage.gov.in/sitemap.xml"
@@ -70,6 +71,10 @@ _DROP_RV_REPRINT = re.compile(r"samhitas/rigveda/shakala-samhita/(\d+-2|mandal-\
 
 
 def _get(url: str, timeout: int = 40) -> str:
+    # Apenas o domínio oficial do portal (evita SSRF caso o sitemap aponte para fora).
+    host = (urlparse(url).hostname or "").lower()
+    if not host.endswith("vedicheritage.gov.in"):
+        return ""
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:

@@ -10,6 +10,8 @@ jobs:
   retrieval-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -23,7 +25,7 @@ jobs:
       - name: Install deps (API + embeddings, CPU)
         run: |
           python -m pip install --upgrade pip
-          pip install ruff pytest
+          pip install ruff pytest pytest-cov
           # torch CPU first to avoid huge CUDA wheel
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements_vedic_pipeline.txt
@@ -31,6 +33,13 @@ jobs:
 
       - name: Lint Python with Ruff
         run: ruff check .
+
+      - name: Audit Python dependencies (informational)
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements-api.txt
+          pip-audit -r requirements_vedic_pipeline.txt
 
       - name: Unit and API regressions
         run: pytest -v
@@ -61,6 +70,9 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: frontend

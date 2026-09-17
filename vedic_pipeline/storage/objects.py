@@ -148,14 +148,23 @@ def iter_local_files(base: Path) -> list[Path]:
 
 
 def ensure_bucket(client: Any, bucket: str) -> bool:
-    """Cria o bucket se ausente. Retorna True se criou, False se já existia."""
+    """Cria o bucket se ausente. Retorna True se criou, False se já existia.
+
+    Fora de us-east-1, o AWS exige ``CreateBucketConfiguration``; o MinIO
+    ignora. Como o client fake dos testes só aceita ``Bucket``, o kwarg extra
+    é adicionado apenas quando a região difere do default.
+    """
     try:
         client.head_bucket(Bucket=bucket)
         return False
     except Exception:
         pass
+    region = get_s3_config().region
+    kwargs: dict[str, Any] = {"Bucket": bucket}
+    if region and region != "us-east-1":
+        kwargs["CreateBucketConfiguration"] = {"LocationConstraint": region}
     try:
-        client.create_bucket(Bucket=bucket)
+        client.create_bucket(**kwargs)
         return True
     except Exception as exc:  # noqa: BLE001
         message = str(exc).lower()
@@ -248,8 +257,9 @@ def pull_dir(
         if not dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)
             s3.download_file(target_bucket, key, str(target))
+            total_bytes += target.stat().st_size
         downloaded += 1
-    logger.info("pull s3://%s/%s: %d arquivos (dry_run=%s)", target_bucket, prefix or "-", downloaded, dry_run)
+    logger.info("pull s3://%s/%s: %d arquivos (%d bytes, dry_run=%s)", target_bucket, prefix or "-", downloaded, total_bytes, dry_run)
     return {
         "backend": "s3",
         "bucket": target_bucket,

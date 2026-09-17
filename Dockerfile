@@ -1,5 +1,6 @@
 # Veda Knowledge — API + UI estática (produção)
-FROM node:20-bookworm-slim AS frontend-build
+# Node 22 alinha com CI e testes do frontend (strip-types >= 22.6)
+FROM node:22-bookworm-slim AS frontend-build
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
