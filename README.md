@@ -35,6 +35,7 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 - **Início** — śloka, estatísticas, tradições
 - **Biblioteca** — catálogo com filtros (tradição/idioma/texto)
 - **Busca** — recuperação semântica com scores
+- **Aprenda** — saṃskṛtam: varṇamālā pronunciável, vocabulário védico ligado ao corpus e lições de sandhi/subantas/tiṅantas
 - **Perguntar** — chat RAG + painel de fontes
 - **Documento** — leitor com Devanāgarī
 - **Operações** — fila de jobs do pipeline (ingest/index/db/treino) com token no `sessionStorage`

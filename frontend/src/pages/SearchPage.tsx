@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, SearchHit } from "../api/client";
 import HitCard from "../components/HitCard";
 
@@ -12,10 +13,11 @@ const DEFAULT_TRADITIONS = [
 ];
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("Self and oneness");
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get("q") || "Self and oneness");
   const [tradition, setTradition] = useState("");
   const [availableTraditions, setAvailableTraditions] = useState(DEFAULT_TRADITIONS);
-  const [language, setLanguage] = useState("");
+  const [language, setLanguage] = useState(params.get("lang") || "");
   const [topK, setTopK] = useState(5);
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [backend, setBackend] = useState<string | null>(null);

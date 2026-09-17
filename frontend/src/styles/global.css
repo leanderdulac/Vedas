@@ -1024,3 +1024,135 @@ h3 {
     display: flex;
   }
 }
+
+/* ---------------------------------------------------------------- Aprenda (saṃskṛtam) */
+.learn-group {
+  margin: 0;
+}
+.learn-group-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--gold-soft);
+  margin: 0 0 0.6rem;
+  letter-spacing: 0.02em;
+}
+.learn-letters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+.learn-letter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.8rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+.learn-letter:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.learn-letter-deva {
+  font-family: var(--font-deva);
+  font-size: 2rem;
+  line-height: 1.15;
+  color: var(--gold-soft);
+}
+.learn-letter-iast {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--saffron-bright);
+}
+.learn-letter-art {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.learn-letter-ex {
+  font-family: var(--font-deva);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.learn-words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 0.9rem;
+}
+.learn-word {
+  margin: 0;
+}
+.learn-word-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+}
+.learn-word-deva {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-deva);
+  font-size: 1.9rem;
+  color: var(--gold-soft);
+  cursor: pointer;
+}
+.learn-word-deva:hover {
+  color: var(--saffron-bright);
+}
+.learn-word-iast {
+  font-size: 1.05rem;
+  color: var(--saffron-bright);
+  font-weight: 600;
+}
+.learn-word-gloss {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.learn-word-meaning {
+  margin: 0.6rem 0;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+.learn-lesson {
+  padding: 1.25rem 1.4rem;
+}
+.learn-lesson h2 {
+  font-family: var(--font-display);
+  margin: 0 0 0.25rem;
+}
+.learn-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.learn-table td {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+.learn-table tr:first-child td {
+  border-top: none;
+}
+.learn-table-deva {
+  font-family: var(--font-deva);
+  font-size: 1.35rem;
+  color: var(--gold-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.learn-table-deva:hover {
+  color: var(--saffron-bright);
+}
+.learn-table-iast {
+  white-space: nowrap;
+  color: var(--saffron-bright);
+  font-size: 0.95rem;
+}

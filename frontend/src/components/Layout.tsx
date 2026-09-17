@@ -5,6 +5,7 @@ const links = [
   { to: "/", label: "Início", end: true },
   { to: "/biblioteca", label: "Biblioteca" },
   { to: "/busca", label: "Busca" },
+  { to: "/aprender", label: "Aprenda" },
   { to: "/perguntar", label: "Perguntar" },
   { to: "/operacoes", label: "Operações" },
   { to: "/sobre", label: "Sobre" },
