@@ -7,10 +7,12 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from vedic_pipeline.search.hybrid import (
+    LOCATOR_INJECT_PER_HYMN,
     apply_locator_hymn_boost,
     extract_query_hymn_ids,
     hybrid_rerank,
     hymn_id_in_blob,
+    locator_hymn_injections,
 )
 from vedic_pipeline.search.reranker import invalidate_reranker
 
@@ -43,6 +45,20 @@ class HymnIdExtractTests(unittest.TestCase):
         self.assertEqual(extract_query_hymn_ids("Gayatri mantra Savitr"), ["3.62"])
         self.assertEqual(extract_query_hymn_ids("gāyatrī sūkta"), ["3.62"])
         self.assertEqual(extract_query_hymn_ids("गायत्री मन्त्र"), ["3.62"])
+
+    def test_gayatri_verse_fingerprints_map_to_3_62(self):
+        self.assertEqual(
+            extract_query_hymn_ids("तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि"),
+            ["3.62"],
+        )
+        self.assertEqual(
+            extract_query_hymn_ids("tat savitur vareṇyaṃ bhargo devasya dhīmahi"),
+            ["3.62"],
+        )
+        self.assertEqual(
+            extract_query_hymn_ids("tatsaviturvarenyam bhargo devasya dhimahi"),
+            ["3.62"],
+        )
 
     def test_hiranyagarbha_maps_to_10_121(self):
         self.assertEqual(extract_query_hymn_ids("Hiranyagarbha golden womb"), ["10.121"])
@@ -373,6 +389,99 @@ class LocatorHymnBoostTests(unittest.TestCase):
             use_cross_encoder=False,
         )
         self.assertEqual(hits[0]["chunk_id"], "90")
+
+
+class LocatorHymnRecallInjectionTests(unittest.TestCase):
+    def test_gayatri_injects_3_62_absent_from_semantic_and_lexical(self):
+        """Boost cannot help if 3.62 never enters the pool (Mac live fail)."""
+        chandogya = {
+            "chunk_id": "inject-ch-iii12",
+            "doc_id": "chandogya-inject",
+            "title": "Chandogya Upanishad III.12 (Müller, SBE01, sacred-texts)",
+            "locator": "Chandogya III.12",
+            "text": "Gayatri is everything whatsoever here exists. Gayatri is speech.",
+            "score": 0.95,
+        }
+        anthology = {
+            "chunk_id": "inject-anth",
+            "doc_id": "anthology-inject",
+            "title": "Vedic anthologies on the Gayatri metre",
+            "locator": "",
+            "text": "Many Upanishads discuss the Gayatri as a metre, not RV 10.90.",
+            "score": 0.90,
+        }
+        # Unique chunk_id: token cache is process-global and other tests reuse "62".
+        rv362 = {
+            "chunk_id": "inject-rv-3-62",
+            "doc_id": "rv-362-inject",
+            "title": "Mandala III Griffith 3.62",
+            "locator": "RV 3.62.10",
+            "text": "May we attain that excellent glory of the God",
+            "score": 0.01,
+        }
+        hits = hybrid_rerank(
+            "Gayatri mantra Savitr Rig Veda",
+            [chandogya, anthology],
+            all_chunks=[chandogya, anthology, rv362],
+            top_k=3,
+            use_cross_encoder=False,
+        )
+        ids = [h["chunk_id"] for h in hits]
+        self.assertIn("inject-rv-3-62", ids)
+        injected = next(h for h in hits if h["chunk_id"] == "inject-rv-3-62")
+        self.assertEqual(injected.get("_hymn_injected"), "3.62")
+        self.assertGreater(injected.get("_hymn_boost") or 0, 0)
+        self.assertEqual(hits[0]["chunk_id"], "inject-rv-3-62")
+        decoy = next(h for h in hits if h["chunk_id"] == "inject-ch-iii12")
+        self.assertIsNone(decoy.get("_hymn_match"))
+        self.assertIsNone(decoy.get("_hymn_injected"))
+
+    def test_injection_skips_name_only_chandogya_and_caps_per_id(self):
+        decoys = [
+            {
+                "chunk_id": f"ch-{i}",
+                "title": "Chandogya Upanishad III.12 Gayatri commentary",
+                "locator": "Chandogya III.12",
+                "text": "Gayatri is speech",
+            }
+            for i in range(6)
+        ]
+        verses = [
+            {
+                "chunk_id": f"v-{n}",
+                "title": f"Rigveda RV 3.62.{n} (Griffith, sacred-texts)",
+                "locator": f"RV 3.62.{n}",
+                "text": "verse body",
+            }
+            for n in range(1, 13)
+        ]
+        hymn_level = {
+            "chunk_id": "hymn",
+            "title": "Rigveda RV 3.62 (Griffith, sacred-texts)",
+            "locator": "RV 3.62",
+            "text": "whole hymn",
+        }
+        injected = locator_hymn_injections(
+            "Gayatri mantra Savitr Rig Veda",
+            decoys + verses + [hymn_level],
+        )
+        self.assertEqual(len(injected), LOCATOR_INJECT_PER_HYMN)
+        self.assertTrue(all(c.get("_hymn_injected") == "3.62" for c in injected))
+        self.assertEqual(injected[0]["chunk_id"], "hymn")
+        self.assertFalse(any(str(c["chunk_id"]).startswith("ch-") for c in injected))
+
+    def test_devanagari_verse_injection_uses_extracted_3_62(self):
+        rv362 = {
+            "chunk_id": "62",
+            "title": "Rigveda RV 3.62 (Griffith, sacred-texts)",
+            "locator": "RV 3.62",
+            "text": "May we attain that excellent glory of Savitar the God",
+        }
+        injected = locator_hymn_injections(
+            "तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि",
+            [rv362],
+        )
+        self.assertEqual([c["chunk_id"] for c in injected], ["62"])
 
 
 if __name__ == "__main__":

@@ -225,6 +225,11 @@ _NAMED_HYMN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         "10.90",
     ),
     (re.compile(r"g[aā]yat(?:h)?r[iī]|गायत्री", re.I), "3.62"),
+    # Verse fingerprints (no “Gāyatrī” token): tat savitur… / तत्सवितुर्…
+    (
+        re.compile(r"tatsavitur|tat\s*savitur|तत्\s*सवितुर्", re.I),
+        "3.62",
+    ),
     (re.compile(r"hira[nṇ]yagarbha|हिरण्यगर्भ", re.I), "10.121"),
     (
         re.compile(
@@ -254,6 +259,8 @@ _EXPLICIT_HYMN_RE = re.compile(
 # PoC local: +~1.4 no título restaurou Nasadiya sob pressão do CE genérico.
 LOCATOR_HYMN_TITLE_BOOST = 1.45
 LOCATOR_HYMN_TEXT_BOOST = 1.05
+# Recall: chunks cujo título/locator casa o id, mesmo fora do top léxico/denso.
+LOCATOR_INJECT_PER_HYMN = 4
 
 
 def hymn_id_in_blob(blob: str, hymn: str) -> bool:
@@ -282,9 +289,10 @@ def hymn_id_variants(hymn: str) -> list[str]:
 def extract_query_hymn_ids(query: str) -> list[str]:
     """Hinos pedidos na query: nomes canônicos e RV X.Y explícito.
 
-    Nomes: Nasadiya→10.129, Purusha Sukta→10.90, Gāyatrī→3.62,
-    Hiraṇyagarbha→10.121, Vāk/Vāc Sūkta→10.125. Se um nome casa e um id
-    explícito discorda, o nome vence — o id conflitante não entra no boost.
+    Nomes: Nasadiya→10.129, Purusha Sukta→10.90, Gāyatrī→3.62
+    (também tat savitur… / तत्सवितुर्…), Hiraṇyagarbha→10.121,
+    Vāk/Vāc Sūkta→10.125. Se um nome casa e um id explícito discorda,
+    o nome vence — o id conflitante não entra no boost.
     """
     text = query or ""
     found: list[str] = []
@@ -336,6 +344,53 @@ def chunk_matches_hymn(chunk: dict[str, Any], hymn: str, *, text_too: bool = Tru
         if hymn_id_in_blob(text_blob, variant):
             return "text"
     return None
+
+
+def _hymn_level_locator(chunk: dict[str, Any], hymn: str) -> bool:
+    """True se o blob de título/locator traz o id sem verso seguinte (3.62 vs 3.62.10)."""
+    blob = _chunk_locator_blob(chunk)
+    if not hymn_id_in_blob(blob, hymn):
+        return False
+    return re.search(rf"(?<![\d.]){re.escape(hymn)}\.\d", blob or "", flags=re.I) is None
+
+
+def locator_hymn_injections(
+    query: str,
+    all_chunks: list[dict[str, Any]],
+    *,
+    exclude_ids: set[str] | None = None,
+    per_hymn: int = LOCATOR_INJECT_PER_HYMN,
+) -> list[dict[str, Any]]:
+    """Chunks do corpus cujo título/locator casa os RV ids extraídos da query.
+
+    Recall, não só re-score: Gāyatrī frequentemente perde o pool para Chandogya
+    III.12 / antologias. Casa só título/locator (barato) com as mesmas regras
+    pós-PR5 — id RV para 3.62 / 10.121 / 10.125, sem boost pelo nome no decoy.
+    Prefere o hino inteiro (RV 3.62) a um verso avulso; limita a ``per_hymn``.
+    """
+    hymns = extract_query_hymn_ids(query)
+    if not hymns or not all_chunks:
+        return []
+    skip = set(exclude_ids or ())
+    injected: list[dict[str, Any]] = []
+    for hymn in hymns:
+        ranked: list[tuple[int, int, dict[str, Any]]] = []
+        for idx, ch in enumerate(all_chunks):
+            cid = str(ch.get("chunk_id") or id(ch))
+            if cid in skip:
+                continue
+            if chunk_matches_hymn(ch, hymn, text_too=False) != "title":
+                continue
+            hymn_level = 0 if _hymn_level_locator(ch, hymn) else 1
+            ranked.append((hymn_level, idx, ch))
+        ranked.sort(key=lambda row: (row[0], row[1]))
+        for _level, _idx, ch in ranked[: max(0, per_hymn)]:
+            cid = str(ch.get("chunk_id") or id(ch))
+            skip.add(cid)
+            copy = dict(ch)
+            copy["_hymn_injected"] = hymn
+            injected.append(copy)
+    return injected
 
 
 def apply_locator_hymn_boost(query: str, pool: list[dict[str, Any]]) -> None:
@@ -419,7 +474,8 @@ def hybrid_rerank(
 ) -> list[dict[str, Any]]:
     """
     Combina ranking semântico (já filtrado) com score lexical nos mesmos hits
-    e, se all_chunks for dado, amplia candidatos lexicais.
+    e, se all_chunks for dado, amplia candidatos lexicais e injeta chunks
+    cujo título/locator casa um RV id extraído da query (antes do boost).
 
     Pós-processamento: boost de título/hino + locator/RV X.Y + Cross-Encoder
     (locator de novo após o CE) + diversificação por doc_id.
@@ -446,6 +502,9 @@ def hybrid_rerank(
                 break
             ch = dict(all_chunks[i])
             ch["_lex_score"] = scores[i]
+            add(ch)
+        # Recall por locator: o boost só reordena o que já entrou no pool.
+        for ch in locator_hymn_injections(query, all_chunks, exclude_ids=seen_ids):
             add(ch)
 
     if not pool:
