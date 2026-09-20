@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from vedic_pipeline.search.reranker import (
+    DEFAULT_RERANKER_MODEL,
     get_reranker,
+    get_reranker_model_name,
     invalidate_reranker,
     is_reranker_enabled,
     rerank_chunks,
+    resolve_reranker_model_source,
 )
 
 
@@ -23,6 +27,50 @@ class RerankerTests(unittest.TestCase):
 
     def test_empty_chunks(self):
         self.assertEqual(rerank_chunks("query", []), [])
+
+    def test_empty_model_env_falls_back_to_default(self):
+        with patch.dict(os.environ, {"VEDIC_RERANKER_MODEL": ""}):
+            self.assertEqual(get_reranker_model_name(), DEFAULT_RERANKER_MODEL)
+
+    def test_resolve_local_dir_under_project_root(self):
+        resolved = resolve_reranker_model_source("fixtures/rerank")
+        self.assertTrue(Path(resolved).is_absolute())
+        self.assertTrue(Path(resolved).is_dir())
+        self.assertEqual(Path(resolved).name, "rerank")
+
+    def test_env_change_reloads_without_explicit_invalidate(self):
+        mock_a = MagicMock(name="ce-a")
+        mock_b = MagicMock(name="ce-b")
+        with (
+            patch.dict(
+                os.environ,
+                {"VEDIC_ENABLE_RERANKER": "true", "VEDIC_RERANKER_MODEL": "model-a"},
+            ),
+            patch(
+                "vedic_pipeline.search.reranker.load_cross_encoder",
+                side_effect=[mock_a, mock_b],
+            ) as loader,
+        ):
+            self.assertIs(get_reranker(), mock_a)
+            os.environ["VEDIC_RERANKER_MODEL"] = "model-b"
+            self.assertIs(get_reranker(), mock_b)
+            self.assertEqual(loader.call_count, 2)
+
+    def test_enable_after_disabled_reloads(self):
+        mock_ce = MagicMock(name="ce-on")
+        with (
+            patch.dict(os.environ, {"VEDIC_ENABLE_RERANKER": "false"}, clear=False),
+            patch(
+                "vedic_pipeline.search.reranker.load_cross_encoder",
+                return_value=mock_ce,
+            ) as loader,
+        ):
+            self.assertIsNone(get_reranker())
+            loader.assert_not_called()
+            os.environ["VEDIC_ENABLE_RERANKER"] = "true"
+            os.environ["VEDIC_RERANKER_MODEL"] = "artifacts/reranker"
+            self.assertIs(get_reranker(), mock_ce)
+            loader.assert_called_once()
 
     def test_default_is_disabled_when_env_unset(self):
         env = {k: v for k, v in os.environ.items() if k != "VEDIC_ENABLE_RERANKER"}
