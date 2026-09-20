@@ -8,11 +8,19 @@ from unittest.mock import MagicMock, patch
 
 from vedic_pipeline.search.hybrid import (
     LOCATOR_INJECT_PER_HYMN,
+    LOCATOR_INJECT_PER_WORK,
+    WORK_ISHA,
+    WORK_KATHA,
+    WORK_SAMAVEDA,
+    WORK_YAJUR_VS,
     apply_locator_hymn_boost,
+    apply_locator_work_boost,
     extract_query_hymn_ids,
+    extract_query_work_keys,
     hybrid_rerank,
     hymn_id_in_blob,
     locator_hymn_injections,
+    locator_work_injections,
 )
 from vedic_pipeline.search.reranker import invalidate_reranker
 
@@ -482,6 +490,317 @@ class LocatorHymnRecallInjectionTests(unittest.TestCase):
             [rv362],
         )
         self.assertEqual([c["chunk_id"] for c in injected], ["62"])
+
+
+class NamedWorkExtractTests(unittest.TestCase):
+    def test_isha_opening_fingerprint_maps_to_isha(self):
+        self.assertEqual(
+            extract_query_work_keys(
+                "īśāvāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat"
+            ),
+            [WORK_ISHA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("ईशावास्यमिदं सर्वं यत्किञ्च जगत्यां जगत्"),
+            [WORK_ISHA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("isavasya idam sarvam yat kinca jagatyam jagat"),
+            [WORK_ISHA],
+        )
+
+    def test_isha_name_maps_to_isha_but_not_a_hymn_id(self):
+        self.assertEqual(
+            extract_query_work_keys("What is the Self according to the Isha Upanishad?"),
+            [WORK_ISHA],
+        )
+        self.assertEqual(
+            extract_query_hymn_ids("īśāvāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat"),
+            [],
+        )
+
+    def test_isha_shared_sanskrit_words_are_not_enough(self):
+        self.assertEqual(extract_query_work_keys("idam sarvam jagat in the Rigveda"), [])
+
+    def test_nachiketas_maps_to_katha_even_with_kaushitaki_label(self):
+        self.assertEqual(
+            extract_query_work_keys("Nachiketas meets Death Kaushitaki Upanishad"),
+            [WORK_KATHA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("नचिकेतस् and Yama"),
+            [WORK_KATHA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("Kaushitaki Upanishad on prana"),
+            [],
+        )
+
+    def test_samaveda_collection_signals(self):
+        self.assertEqual(
+            extract_query_work_keys("Sama Veda chant melody of Rig verses"),
+            [WORK_SAMAVEDA],
+        )
+        self.assertEqual(extract_query_work_keys("Sāmaveda recitation"), [WORK_SAMAVEDA])
+        self.assertEqual(extract_query_work_keys("सामवेद गान"), [WORK_SAMAVEDA])
+        self.assertEqual(extract_query_work_keys("chant melody of Rig verses"), [])
+
+    def test_shukla_yajur_vajasaneyi_signals(self):
+        self.assertEqual(
+            extract_query_work_keys("Shukla Yajur Veda Vajasaneyi Samhita"),
+            [WORK_YAJUR_VS],
+        )
+        self.assertEqual(extract_query_work_keys("White Yajur Veda"), [WORK_YAJUR_VS])
+        self.assertEqual(extract_query_work_keys("Yajurveda VS 40"), [WORK_YAJUR_VS])
+        self.assertEqual(extract_query_work_keys("Yajur Veda in general"), [])
+
+
+class NamedWorkLocatorTests(unittest.TestCase):
+    def test_isha_fingerprint_beats_rv_10_58(self):
+        """Mac beyond-gold: isha-iast-vs-dev top-1 was Rigveda RV 10.58."""
+        hits = hybrid_rerank(
+            "īśāvāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat",
+            [
+                {
+                    "chunk_id": "rv-1058",
+                    "doc_id": "rv-1058",
+                    "title": "Rigveda RV 10.58 (Griffith)",
+                    "locator": "RV 10.58",
+                    "text": "Thy spirit, that went far away to Yama, to Vivasvan's son — "
+                    "we cause to stay, that it may live and dwell here, idam sarvam jagat.",
+                    "score": 0.95,
+                },
+                {
+                    "chunk_id": "isha-1",
+                    "doc_id": "isha",
+                    "title": "Isha Upanishad (Müller)",
+                    "locator": "Isha 1",
+                    "text": "All this is for habitation by the Lord, whatsoever is individual "
+                    "universe of movement in the universal motion.",
+                    "score": 0.30,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "isha-1")
+        self.assertGreater(hits[0].get("_work_boost") or 0, 0)
+        decoy = next(h for h in hits if h["chunk_id"] == "rv-1058")
+        self.assertIsNone(decoy.get("_work_match"))
+        self.assertIsNone(decoy.get("_hymn_match"))
+
+    def test_isha_does_not_boost_rv_sharing_a_few_sanskrit_words(self):
+        pool = [
+            {
+                "chunk_id": "rv-1058",
+                "title": "Rigveda RV 10.58 (Griffith)",
+                "locator": "RV 10.58",
+                "text": "idam sarvam yat kinca jagatyam jagat",
+                "score": 0.9,
+            },
+            {
+                "chunk_id": "isha-1",
+                "title": "Īśā Upanishad",
+                "locator": "Isha 1",
+                "text": "īśāvāsyam idaṃ sarvam",
+                "score": 0.2,
+            },
+        ]
+        apply_locator_work_boost("īśāvāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat", pool)
+        by_id = {c["chunk_id"]: c for c in pool}
+        self.assertGreater(by_id["isha-1"].get("_work_boost") or 0, 0)
+        self.assertIsNone(by_id["rv-1058"].get("_work_match"))
+
+    def test_nachiketas_beats_kaushitaki_label_and_chandogya(self):
+        """Adversarial: story is Kaṭha; query wrongly names Kauṣītaki."""
+        hits = hybrid_rerank(
+            "Nachiketas meets Death Kaushitaki Upanishad",
+            [
+                {
+                    "chunk_id": "ch-death",
+                    "doc_id": "chandogya",
+                    "title": "Chandogya Upanishad I.2 (Müller, SBE01, sacred-texts)",
+                    "locator": "Chandogya I.2",
+                    "text": "Death and the gods contend; the Upanishad names breath.",
+                    "score": 0.95,
+                },
+                {
+                    "chunk_id": "katha-1",
+                    "doc_id": "katha",
+                    "title": "Katha Upanishad — seção 1 (Müller, SBE15, sacred-texts)",
+                    "locator": "Katha 1",
+                    "text": "Nachiketas went to the house of Death and Yama granted three boons.",
+                    "score": 0.28,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "katha-1")
+        self.assertEqual(hits[0].get("_work_match"), WORK_KATHA)
+        decoy = next(h for h in hits if h["chunk_id"] == "ch-death")
+        self.assertIsNone(decoy.get("_work_match"))
+
+    def test_samaveda_title_beats_chandogya_i6(self):
+        """Mac beyond-gold: samaveda-melody top-1 was Chandogya I.6."""
+        hits = hybrid_rerank(
+            "Sama Veda chant melody of Rig verses",
+            [
+                {
+                    "chunk_id": "ch-i6",
+                    "doc_id": "chandogya-i6",
+                    "title": "Chandogya Upanishad I.6 (Müller, SBE01, sacred-texts)",
+                    "locator": "Chandogya I.6",
+                    "text": "This earth is the Rc, fire is the Saman. The Saman is sung on the Rc.",
+                    "score": 0.96,
+                },
+                {
+                    "chunk_id": "sv-1111",
+                    "doc_id": "sv-1111",
+                    "title": "Sāmaveda SV 1.1.1.1 (Griffith, DharmicData)",
+                    "locator": "SV 1.1.1.1",
+                    "text": "Come, Agni, praised with song, to feast and sacrificial offering.",
+                    "score": 0.22,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "sv-1111")
+        self.assertEqual(hits[0].get("_work_match"), WORK_SAMAVEDA)
+        decoy = next(h for h in hits if h["chunk_id"] == "ch-i6")
+        self.assertIsNone(decoy.get("_work_match"))
+
+    def test_yajur_vs_title_beats_muller_upanishads(self):
+        """Mac beyond-gold: yajur-shukla top-1 was a generic Müller Upanishad."""
+        hits = hybrid_rerank(
+            "Shukla Yajur Veda Vajasaneyi Samhita",
+            [
+                {
+                    "chunk_id": "muller-up",
+                    "doc_id": "sbe-up",
+                    "title": "The Upanishads (Müller, SBE01, sacred-texts)",
+                    "locator": "",
+                    "text": "The White Yajur Veda is mentioned among the Vedas in this anthology.",
+                    "score": 0.94,
+                },
+                {
+                    "chunk_id": "vs-1",
+                    "doc_id": "yv-vs-1",
+                    "title": "Yajurveda VS 1 (Sanskrit, DharmicData)",
+                    "locator": "VS 1",
+                    "text": "इषे त्वोर्जे त्वा वायव स्थ देवो वः सविता प्रार्पयतु श्रेष्ठतमाय कर्मणे",
+                    "score": 0.20,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "vs-1")
+        self.assertEqual(hits[0].get("_work_match"), WORK_YAJUR_VS)
+        decoy = next(h for h in hits if h["chunk_id"] == "muller-up")
+        self.assertIsNone(decoy.get("_work_match"))
+
+
+class NamedWorkRecallInjectionTests(unittest.TestCase):
+    def test_isha_injects_title_chunk_absent_from_semantic(self):
+        rv = {
+            "chunk_id": "inject-rv-1058",
+            "doc_id": "rv-1058-inject",
+            "title": "Rigveda RV 10.58 (Griffith)",
+            "locator": "RV 10.58",
+            "text": "idam sarvam jagat far away to Yama",
+            "score": 0.95,
+        }
+        isha = {
+            "chunk_id": "inject-isha",
+            "doc_id": "isha-inject",
+            "title": "Isha Upanishad (English, fixture)",
+            "locator": "Isha 1",
+            "text": "All this is for habitation by the Lord",
+            "score": 0.01,
+        }
+        hits = hybrid_rerank(
+            "īśāvāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat",
+            [rv],
+            all_chunks=[rv, isha],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "inject-isha")
+        self.assertEqual(hits[0].get("_work_injected"), WORK_ISHA)
+        self.assertGreater(hits[0].get("_work_boost") or 0, 0)
+        self.assertIsNone(next(h for h in hits if h["chunk_id"] == "inject-rv-1058").get("_work_match"))
+
+    def test_katha_injects_despite_kaushitaki_token(self):
+        chandogya = {
+            "chunk_id": "inject-ch-k",
+            "title": "Chandogya Upanishad III.1 (Müller, SBE01, sacred-texts)",
+            "locator": "Chandogya III.1",
+            "text": "Death and the honey-doctrine",
+            "score": 0.9,
+        }
+        katha = {
+            "chunk_id": "inject-katha",
+            "title": "Katha Upanishad (English, sacred-texts SBE15)",
+            "locator": "Katha 1",
+            "text": "Nachiketas son of Vajasravasa",
+            "score": 0.01,
+        }
+        injected = locator_work_injections(
+            "Nachiketas meets Death Kaushitaki Upanishad",
+            [chandogya, katha],
+        )
+        self.assertEqual([c["chunk_id"] for c in injected], ["inject-katha"])
+        self.assertEqual(injected[0].get("_work_injected"), WORK_KATHA)
+
+    def test_samaveda_injection_skips_chandogya_and_caps(self):
+        decoys = [
+            {
+                "chunk_id": f"ch-saman-{i}",
+                "title": "Chandogya Upanishad I.6 Saman commentary",
+                "locator": "Chandogya I.6",
+                "text": "The Saman is sung upon the Rig verses",
+            }
+            for i in range(6)
+        ]
+        verses = [
+            {
+                "chunk_id": f"sv-{n}",
+                "title": f"Sāmaveda SV 1.1.1.{n} (Griffith, DharmicData)",
+                "locator": f"SV 1.1.1.{n}",
+                "text": "chant body",
+            }
+            for n in range(1, 13)
+        ]
+        injected = locator_work_injections(
+            "Sama Veda chant melody of Rig verses",
+            decoys + verses,
+        )
+        self.assertEqual(len(injected), LOCATOR_INJECT_PER_WORK)
+        self.assertEqual(LOCATOR_INJECT_PER_WORK, LOCATOR_INJECT_PER_HYMN)
+        self.assertTrue(all(c.get("_work_injected") == WORK_SAMAVEDA for c in injected))
+        self.assertFalse(any(str(c["chunk_id"]).startswith("ch-") for c in injected))
+
+    def test_yajur_vs_injection_skips_muller_anthology(self):
+        muller = {
+            "chunk_id": "inject-muller",
+            "title": "The Upanishads (Müller, SBE15)",
+            "locator": "",
+            "text": "Vajasaneyi and the White Yajur are discussed here",
+        }
+        vs = {
+            "chunk_id": "inject-vs-40",
+            "title": "Yajurveda VS 40 (Sanskrit, DharmicData)",
+            "locator": "VS 40",
+            "text": "ईशावास्यमिदं सर्वम्",
+        }
+        injected = locator_work_injections(
+            "Shukla Yajur Veda Vajasaneyi Samhita",
+            [muller, vs],
+        )
+        self.assertEqual([c["chunk_id"] for c in injected], ["inject-vs-40"])
+        self.assertEqual(injected[0].get("_work_injected"), WORK_YAJUR_VS)
 
 
 if __name__ == "__main__":
