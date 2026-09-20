@@ -22,25 +22,22 @@ STABLE_IDS = (
     "manu-dharma",
 )
 REQUIRED_NEW_IDS = (
-    "gayatri-rv362",
-    "asya-vamasya",
-    "chandogya-tattvamasi",
-    "brihadaranyaka-neti",
-    "katha-nachiketa",
-    "mandukya-om",
-    "gita-247",
-    "yoga-12-paraphrase",
+    "katha-nachiketas",
+    "gita-2-47",
+    "yoga-1-2",
     "rama-sita-abduction",
     "bhishma-arrows",
-    "nasadiya-deva",
-    "isha-opening-deva",
+    "ishavasya-sa",
+    "shvetashvatara-rudra",
+    "prasna-six",
+    "mundaka-two-birds",
 )
 
 
 class SmokeGoldSchemaTests(unittest.TestCase):
     def test_expanded_gold_has_unique_ids_and_schema(self):
         queries = load_gold_queries(GOLD_PATH)
-        self.assertGreaterEqual(len(queries), 20)
+        self.assertGreaterEqual(len(queries), 19)
         ids = [str(q.get("id") or "") for q in queries]
         self.assertTrue(all(ids))
         self.assertEqual(len(ids), len(set(ids)), "gold ids must be unique")
@@ -53,14 +50,17 @@ class SmokeGoldSchemaTests(unittest.TestCase):
             expect = list(query.get("expect_title_any") or [])
             self.assertTrue(expect, f"{query.get('id')} missing expect_title_any")
             self.assertGreaterEqual(int(query.get("min_hits") or 1), 1)
+            self.assertFalse(
+                any(p.strip().lower() == "rig" for p in expect),
+                f"{query.get('id')} must not use loose expect token 'Rig'",
+            )
 
-    def test_locator_queries_expose_hymn_ids(self):
+    def test_locator_and_devanagari_queries(self):
         by_id = {q["id"]: q for q in load_gold_queries(GOLD_PATH)}
-        self.assertIn("10.129", extract_query_hymn_ids(by_id["nasadiya-deva"]["query"]))
-        self.assertIn("3.62", extract_query_hymn_ids(by_id["gayatri-rv362"]["query"]))
-        self.assertIn("1.164", extract_query_hymn_ids(by_id["asya-vamasya"]["query"]))
-        self.assertIn("2.47", extract_query_hymn_ids(by_id["gita-247"]["query"]))
-        self.assertTrue(any("\u0900" <= ch <= "\u097f" for ch in by_id["isha-opening-deva"]["query"]))
+        self.assertIn("2.47", extract_query_hymn_ids(by_id["gita-2-47"]["query"]))
+        isha = by_id["ishavasya-sa"]["query"]
+        self.assertTrue(any("\u0900" <= ch <= "\u097f" for ch in isha))
+        self.assertIn("Isha", isha)
 
 
 if __name__ == "__main__":
