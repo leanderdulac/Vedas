@@ -236,8 +236,12 @@ _NAMED_HYMN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     ),
 )
 
+# Só nomes distintivos no *chunk*. Gāyatrī/Hiraṇyagarbha/Vāk na query
+# extraem o id (3.62 / 10.121 / 10.125); casar o nome no texto também
+# subiria Chandogya III.12 (metro Gāyatrī) ou antologias genéricas.
 _NAMED_IN_BLOB: dict[str, re.Pattern[str]] = {
-    hymn: pattern for pattern, hymn in _NAMED_HYMN_PATTERNS
+    "10.129": re.compile(r"n[aā]sad[iī]ya|नासदीय|नासदासीन्", re.I),
+    "10.90": re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta|\bpurusa\s+sukta", re.I),
 }
 
 # "RV 10.129", "hymn 1.1", ou id solto "10.129" / "10.90".
@@ -312,7 +316,10 @@ def _chunk_locator_blob(chunk: dict[str, Any]) -> str:
 
 
 def chunk_matches_hymn(chunk: dict[str, Any], hymn: str, *, text_too: bool = True) -> str | None:
-    """Retorna 'title' | 'text' conforme onde o id (ou nome canônico) aparece."""
+    """Retorna 'title' | 'text' conforme onde o id (ou nome distintivo) aparece.
+
+    Gāyatrī → 3.62 casa o id RV, não a palavra 'Gayatri' em Chandogya III.12.
+    """
     loc_blob = _chunk_locator_blob(chunk)
     text_blob = str(chunk.get("text") or "") if text_too else ""
     named = _NAMED_IN_BLOB.get(hymn)

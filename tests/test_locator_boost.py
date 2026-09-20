@@ -182,6 +182,66 @@ class LocatorHymnBoostTests(unittest.TestCase):
         )
         self.assertEqual(hits[0]["chunk_id"], "62")
 
+    def test_gayatri_does_not_boost_chandogya_iii_12(self):
+        """Mac beyond-gold: gayatri-mantra top-1 was Chandogya III.12, not RV 3.62."""
+        hits = hybrid_rerank(
+            "Gayatri mantra Savitr",
+            [
+                {
+                    "chunk_id": "ch-iii12",
+                    "doc_id": "chandogya",
+                    "title": "Chandogya Upanishad III.12 (Müller, SBE01, sacred-texts)",
+                    "locator": "Chandogya III.12",
+                    "text": "Gayatri is everything whatsoever here exists. Gayatri is speech.",
+                    "score": 0.95,
+                },
+                {
+                    "chunk_id": "62",
+                    "doc_id": "rv-362",
+                    "title": "Rigveda RV 3.62 (Griffith)",
+                    "locator": "RV 3.62",
+                    "text": "May we attain that excellent glory of Savitar the God",
+                    "score": 0.35,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "62")
+        self.assertGreater(hits[0].get("_hymn_boost") or 0, 0)
+        decoy = next(h for h in hits if h["chunk_id"] == "ch-iii12")
+        self.assertIsNone(decoy.get("_hymn_match"))
+
+    def test_hiranyagarbha_beats_generic_selected_hymns(self):
+        """Mac beyond-gold: hiranyagarbha top-1 was a generic RV anthology, not 10.121."""
+        hits = hybrid_rerank(
+            "Hiranyagarbha golden womb",
+            [
+                {
+                    "chunk_id": "sel",
+                    "doc_id": "rv-selected",
+                    "title": "Rig Veda selected hymns",
+                    "locator": "",
+                    "text": "A compilation of famous suktas including Hiranyagarbha in passing.",
+                    "score": 0.95,
+                },
+                {
+                    "chunk_id": "121",
+                    "doc_id": "rv-121",
+                    "title": "Rigveda RV 10.121 (Griffith)",
+                    "locator": "RV 10.121",
+                    "text": "In the beginning rose Hiranyagarbha, born Only Lord of all created beings.",
+                    "score": 0.35,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "121")
+        self.assertGreater(hits[0].get("_hymn_boost") or 0, 0)
+        decoy = next(h for h in hits if h["chunk_id"] == "sel")
+        self.assertIsNone(decoy.get("_hymn_match"))
+
     def test_roman_x_129_in_body_of_selected_hymns(self):
         pool = [
             {
