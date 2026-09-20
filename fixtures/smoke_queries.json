@@ -1,8 +1,8 @@
 {
   "meta": {
     "description": "Gold set de regressão de retrieval (título/tradição esperados no top-k)",
-    "version": 2,
-    "notes": "Queries calibradas após corpus com Mahābhārata completo (muitos chunks dominam ranking genérico)."
+    "version": 3,
+    "notes": "Queries calibradas após corpus com Mahābhārata completo (muitos chunks dominam ranking genérico). v3: 19 queries — 10 originais (ids estáveis) + 9 append-only verificadas no híbrido (CE off). expect_title_any estrito (sem token solto 'Rig'). CI continua em smoke_queries_ci.json."
   },
   "queries": [
     {
@@ -77,6 +77,69 @@
       "query": "Laws of Manu on dharma and social order",
       "top_k": 8,
       "expect_title_any": ["Manu", "Laws"],
+      "min_hits": 1
+    },
+    {
+      "id": "katha-nachiketas",
+      "query": "Nachiketas and Yama in the Katha Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Katha", "Kaṭha", "Katha Upanishad"],
+      "min_hits": 1
+    },
+    {
+      "id": "gita-2-47",
+      "query": "Bhagavad Gita 2.47 you have a right to action never to its fruits",
+      "top_k": 8,
+      "expect_title_any": ["Gita", "Gītā", "Bhagavad", "Song Celestial"],
+      "min_hits": 1
+    },
+    {
+      "id": "yoga-1-2",
+      "query": "Patanjali Yoga Sutras yogaś citta-vṛtti-nirodhaḥ definition of yoga",
+      "top_k": 8,
+      "expect_title_any": ["Yoga Sutras", "Yoga Sutra", "Patanjali", "Patañjali"],
+      "min_hits": 1
+    },
+    {
+      "id": "rama-sita-abduction",
+      "query": "Ravana abducts Sita from the forest Ramayana of Valmiki",
+      "top_k": 8,
+      "expect_title_any": ["Ramayan", "Rāmāyaṇ", "Valmiki"],
+      "min_hits": 1
+    },
+    {
+      "id": "bhishma-arrows",
+      "query": "Bhishma lies on a bed of arrows in the Mahabharata",
+      "top_k": 8,
+      "expect_title_any": ["Mahabharata", "Mahābhārata", "Ganguli"],
+      "min_hits": 1
+    },
+    {
+      "id": "ishavasya-sa",
+      "query": "ईशावास्यमिदं सर्वं यत्किञ्च जगत्यां जगत् Isha Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Isha", "Īśā", "Isa Upanishad", "Isha Upanishad"],
+      "min_hits": 1
+    },
+    {
+      "id": "shvetashvatara-rudra",
+      "query": "Shvetashvatara Upanishad one Rudra God creator",
+      "top_k": 8,
+      "expect_title_any": ["Shvetashvatara", "Śvetāśvatara", "Svetasvatara"],
+      "min_hits": 1
+    },
+    {
+      "id": "prasna-six",
+      "query": "Prasna Upanishad six questions to Pippalada",
+      "top_k": 8,
+      "expect_title_any": ["Prasna", "Praśna", "Prashna"],
+      "min_hits": 1
+    },
+    {
+      "id": "mundaka-two-birds",
+      "query": "Mundaka Upanishad two birds on the same tree",
+      "top_k": 8,
+      "expect_title_any": ["Mundaka", "Muṇḍaka"],
       "min_hits": 1
     }
   ]

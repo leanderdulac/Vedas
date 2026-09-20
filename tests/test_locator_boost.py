@@ -24,6 +24,14 @@ class HymnIdExtractTests(unittest.TestCase):
             ["10.129"],
         )
         self.assertEqual(extract_query_hymn_ids("nāsadīya sūkta"), ["10.129"])
+        self.assertEqual(
+            extract_query_hymn_ids("नासदासीन् नो सदासीत् तदानीं"),
+            ["10.129"],
+        )
+        self.assertEqual(
+            extract_query_hymn_ids("नासदासीन् नो सदासीत् तदानीं 10.129"),
+            ["10.129"],
+        )
 
     def test_purusha_sukta_maps_to_10_90(self):
         self.assertEqual(
@@ -165,6 +173,33 @@ class LocatorHymnBoostTests(unittest.TestCase):
         invalidate_reranker()
         self.assertEqual(hits[0]["chunk_id"], "129")
         mock_ce.predict.assert_called()
+
+    def test_devanagari_nasadiya_boosts_10_129(self):
+        hits = hybrid_rerank(
+            "नासदासीन् नो सदासीत् तदानीं 10.129",
+            [
+                {
+                    "chunk_id": "125",
+                    "doc_id": "rv-125",
+                    "title": "Rigveda RV 10.125 (Griffith)",
+                    "locator": "RV 10.125",
+                    "text": "I am the queen, the gatherer-up of treasures.",
+                    "score": 0.95,
+                },
+                {
+                    "chunk_id": "129",
+                    "doc_id": "rv-129",
+                    "title": "Rigveda RV 10.129 Nasadiya (Griffith)",
+                    "locator": "RV 10.129",
+                    "text": "Then was not non-existent nor existent.",
+                    "score": 0.35,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "129")
+        self.assertGreater(hits[0].get("_hymn_boost") or 0, 0)
 
     def test_purusha_sukta_boosts_10_90(self):
         hits = hybrid_rerank(

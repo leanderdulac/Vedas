@@ -5,7 +5,9 @@
 
 ## Resultado A/B no gold de smoke
 
-Gold: `fixtures/smoke_queries.json` (10 queries). Relatórios locais: `data/smoke_report_rerank_off.json` / `data/smoke_report_rerank_on.json`.
+Gold **do snapshot** (2026-09-20): `fixtures/smoke_queries.json` tinha **10 queries**. Relatórios locais: `data/smoke_report_rerank_off.json` / `data/smoke_report_rerank_on.json`.
+
+O arquivo atual é o **gold expandido** (19 queries: 10 originais + 9 append-only verificadas no híbrido). O gate de promote (`eval_reranker_smoke.py`) e o smoke de retrieval devem usar esse gold — não o recorte histórico de 10 nem `fixtures/smoke_queries_ci.json`.
 
 | Modo | Pass | Notas |
 |------|------|-------|
@@ -29,7 +31,7 @@ Treinar o MiniLM ms-marco nos pares gold (v1→v3, inclusive hard negatives de 1
 Conclusão: CE fine-tune **sozinho** não é suficiente para opt-in. Antes de ligar:
 
 1. **Boost de locator/hino** no híbrido (e de novo após o CE) — PoC local restaurou Nasadiya sob pressão do CE; agora está em `apply_locator_hymn_boost`.
-2. **Pares maiores/melhores** (mais decoys, mais âncoras de hino, holdout real) — o gold de 10 queries é estreito demais para o CE generalizar 10.129 vs 10.125.
+2. **Pares maiores/melhores** (mais decoys, mais âncoras de hino, holdout real) — o snapshot de 10 queries era estreito demais para o CE generalizar 10.129 vs 10.125. O gold expandido (Kaṭha, Gītā 2.47, Yoga 1.2, épicos, Īśā em Devanāgarī, Śvetāśvatara, Praśna, Muṇḍaka) é o conjunto que o gate deve medir.
 
 ## Política atual
 
@@ -67,7 +69,7 @@ python scripts/build_rerank_pairs.py \
 python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 python scripts/train_reranker.py --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 
-# 3. Gate A/B no gold — exit ≠ 0 se o CE de domínio for pior OU se Nasadiya falhar
+# 3. Gate A/B no gold expandido — exit ≠ 0 se o CE de domínio for pior OU se Nasadiya falhar
 python scripts/eval_reranker_smoke.py \
   --model artifacts/reranker \
   --queries fixtures/smoke_queries.json \
@@ -88,9 +90,11 @@ Promote (**exit 0**) somente se **ambos** valerem:
 | Pass rate do CE de domínio **≥** pass rate do híbrido (CE off) | `ce_worse_overall` |
 | O CE **passa Nasadiya** (`nasadiya` / RV 10.129) quando a query está no gold | `nasadiya_failed` (+ `nasadiya_regressed` se o híbrido passava) |
 
-Medição Mac 2026-09-20 (domínio v1–v3): **não promove** — 9/10 vs híbrido 10/10, Nasadiya falha com tops 10.125 / 10.5.
+Medição Mac 2026-09-20 (domínio v1–v3, gold de 10): **não promove** — 9/10 vs híbrido 10/10, Nasadiya falha com tops 10.125 / 10.5.
 
 O JSON traz `per_query` (ok híbrido vs CE + `top_titles`) e um bloco dedicado `nasadiya`.
+
+**Gold do gate:** sempre `fixtures/smoke_queries.json` expandido (19 queries: ids originais estáveis + Kaṭha Nachiketas, Gītā 2.47, Yoga 1.2, rapto de Sītā, leito de flechas de Bhīṣma, Īśā em Devanāgarī, Śvetāśvatara, Praśna, Muṇḍaka). Só entram queries com `expect_title_any` estrito que passaram no híbrido (CE off). O CI reduzido (`smoke_queries_ci.json`) não substitui o gate. CE continua **off** por default.
 
 O default permanece **OFF**. `eval_reranker_smoke.py` troca `VEDIC_ENABLE_RERANKER` / `VEDIC_RERANKER_MODEL` no processo e recarrega o singleton; não deixa o CE ligado ao sair.
 

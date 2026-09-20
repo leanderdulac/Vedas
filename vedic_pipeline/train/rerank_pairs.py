@@ -30,7 +30,7 @@ PAIR_FIELDS = ("query", "text", "label", "query_id", "doc_title", "split")
 
 # Hinos que o CE genérico (ms-marco MiniLM) empurrou no lugar de RV 10.129.
 NASADIYA_HARD_NEG_HYMNS = ("10.125", "10.5", "2.38")
-PIN_TRAIN_QUERY_IDS = frozenset({"nasadiya"})
+PIN_TRAIN_QUERY_IDS = frozenset({"nasadiya", "nasadiya-deva"})
 
 _HYMN_NUM_RE = re.compile(r"^\d+\.\d+$")
 _HYMN_IN_PATTERN_RE = re.compile(r"\d+\.\d+")
@@ -75,7 +75,12 @@ def title_matches(title: str, patterns: Iterable[str], *, prefer_strict: bool = 
 
 def is_nasadiya_query(query_id: str, query: str = "") -> bool:
     blob = f"{query_id} {query}".lower()
-    return "nasadiya" in blob or "nāsadīya" in blob
+    return (
+        "nasadiya" in blob
+        or "nāsadīya" in blob
+        or "नासदीय" in blob
+        or "नासदासीन्" in blob
+    )
 
 
 def hit_title_blob(hit: dict[str, Any]) -> str:
