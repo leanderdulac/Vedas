@@ -12,9 +12,10 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR, PROJECT_ROOT
 
