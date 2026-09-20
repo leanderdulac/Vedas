@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--gold",
         default=str(DEFAULT_GOLD),
-        help="Gold expandido (fixtures/smoke_queries.json; 19 queries)",
+        help="Gold expandido (fixtures/smoke_queries.json; 37 queries)",
     )
     parser.add_argument(
         "--candidates",

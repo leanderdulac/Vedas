@@ -1,8 +1,9 @@
 {
   "meta": {
     "description": "Gold set de regressão de retrieval (título/tradição esperados no top-k)",
-    "version": 3,
-    "notes": "Queries calibradas após corpus com Mahābhārata completo (muitos chunks dominam ranking genérico). v3: 19 queries — 10 originais (ids estáveis) + 9 append-only verificadas no híbrido (CE off). expect_title_any estrito (sem token solto 'Rig'). CI continua em smoke_queries_ci.json."
+    "version": 4,
+    "count": 37,
+    "notes": "Queries calibradas após corpus com Mahābhārata completo (muitos chunks dominam ranking genérico). v4: 37 queries — 19 anteriores (10 originais + 9 append-only híbrido) + 18 beyond-stress após locator PRs #5–#9, verificadas no híbrido Mac top-1 (CE off; 24/25 no stress; short-dharma excluído de propósito). expect_title_any estrito (sem token solto 'Rig'). CI continua no recorte rápido smoke_queries_ci.json; este arquivo é o gold do gate de promote."
   },
   "queries": [
     {
@@ -140,6 +141,132 @@
       "query": "Mundaka Upanishad two birds on the same tree",
       "top_k": 8,
       "expect_title_any": ["Mundaka", "Muṇḍaka"],
+      "min_hits": 1
+    },
+    {
+      "id": "wrong-nasadiya-10-125",
+      "query": "Nasadiya Sukta Rig Veda 10.125 creation hymn",
+      "top_k": 8,
+      "expect_title_any": ["10.129", "Nasadiya"],
+      "min_hits": 1
+    },
+    {
+      "id": "wrong-purusha-10-9",
+      "query": "Purusha Sukta hymn 10.9 cosmic person",
+      "top_k": 8,
+      "expect_title_any": ["10.90", "Purusha", "Purusa"],
+      "min_hits": 1
+    },
+    {
+      "id": "rv-10-5-exact",
+      "query": "Rig Veda hymn 10.5 Griffith",
+      "top_k": 8,
+      "expect_title_any": ["10.5"],
+      "min_hits": 1
+    },
+    {
+      "id": "gayatri-mantra",
+      "query": "Gayatri mantra Savitr Rig Veda",
+      "top_k": 8,
+      "expect_title_any": ["3.62", "Gayatri", "Savit"],
+      "min_hits": 1
+    },
+    {
+      "id": "hiranyagarbha",
+      "query": "Hiranyagarbha Sukta golden embryo Rig Veda",
+      "top_k": 8,
+      "expect_title_any": ["10.121", "Hiranyagarbha"],
+      "min_hits": 1
+    },
+    {
+      "id": "vak-sukta",
+      "query": "Vak Sukta I am the queen gatherer of treasures",
+      "top_k": 8,
+      "expect_title_any": ["10.125", "Vak", "Vāc"],
+      "min_hits": 1
+    },
+    {
+      "id": "nasadiya-devanagari-only",
+      "query": "नासदासीन् नो सदासीत् तदानीं",
+      "top_k": 8,
+      "expect_title_any": ["10.129", "Nasadiya"],
+      "min_hits": 1
+    },
+    {
+      "id": "gayatri-devanagari",
+      "query": "तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि",
+      "top_k": 8,
+      "expect_title_any": ["3.62", "Gayatri", "Savit"],
+      "min_hits": 1
+    },
+    {
+      "id": "isha-iast-vs-dev",
+      "query": "īśāvāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat",
+      "top_k": 8,
+      "expect_title_any": ["Isha", "Īśā", "Isa"],
+      "min_hits": 1
+    },
+    {
+      "id": "brihad-neti",
+      "query": "neti neti Brihadaranyaka Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Brihad", "Bṛhad", "Brihadaranyaka"],
+      "min_hits": 1
+    },
+    {
+      "id": "katha-vs-kaushitaki",
+      "query": "Nachiketas meets Death Kaushitaki Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Katha", "Kaṭha"],
+      "min_hits": 1
+    },
+    {
+      "id": "mandukya-om",
+      "query": "Mandukya Upanishad syllable Om four quarters",
+      "top_k": 8,
+      "expect_title_any": ["Mandukya", "Māṇḍūkya"],
+      "min_hits": 1
+    },
+    {
+      "id": "samaveda-melody",
+      "query": "Sama Veda chant melody of Rig verses",
+      "top_k": 8,
+      "expect_title_any": ["Sama", "Sāma", "Samaveda"],
+      "min_hits": 1
+    },
+    {
+      "id": "yajur-shukla",
+      "query": "Shukla Yajur Veda Vajasaneyi Samhita",
+      "top_k": 8,
+      "expect_title_any": ["Yajur", "Vajasaneyi", "White Yajur"],
+      "min_hits": 1
+    },
+    {
+      "id": "pt-nasadiya",
+      "query": "hino da criação do Rigveda Nasadiya o que diz",
+      "top_k": 8,
+      "expect_title_any": ["10.129", "Nasadiya"],
+      "min_hits": 1
+    },
+    {
+      "id": "pt-gita-acao",
+      "query": "Bhagavad Gita direito à ação sem frutos do karma",
+      "top_k": 8,
+      "expect_title_any": ["Gita", "Gītā", "Bhagavad", "Song Celestial"],
+      "min_hits": 1
+    },
+    {
+      "id": "pt-yoga-definicao",
+      "query": "definição de yoga nos Yoga Sutras de Patanjali",
+      "top_k": 8,
+      "expect_title_any": ["Yoga", "Patanjali", "Patañjali"],
+      "min_hits": 1
+    },
+    {
+      "id": "sita-abduction-wrong-epic",
+      "query": "Sita abduction in the Mahabharata forest",
+      "top_k": 8,
+      "expect_title_any": ["Ramayan", "Rāmāyaṇ", "Valmiki"],
       "min_hits": 1
     }
   ]

@@ -1,7 +1,9 @@
 {
   "meta": {
-    "description": "Gold set reduzido para CI (fixtures locais apenas)",
-    "version": 1
+    "description": "Gold set reduzido para CI (fixtures locais apenas). Recorte rápido — não substitui o gold de promote em fixtures/smoke_queries.json (37 queries).",
+    "version": 1,
+    "count": 4,
+    "notes": "CI (.github/workflows/smoke.yml) usa este recorte de 4 queries para não explodir o runtime. O gate de promote e o smoke local completo leem o gold expandido."
   },
   "queries": [
     {
