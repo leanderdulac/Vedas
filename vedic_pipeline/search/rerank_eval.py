@@ -34,7 +34,7 @@ def compare_smoke_suites(
 
     Gate de promote (exit 0):
     - pass rate do CE >= pass rate do híbrido
-    - se o híbrido passa Nasadiya, o CE também passa
+    - o CE **passa Nasadiya** (query presente no gold)
     """
     h_pass, h_total, h_rate = _pass_rate(hybrid)
     c_pass, c_total, c_rate = _pass_rate(ce)
@@ -88,6 +88,8 @@ def compare_smoke_suites(
             "hybrid_top_titles": list((nas_h or {}).get("top_titles") or []),
             "ce_top_titles": list((nas_c or {}).get("top_titles") or []),
         }
+        if not nasadiya["ce_ok"]:
+            reasons.append("nasadiya_failed")
         if nasadiya["hybrid_ok"] and not nasadiya["ce_ok"]:
             reasons.append("nasadiya_regressed")
 

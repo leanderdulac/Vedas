@@ -306,7 +306,7 @@ python -m vedic_pipeline train-model --base-model gpt2 --block-size 128 --max-st
 
 ## Reranker (Cross-Encoder)
 
-**Desligado por padrão.** Em 2026-09-20 o híbrido sozinho fez **10/10** no gold de smoke; o `cross-encoder/ms-marco-MiniLM-L-6-v2` caiu para **9/10** (regressão `nasadiya` / RV 10.129). Decisão e critérios de promote: [`docs/reranker_decision.md`](docs/reranker_decision.md).
+**Desligado por padrão.** Não promover: o híbrido faz **10/10**; CE genérico e CE de domínio v1–v3 ficam **9/10** (Nasadiya / RV 10.129, tops 10.125 e 10.5). Fine-tune sozinho não corrigiu; o híbrido aplica boost de locator/hino e o gate exige CE ≥ híbrido **e** Nasadiya ok. Ver [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ```bash
 # Opt-in explícito (só depois de um CE de domínio validado)
@@ -340,7 +340,7 @@ python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_re
 Gold set: `fixtures/smoke_queries.json` (Isha, Gītā, Nasadiya, Puruṣa, Agni 1.1, Yoga-sūtra, Rāmāyaṇa, Mahābhārata, Manu…).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json`.
 
-O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico 9/10) e o gate train→eval→promote estão em [`docs/reranker_decision.md`](docs/reranker_decision.md).
+O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico **e** domínio v1–v3 em 9/10) e o gate train→eval→promote estão em [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ## Docker
 

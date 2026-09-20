@@ -12,6 +12,9 @@ Gold: `fixtures/smoke_queries.json` (10 queries). Relatórios locais: `data/smok
 | Híbrido **sem** CrossEncoder (`VEDIC_ENABLE_RERANKER=false`) | **10/10** | ranking numpy + léxico + boosts |
 | Reranker ON, CE **sem** cache | 10/10 | o modelo não carregou — ranking = OFF |
 | Reranker ON, `cross-encoder/ms-marco-MiniLM-L-6-v2` em cache | **9/10** | CE genérico ativo |
+| CE de **domínio** v1 (117 pares gold) | **9/10** | Nasadiya falha |
+| CE de domínio v2 | **9/10** | Nasadiya falha |
+| CE de domínio v3 (hard neg. explícitos 10.125 / 10.5) | **9/10** | tops errados: RV **10.125** depois **10.5** |
 
 ### Delta com o CE genérico ligado
 
@@ -19,14 +22,29 @@ Gold: `fixtures/smoke_queries.json` (10 queries). Relatórios locais: `data/smok
 - **Regressão:** `nasadiya` (title_mismatch). O CE empurrou RV 10.125 / 10.5 / 2.38 no lugar de **RV 10.129**.
 - Latência: 1ª query ~24s (cold start do CE); demais ~iguais ao OFF (+100–200ms).
 
-Conclusão: o MiniLM ms-marco **não** é ganho gratuito neste gold. O híbrido sozinho já passa 10/10.
+### Fine-tune de domínio **não** corrigiu Nasadiya
+
+Treinar o MiniLM ms-marco nos pares gold (v1→v3, inclusive hard negatives de 10.125 / 10.5) **não** tirou RV 10.129 do buraco: o smoke com CE de domínio continua **9/10**, mesmos decoys. O híbrido sem CE segue **10/10**.
+
+Conclusão: CE fine-tune **sozinho** não é suficiente para opt-in. Antes de ligar:
+
+1. **Boost de locator/hino** no híbrido (e de novo após o CE) — PoC local restaurou Nasadiya sob pressão do CE; agora está em `apply_locator_hymn_boost`.
+2. **Pares maiores/melhores** (mais decoys, mais âncoras de hino, holdout real) — o gold de 10 queries é estreito demais para o CE generalizar 10.129 vs 10.125.
 
 ## Política atual
 
-1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). O caminho de produção não carrega o CE a menos que se opte explicitamente (`true` / `1` / `on` / `yes`).
+1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). **Não promover** o CE (genérico nem domínio v1–v3).
 2. `VEDIC_RERANKER_MODEL` pode ser um id HF **ou** um diretório local (`artifacts/reranker`); o loader resolve o path absoluto quando o dir existe.
-3. Fine-tune só faz sentido com pares que **protejam Nasadiya** — positivos com marcadores de hino (`10.129` / Nasadiya) em vez do rótulo amplo "Rig Veda", e hard negatives 10.125 / 10.5 / 2.38 quando aparecerem nos candidatos.
+3. Fine-tune só faz sentido com pares que **protejam Nasadiya** — positivos com marcadores de hino (`10.129` / Nasadiya) em vez do rótulo amplo "Rig Veda", e hard negatives 10.125 / 10.5 / 2.38 quando aparecerem nos candidatos — **e** com o boost de locator abaixo.
 4. **Não** treinar GPT-2 / LM causal para ranking.
+
+## Boost de locator / hino (híbrido ± CE)
+
+Quando a query cita **Nasadiya** (→ 10.129), **Purusha Sukta** (→ 10.90) ou um **RV X.Y** explícito (`hymn 1.1`, `10.129`, `RV 10.90`), os candidatos cujo `title` / `locator` / texto contêm esse id sobem. Casa `10.5` sem `10.50`; também `HYMN X.129` (romano).
+
+Aplicado **no híbrido** (antes do CE, para o hino certo entrar no slice) e **de novo depois do CE** quando o reranker está ligado — senão o CE volta a enterrar 10.129.
+
+Isso **não** liga o CE. Só reduz a regressão se alguém optar pelo modelo local.
 
 ## Gate train → eval → promote
 
@@ -49,14 +67,14 @@ python scripts/build_rerank_pairs.py \
 python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 python scripts/train_reranker.py --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 
-# 3. Gate A/B no gold — exit ≠ 0 se o CE de domínio for pior OU se Nasadiya regride
+# 3. Gate A/B no gold — exit ≠ 0 se o CE de domínio for pior OU se Nasadiya falhar
 python scripts/eval_reranker_smoke.py \
   --model artifacts/reranker \
   --queries fixtures/smoke_queries.json \
   --backend numpy \
   --json-out data/rerank_eval.json
 
-# 4. Só então, opt-in local/prod
+# 4. Só então, opt-in local/prod (default continua false)
 export VEDIC_ENABLE_RERANKER=true
 export VEDIC_RERANKER_MODEL=artifacts/reranker
 ```
@@ -68,7 +86,9 @@ Promote (**exit 0**) somente se **ambos** valerem:
 | Critério | Falha (exit 1) |
 |----------|----------------|
 | Pass rate do CE de domínio **≥** pass rate do híbrido (CE off) | `ce_worse_overall` |
-| Se o híbrido **passa** Nasadiya (`nasadiya` / RV 10.129), o CE também passa | `nasadiya_regressed` |
+| O CE **passa Nasadiya** (`nasadiya` / RV 10.129) quando a query está no gold | `nasadiya_failed` (+ `nasadiya_regressed` se o híbrido passava) |
+
+Medição Mac 2026-09-20 (domínio v1–v3): **não promove** — 9/10 vs híbrido 10/10, Nasadiya falha com tops 10.125 / 10.5.
 
 O JSON traz `per_query` (ok híbrido vs CE + `top_titles`) e um bloco dedicado `nasadiya`.
 
@@ -81,4 +101,5 @@ Latência p95 CPU não deve ficar >2× o híbrido (critério operacional, fora d
 - Não substituir `/ask` / xAI por LM causal fine-tuned para “melhorar ranking”.
 - Não treinar embedding sânscrito-específico antes de medir falhas reais do MiniLM atual.
 - Não commitar pesos grandes nem corpus em git.
-- Não ligar o CE genérico `cross-encoder/ms-marco-MiniLM-L-6-v2` em produção.
+- Não ligar o CE genérico `cross-encoder/ms-marco-MiniLM-L-6-v2` **nem** o CE de domínio v1–v3 em produção.
+- Não tratar o fine-tune gold-only como correção de Nasadiya.

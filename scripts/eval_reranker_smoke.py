@@ -8,7 +8,7 @@ Uso:
     --queries fixtures/smoke_queries.json \\
     --json-out data/rerank_eval.json
 
-Exit 0: CE de domínio >= híbrido no pass rate E não regride Nasadiya.
+Exit 0: CE de domínio >= híbrido no pass rate E o CE passa Nasadiya.
 Exit 1: gate de promote falhou.
 Exit 2: índice/modelo local ausente ou suíte não rodou.
 """

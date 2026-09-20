@@ -204,6 +204,139 @@ _EPIC_QUERY_HINTS = frozenset(
     }
 )
 
+# Mandala 1–10 em romano (Griffith: "HYMN X.129").
+_MANDALA_ROMAN = {
+    1: "I",
+    2: "II",
+    3: "III",
+    4: "IV",
+    5: "V",
+    6: "VI",
+    7: "VII",
+    8: "VIII",
+    9: "IX",
+    10: "X",
+}
+
+_NAMED_HYMN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"n[aā]sad[iī]ya", re.I), "10.129"),
+    (
+        re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta|\bpurusa\s+sukta", re.I),
+        "10.90",
+    ),
+)
+
+_NAMED_IN_BLOB: dict[str, re.Pattern[str]] = {
+    "10.129": re.compile(r"n[aā]sad[iī]ya", re.I),
+    "10.90": re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta", re.I),
+}
+
+# "RV 10.129", "hymn 1.1", ou id solto "10.129" / "10.90".
+_EXPLICIT_HYMN_RE = re.compile(
+    r"(?:(?:\brv\b|ṛgveda|rigveda|rig\s*veda|hymn|s[uū]kta)\s*)(\d{1,2}\.\d{1,3})"
+    r"|\b(\d{1,2}\.\d{1,3})\b",
+    re.I,
+)
+
+# PoC local: +~1.4 no título restaurou Nasadiya sob pressão do CE genérico.
+LOCATOR_HYMN_TITLE_BOOST = 1.45
+LOCATOR_HYMN_TEXT_BOOST = 1.05
+
+
+def hymn_id_in_blob(blob: str, hymn: str) -> bool:
+    """Casa 10.5 em 'RV 10.5' sem casar 10.50 / 10.125."""
+    escaped = re.escape((hymn or "").strip())
+    if not escaped:
+        return False
+    return re.search(rf"(?<![\d.]){escaped}(?!\d)", blob or "", flags=re.I) is not None
+
+
+def hymn_id_variants(hymn: str) -> list[str]:
+    raw = (hymn or "").strip()
+    if not raw or "." not in raw:
+        return [raw] if raw else []
+    book_s, num = raw.split(".", 1)
+    variants = [raw]
+    try:
+        roman = _MANDALA_ROMAN.get(int(book_s))
+    except ValueError:
+        roman = None
+    if roman:
+        variants.append(f"{roman}.{num}")
+    return variants
+
+
+def extract_query_hymn_ids(query: str) -> list[str]:
+    """Hinos pedidos na query: Nasadiya→10.129, Purusha Sukta→10.90, RV X.Y explícito."""
+    text = query or ""
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def add(hymn: str) -> None:
+        key = hymn.strip()
+        if key and key not in seen:
+            seen.add(key)
+            found.append(key)
+
+    for pattern, hymn in _NAMED_HYMN_PATTERNS:
+        if pattern.search(text):
+            add(hymn)
+    for match in _EXPLICIT_HYMN_RE.finditer(text):
+        add(match.group(1) or match.group(2) or "")
+    return found
+
+
+def _chunk_locator_blob(chunk: dict[str, Any]) -> str:
+    return " ".join(
+        str(chunk.get(key) or "") for key in ("title", "locator", "heading", "work")
+    )
+
+
+def chunk_matches_hymn(chunk: dict[str, Any], hymn: str, *, text_too: bool = True) -> str | None:
+    """Retorna 'title' | 'text' conforme onde o id (ou nome canônico) aparece."""
+    loc_blob = _chunk_locator_blob(chunk)
+    text_blob = str(chunk.get("text") or "") if text_too else ""
+    named = _NAMED_IN_BLOB.get(hymn)
+    if named and named.search(loc_blob):
+        return "title"
+    for variant in hymn_id_variants(hymn):
+        if hymn_id_in_blob(loc_blob, variant):
+            return "title"
+    if not text_too:
+        return None
+    if named and named.search(text_blob):
+        return "text"
+    for variant in hymn_id_variants(hymn):
+        if hymn_id_in_blob(text_blob, variant):
+            return "text"
+    return None
+
+
+def apply_locator_hymn_boost(query: str, pool: list[dict[str, Any]]) -> None:
+    """Sobe candidatos cujo título/locator/texto traz o hino pedido na query.
+
+    Corre no híbrido e de novo *depois* do CE (quando ligado): o MiniLM genérico
+    e o CE de domínio v1–v3 ainda empurram RV 10.125 / 10.5 no lugar de 10.129.
+    """
+    hymns = extract_query_hymn_ids(query)
+    if not hymns or not pool:
+        return
+    for chunk in pool:
+        best = 0.0
+        matched: str | None = None
+        for hymn in hymns:
+            where = chunk_matches_hymn(chunk, hymn)
+            if where == "title":
+                best = max(best, LOCATOR_HYMN_TITLE_BOOST)
+                matched = hymn
+            elif where == "text":
+                best = max(best, LOCATOR_HYMN_TEXT_BOOST)
+                matched = matched or hymn
+        if best:
+            chunk["score"] = round(float(chunk.get("score") or 0.0) + best, 4)
+            chunk["_hymn_boost"] = best
+            chunk["_hymn_match"] = matched
+
 
 def diversify_by_doc(
     hits: list[dict[str, Any]],
@@ -261,8 +394,8 @@ def hybrid_rerank(
     Combina ranking semântico (já filtrado) com score lexical nos mesmos hits
     e, se all_chunks for dado, amplia candidatos lexicais.
 
-    Pós-processamento: boost de título/hino + Cross-Encoder + diversificação por doc_id
-    (evita top-k monopolizado pelo Mahābhārata).
+    Pós-processamento: boost de título/hino + locator/RV X.Y + Cross-Encoder
+    (locator de novo após o CE) + diversificação por doc_id.
     """
     pool: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
@@ -320,6 +453,7 @@ def hybrid_rerank(
         c.pop("_sem_score", None)
 
     apply_title_and_size_boost(query, pool)
+    apply_locator_hymn_boost(query, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
 
     if use_cross_encoder and is_reranker_enabled() and pool:
@@ -327,6 +461,8 @@ def hybrid_rerank(
         top_candidates = pool[:top_slice_size]
         reranked_top = rerank_chunks(query, top_candidates, top_k=top_slice_size)
         pool = reranked_top + pool[top_slice_size:]
+        # CE genérico/domínio ainda inverte Nasadiya → 10.125/10.5; reaplicar o locator.
+        apply_locator_hymn_boost(query, pool)
 
     apply_phrase_boost(query, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)

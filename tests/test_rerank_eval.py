@@ -98,10 +98,27 @@ class RerankEvalGateTests(unittest.TestCase):
         )
         comparison = compare_smoke_suites(hybrid, ce, model="ms-marco")
         self.assertFalse(comparison["promote"])
+        self.assertIn("nasadiya_failed", comparison["fail_reasons"])
         self.assertIn("nasadiya_regressed", comparison["fail_reasons"])
         self.assertIn("ce_worse_overall", comparison["fail_reasons"])
         self.assertEqual(comparison["nasadiya"]["ce_top_titles"][0], "Rigveda RV 10.125")
         self.assertTrue(find_nasadiya_row(ce["results"]))
+
+    def test_equal_rates_still_fail_if_ce_misses_nasadiya(self):
+        rows_fail = [
+            {
+                "id": "nasadiya",
+                "query": "Nasadiya",
+                "ok": False,
+                "top_titles": ["Rigveda RV 10.125"],
+            },
+            {"id": "isha-self", "query": "Isha", "ok": True, "top_titles": ["Isha"]},
+        ]
+        comparison = compare_smoke_suites(_suite(rows_fail), _suite(rows_fail), model="domain-v3")
+        self.assertFalse(comparison["promote"])
+        self.assertIn("nasadiya_failed", comparison["fail_reasons"])
+        self.assertNotIn("ce_worse_overall", comparison["fail_reasons"])
+        self.assertEqual(gate_exit_code(comparison), 1)
 
     def test_ci_gold_without_nasadiya_only_checks_pass_rate(self):
         rows = [
