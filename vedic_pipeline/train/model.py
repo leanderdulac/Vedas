@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +13,85 @@ from vedic_pipeline.common.constants import DEFAULT_BASE_MODEL, DEFAULT_MODEL_DI
 from vedic_pipeline.common.corpus import iter_corpus_texts, utc_now_iso
 
 logger = logging.getLogger("vedic_pipeline.train.model")
+
+_UNEXPECTED_KWARG = re.compile(r"unexpected keyword argument ['\"](\w+)['\"]")
+
+
+def filter_supported_kwargs(fn: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Drop kwargs that are not named parameters of ``fn`` (or ``fn.__init__``).
+
+    transformers 5.x removed several ``TrainingArguments`` fields without a
+    deprecation cycle (notably ``overwrite_output_dir``). Filtering by
+    signature keeps ``train-model`` working on 4.x and 5.x.
+    """
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError):
+        try:
+            sig = inspect.signature(fn.__init__)
+        except (TypeError, ValueError, AttributeError):
+            return dict(kwargs)
+
+    named = {
+        name
+        for name, param in sig.parameters.items()
+        if name != "self"
+        and param.kind
+        in (
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+    }
+    return {key: value for key, value in kwargs.items() if key in named}
+
+
+def causal_lm_training_kwargs(
+    *,
+    out_dir: Path,
+    epochs: int,
+    batch_size: int,
+    learning_rate: float,
+    max_steps: int | None,
+    fp16: bool,
+    use_cuda: bool,
+) -> dict[str, Any]:
+    """Kwargs we *want* to pass to TrainingArguments (filtered per version)."""
+    return {
+        "output_dir": str(Path(out_dir) / "checkpoints"),
+        "overwrite_output_dir": True,
+        "num_train_epochs": epochs,
+        "per_device_train_batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "weight_decay": 0.01,
+        "logging_steps": 10,
+        "save_steps": 500,
+        "save_total_limit": 2,
+        "prediction_loss_only": True,
+        "fp16": bool(fp16 and use_cuda),
+        "report_to": [],
+        "max_steps": max_steps if max_steps is not None else -1,
+        "dataloader_drop_last": False,
+        "remove_unused_columns": False,
+    }
+
+
+def build_training_arguments(training_arguments_cls: Any, kwargs: dict[str, Any]) -> Any:
+    """Construct TrainingArguments, omitting kwargs the installed class rejects."""
+    payload = filter_supported_kwargs(training_arguments_cls, kwargs)
+    try:
+        return training_arguments_cls(**payload)
+    except TypeError as exc:
+        match = _UNEXPECTED_KWARG.search(str(exc))
+        dropped = match.group(1) if match else None
+        if dropped and dropped in payload:
+            logger.warning(
+                "TrainingArguments recusou %s (%s); tentando de novo sem esse kwarg.",
+                dropped,
+                exc,
+            )
+            payload.pop(dropped)
+            return training_arguments_cls(**payload)
+        raise
 
 
 def train_causal_model(
@@ -113,22 +194,17 @@ def train_causal_model(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     use_cuda = torch.cuda.is_available()
-    args = TrainingArguments(
-        output_dir=str(out_dir / "checkpoints"),
-        overwrite_output_dir=True,
-        num_train_epochs=epochs,
-        per_device_train_batch_size=batch_size,
-        learning_rate=learning_rate,
-        weight_decay=0.01,
-        logging_steps=10,
-        save_steps=500,
-        save_total_limit=2,
-        prediction_loss_only=True,
-        fp16=fp16 and use_cuda,
-        report_to=[],
-        max_steps=max_steps if max_steps is not None else -1,
-        dataloader_drop_last=False,
-        remove_unused_columns=False,
+    args = build_training_arguments(
+        TrainingArguments,
+        causal_lm_training_kwargs(
+            out_dir=out_dir,
+            epochs=epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            max_steps=max_steps,
+            fp16=fp16,
+            use_cuda=use_cuda,
+        ),
     )
 
     collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
