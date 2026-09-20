@@ -156,6 +156,43 @@ def build_parser() -> argparse.ArgumentParser:
     p_serve.add_argument("--host", default="0.0.0.0")
     p_serve.add_argument("--port", type=int, default=8000)
 
+    p_corpus = sub.add_parser(
+        "corpus-status",
+        help="Perfil + fingerprint do corpus (lock reproduzível)",
+    )
+    p_corpus.add_argument("--corpus", default=str(DEFAULT_CORPUS))
+    p_corpus.add_argument(
+        "--profile",
+        default=None,
+        help="Verifica min/max de um perfil (bootstrap, local, open-web, canonical-snapshot)",
+    )
+    p_corpus.add_argument(
+        "--write-lock",
+        default=None,
+        help="Grava data/corpus.lock.json (ou path) com o fingerprint atual",
+    )
+    p_corpus.add_argument(
+        "--verify-lock",
+        default=None,
+        help="Compara o corpus atual com um lock gravado",
+    )
+
+    p_deploy = sub.add_parser(
+        "deploy-check",
+        help="Checklist de senhas, tokens, CE e geração paga",
+    )
+    p_deploy.add_argument(
+        "--mode",
+        choices=["local", "prod"],
+        default="local",
+        help="prod é fail-closed (token de geração, senha, pipeline token)",
+    )
+
+    sub.add_parser(
+        "reranker-status",
+        help="Gate PROMOTE vs default off; se o dir local está pronto para opt-in",
+    )
+
     return parser
 
 
@@ -339,6 +376,39 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         parser.error(f"Ação desconhecida: {args.artifacts_action}")
         return 2
+
+    if args.command == "corpus-status":
+        from vedic_pipeline.common.corpus_status import (
+            build_lock,
+            corpus_status,
+            status_exit_code,
+            write_lock,
+        )
+
+        status = corpus_status(
+            Path(args.corpus),
+            profile=args.profile,
+            lock_path=Path(args.verify_lock) if args.verify_lock else None,
+        )
+        if args.write_lock:
+            lock = build_lock(status, profile=args.profile)
+            dest = write_lock(Path(args.write_lock), lock)
+            status["lock_written"] = str(dest)
+        print(json.dumps(status, ensure_ascii=False, indent=2))
+        return status_exit_code(status)
+
+    if args.command == "deploy-check":
+        from vedic_pipeline.ops.deploy_check import deploy_check_exit_code, run_deploy_check
+
+        result = run_deploy_check(mode=args.mode)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return deploy_check_exit_code(result)
+
+    if args.command == "reranker-status":
+        from vedic_pipeline.search.reranker_status import reranker_runtime_status
+
+        print(json.dumps(reranker_runtime_status(), ensure_ascii=False, indent=2))
+        return 0
 
     if args.command == "serve":
         import uvicorn

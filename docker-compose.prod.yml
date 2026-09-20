@@ -6,8 +6,9 @@
 # subir a stack completa com TLS. Sem o perfil, apenas db + api sobem.
 #
 # Perfis opcionais:
-#   --profile s3     MinIO interno (raw + artefatos; sem portas públicas)
-#   --profile train  worker de treino/pipeline (imagem completa, uso via `run`)
+#   --profile s3       MinIO interno (raw + artefatos; sem portas públicas)
+#   --profile train    worker de treino/pipeline (imagem completa, uso via `run`)
+#   --profile metrics  Prometheus interno (scrape /metrics; sem porta pública)
 #
 services:
   db:
@@ -46,6 +47,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-vedas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-vedas}
       VEDIC_PIPELINE_API_TOKEN: ${VEDIC_PIPELINE_API_TOKEN:-}
       VEDIC_GENERATION_API_TOKEN: ${VEDIC_GENERATION_API_TOKEN:-}
+      VEDIC_REQUIRE_GENERATION_TOKEN: ${VEDIC_REQUIRE_GENERATION_TOKEN:-true}
+      VEDIC_ENABLE_RERANKER: ${VEDIC_ENABLE_RERANKER:-false}
+      VEDIC_RERANKER_MODEL: ${VEDIC_RERANKER_MODEL:-}
       VEDIC_API_INDEX_DIR: /app/artifacts/embeddings
       VEDIC_LOG_FORMAT: json
       VEDIC_TRUST_PROXY_HEADERS: "true"
@@ -130,6 +134,28 @@ services:
     profiles:
       - s3
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: vedas-prod-prometheus
+    restart: always
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - vedas_prod_prometheus:/prometheus
+    networks:
+      - vedas_internal
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles:
+      - metrics
+
   train:
     build:
       context: .
@@ -173,5 +199,6 @@ volumes:
   vedas_prod_data:
   vedas_prod_artifacts:
   vedas_prod_minio:
+  vedas_prod_prometheus:
   caddy_data:
   caddy_config:

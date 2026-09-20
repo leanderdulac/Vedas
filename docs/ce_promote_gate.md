@@ -35,6 +35,10 @@ python scripts/eval_reranker_smoke.py \
 
 O script troca `VEDIC_ENABLE_RERANKER` / `VEDIC_RERANKER_MODEL` só no processo e restaura ao sair. Não deixa o CE ligado.
 
+Estado do gate (PROMOTE ≠ default on): `fixtures/reranker_promote.json` e
+`vedic-pipeline reranker-status`. `/api/v1/health` expõe `reranker.eligible_opt_in`
+sem ligar o modelo.
+
 Fine-tune no Mac: `scripts/train_reranker.py` usa Apple MPS quando `torch.backends.mps.is_available()` (ordem: cuda → mps → cpu). `--device` força o backend. Isso **não** liga o CE (`VEDIC_ENABLE_RERANKER` continua off por default).
 
 ## Resultado v4 no gold de 19 (Mac, 2026-09-20) — histórico

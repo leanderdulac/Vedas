@@ -36,6 +36,46 @@ class RequestPolicyTests(unittest.TestCase):
             with patch.dict(os.environ, {'VEDIC_API_INDEX_DIR': str(index)}), TestClient(create_app()) as client:
                 self.assertEqual(client.post('/search', json={'query': 'atman', 'index_dir': str(alias)}).status_code, 422)
 
+    def test_require_generation_token_blocks_open_xai(self):
+        with patch.dict(
+            os.environ,
+            {
+                "VEDIC_REQUIRE_GENERATION_TOKEN": "true",
+                "VEDIC_GENERATION_API_TOKEN": "",
+                "XAI_API_KEY": "test-key",
+                "XAI_MODEL": "configured-model",
+            },
+        ), patch("vedic_pipeline.llm.ask.ask", return_value={"answer": "test"}) as ask, TestClient(
+            create_app()
+        ) as client:
+            self.assertEqual(client.post("/ask", json={"query": "atman", "provider": "auto"}).status_code, 503)
+            self.assertEqual(client.post("/ask", json={"query": "atman", "provider": "xai"}).status_code, 503)
+            self.assertEqual(client.post("/ask", json={"query": "atman", "provider": "extractive"}).status_code, 200)
+            self.assertEqual(ask.call_args.kwargs["provider"], "extractive")
+
+    def test_require_generation_token_accepts_bearer(self):
+        with patch.dict(
+            os.environ,
+            {
+                "VEDIC_REQUIRE_GENERATION_TOKEN": "true",
+                "VEDIC_GENERATION_API_TOKEN": "test-token",
+                "XAI_API_KEY": "test-key",
+                "XAI_MODEL": "configured-model",
+            },
+        ), patch("vedic_pipeline.llm.ask.ask", return_value={"answer": "test"}) as ask, TestClient(
+            create_app()
+        ) as client:
+            self.assertEqual(client.post("/ask", json={"query": "atman"}).status_code, 401)
+            self.assertEqual(
+                client.post(
+                    "/ask",
+                    json={"query": "atman"},
+                    headers={"Authorization": "Bearer test-token"},
+                ).status_code,
+                200,
+            )
+            self.assertEqual(ask.call_args.kwargs["provider"], "xai")
+
     def test_local_xai_allowed_without_generation_token(self):
         with patch.dict(os.environ, {'VEDIC_GENERATION_API_TOKEN': '', 'XAI_API_KEY': 'test-key', 'XAI_MODEL': 'configured-model'}), \
              patch('vedic_pipeline.llm.ask.ask', return_value={'answer': 'test'}) as ask, \

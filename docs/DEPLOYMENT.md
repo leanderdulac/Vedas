@@ -40,6 +40,17 @@ XAI_API_KEY=xai-sua-chave-opcional
 # Domínio e CORS
 DOMAIN=vedas.sua-instituicao.org
 CORS_ORIGINS=https://vedas.sua-instituicao.org
+
+# Fail-closed: geração xAI/TTS/Imagine exige o token (já é o default do compose.prod)
+VEDIC_REQUIRE_GENERATION_TOKEN=true
+VEDIC_ENABLE_RERANKER=false
+```
+
+Antes de subir:
+
+```bash
+vedic-pipeline deploy-check --mode prod
+vedic-pipeline corpus-status --profile bootstrap   # ou o perfil que você ingestiu
 ```
 
 ---
@@ -54,6 +65,9 @@ docker compose -f docker-compose.prod.yml up -d
 
 # Para subir com ingress Caddy (HTTPS automático na porta 80 e 443):
 docker compose -f docker-compose.prod.yml --profile ingress up -d
+
+# Opcional: Prometheus interno (scrape /metrics na rede vedas_internal; sem porta)
+docker compose -f docker-compose.prod.yml --profile metrics up -d
 ```
 
 ### 3.2. Carga Inicial do Catálogo e Índices
@@ -115,7 +129,9 @@ rode `artifacts` pela CLI local (`pip install -e ".[s3]"`) ou pelo `train`.
 ### 4.1. Endpoint Prometheus (`/metrics`)
 
 A API expõe métricas no formato Prometheus. Por segurança, `/metrics` **não** é
-publicado pelo Caddy — scrape dentro da rede interna do compose ou via exec:
+publicado pelo Caddy. O perfil `--profile metrics` sobe um Prometheus que
+raspa `api:8000/metrics` só na rede `vedas_internal`. Sem o perfil, scrape
+manual:
 
 ```bash
 # dentro da rede interna (apenas outro container/agente em vedas_internal):

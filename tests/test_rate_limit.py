@@ -62,9 +62,31 @@ class RateLimitTests(unittest.TestCase):
 class MediaAuthTests(unittest.TestCase):
     def test_media_allowed_without_generation_token(self):
         # Em instância local (sem token) a geração de mídia continua liberada.
-        with patch.dict(os.environ, {"VEDIC_GENERATION_API_TOKEN": "", "XAI_API_KEY": "k"}):
+        with patch.dict(
+            os.environ,
+            {
+                "VEDIC_GENERATION_API_TOKEN": "",
+                "XAI_API_KEY": "k",
+                "VEDIC_REQUIRE_GENERATION_TOKEN": "",
+            },
+        ):
             authorize_media(None)
             authorize_media("Bearer anything")
+
+    def test_media_require_token_flag_is_fail_closed(self):
+        from fastapi import HTTPException
+
+        with patch.dict(
+            os.environ,
+            {
+                "VEDIC_GENERATION_API_TOKEN": "",
+                "XAI_API_KEY": "k",
+                "VEDIC_REQUIRE_GENERATION_TOKEN": "true",
+            },
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                authorize_media(None)
+            self.assertEqual(ctx.exception.status_code, 503)
 
     def test_media_requires_token_when_configured(self):
         from fastapi import HTTPException
@@ -104,6 +126,11 @@ class ConsistencyTests(unittest.TestCase):
         with TestClient(create_app()) as client:
             health = client.get("/api/v1/health").json()
         self.assertEqual(health["version"], __version__)
+        self.assertFalse(health["reranker"]["enabled"])
+        self.assertFalse(health["reranker"]["default_enabled"])
+        self.assertTrue(health["reranker"]["eligible_opt_in"])
+        self.assertIn("require_token", health["generation"])
+        self.assertIn("matched_profiles", health["corpus_profile"])
 
     def test_metric_paths_collapse_cardinality(self):
         METRICS.reset()

@@ -1,0 +1,41 @@
+{
+  "default_profile": "bootstrap",
+  "profiles": {
+    "local": {
+      "label": "Dev mínimo",
+      "manifest": "fixtures/sources_local.json",
+      "reproducible": true,
+      "min_documents": 1,
+      "max_documents": 10,
+      "manifest_source_count": 5,
+      "notes": "fixtures/sources_local.json — clone fresco sem bulk ingest."
+    },
+    "bootstrap": {
+      "label": "Bootstrap reproduzível (CI / default)",
+      "manifest": "fixtures/sources_vedic_corpus.json",
+      "reproducible": true,
+      "min_documents": 11,
+      "max_documents": 20,
+      "manifest_source_count": 11,
+      "notes": "Default de scripts/bootstrap_vedic_corpus.py e do smoke de CI. Não é o snapshot de ~1054 docs."
+    },
+    "open-web": {
+      "label": "Gutenberg + Sacred Texts + fixtures",
+      "manifest": "fixtures/sources_open_web.json",
+      "reproducible": true,
+      "min_documents": 40,
+      "max_documents": 80,
+      "manifest_source_count": 54,
+      "notes": "scripts/bulk_ingest_open.py --manifest fixtures/sources_open_web.json"
+    },
+    "canonical-snapshot": {
+      "label": "Snapshot de um ambiente (não vem no git)",
+      "manifest": null,
+      "reproducible": false,
+      "min_documents": 1000,
+      "expected_documents": 1054,
+      "measured_at": "2026-08-07",
+      "notes": "Contagens do README (~1054 docs / ~19,8M chars). Novo deploy NÃO começa aqui — ingira um manifesto e grave um lock."
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "version": "v5",
+  "gate": "PROMOTE",
+  "eligible_opt_in": true,
+  "default_enabled": false,
+  "gold": "fixtures/smoke_queries.json",
+  "gold_n": 37,
+  "hybrid_pass": "37/37",
+  "ce_pass": "37/37",
+  "model_path": "artifacts/reranker_domain_v5",
+  "prior_opt_in": "artifacts/reranker_domain_v4",
+  "weights_committed": false,
+  "measured_at": "2026-09-20",
+  "docs": [
+    "docs/reranker_decision.md",
+    "docs/ce_promote_gate.md"
+  ],
+  "opt_in": {
+    "VEDIC_ENABLE_RERANKER": "true",
+    "VEDIC_RERANKER_MODEL": "artifacts/reranker_domain_v5"
+  },
+  "notes": "PROMOTE = apto a opt-in local (v5 recomendado; v4 válido). Não liga o CE no default. Pesos não estão no git."
+}
