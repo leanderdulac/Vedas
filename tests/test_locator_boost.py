@@ -1,4 +1,4 @@
-"""Boost de locator/hino: Nasadiya 10.129, Purusha 10.90, RV X.Y explícito."""
+"""Boost de locator/hino: nomes canônicos (Nasadiya, Gāyatrī, …) e RV X.Y."""
 
 from __future__ import annotations
 
@@ -39,11 +39,41 @@ class HymnIdExtractTests(unittest.TestCase):
             ["10.90"],
         )
 
+    def test_gayatri_maps_to_3_62(self):
+        self.assertEqual(extract_query_hymn_ids("Gayatri mantra Savitr"), ["3.62"])
+        self.assertEqual(extract_query_hymn_ids("gāyatrī sūkta"), ["3.62"])
+        self.assertEqual(extract_query_hymn_ids("गायत्री मन्त्र"), ["3.62"])
+
+    def test_hiranyagarbha_maps_to_10_121(self):
+        self.assertEqual(extract_query_hymn_ids("Hiranyagarbha golden womb"), ["10.121"])
+        self.assertEqual(extract_query_hymn_ids("hiraṇyagarbha sūkta"), ["10.121"])
+        self.assertEqual(extract_query_hymn_ids("हिरण्यगर्भः समवर्तताग्रे"), ["10.121"])
+
+    def test_vak_sukta_maps_to_10_125(self):
+        self.assertEqual(extract_query_hymn_ids("Vak Sukta hymn of speech"), ["10.125"])
+        self.assertEqual(extract_query_hymn_ids("Vāc Sūkta"), ["10.125"])
+        self.assertEqual(extract_query_hymn_ids("वाक् सूक्त"), ["10.125"])
+
     def test_explicit_rv_and_hymn_numbers(self):
         self.assertIn("10.129", extract_query_hymn_ids("Rig Veda RV 10.129 creation"))
         self.assertEqual(
             extract_query_hymn_ids("Agni priest of the sacrifice Rig Veda hymn 1.1"),
             ["1.1"],
+        )
+        self.assertEqual(extract_query_hymn_ids("Rigveda RV 10.125"), ["10.125"])
+
+    def test_named_sukta_beats_conflicting_explicit_id(self):
+        self.assertEqual(
+            extract_query_hymn_ids("Nasadiya creation hymn RV 10.125"),
+            ["10.129"],
+        )
+        self.assertNotIn(
+            "10.125",
+            extract_query_hymn_ids("Nasadiya Sukta 10.125"),
+        )
+        self.assertEqual(
+            extract_query_hymn_ids("Purusha Sukta 10.9"),
+            ["10.90"],
         )
 
     def test_isha_has_no_hymn_id(self):
@@ -56,6 +86,8 @@ class HymnIdExtractTests(unittest.TestCase):
         self.assertTrue(hymn_id_in_blob("Rigveda RV 10.5 (Griffith)", "10.5"))
         self.assertFalse(hymn_id_in_blob("Rigveda RV 10.50 (Griffith)", "10.5"))
         self.assertFalse(hymn_id_in_blob("Rigveda RV 10.125 (Griffith)", "10.5"))
+        self.assertEqual(extract_query_hymn_ids("Rigveda 10.5"), ["10.5"])
+        self.assertEqual(extract_query_hymn_ids("Rigveda 10.50"), ["10.50"])
 
 
 class LocatorHymnBoostTests(unittest.TestCase):
@@ -94,6 +126,61 @@ class LocatorHymnBoostTests(unittest.TestCase):
         )
         self.assertEqual(hits[0]["chunk_id"], "129")
         self.assertGreater(hits[0].get("_hymn_boost") or 0, 0)
+
+    def test_nasadiya_wrong_number_boosts_10_129_not_10_125(self):
+        hits = hybrid_rerank(
+            "Nasadiya creation hymn RV 10.125",
+            [
+                {
+                    "chunk_id": "125",
+                    "doc_id": "rv-125",
+                    "title": "Rigveda RV 10.125 (Griffith)",
+                    "locator": "RV 10.125",
+                    "text": "I am the queen, the gatherer-up of treasures.",
+                    "score": 0.95,
+                },
+                {
+                    "chunk_id": "129",
+                    "doc_id": "rv-129",
+                    "title": "Rigveda RV 10.129 Nasadiya (Griffith)",
+                    "locator": "RV 10.129",
+                    "text": "Then was not non-existent nor existent.",
+                    "score": 0.35,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "129")
+        self.assertGreater(hits[0].get("_hymn_boost") or 0, 0)
+        decoy = next(h for h in hits if h["chunk_id"] == "125")
+        self.assertIsNone(decoy.get("_hymn_match"))
+
+    def test_gayatri_boosts_3_62(self):
+        hits = hybrid_rerank(
+            "Gayatri mantra Savitr",
+            [
+                {
+                    "chunk_id": "noise",
+                    "doc_id": "rv-other",
+                    "title": "Rigveda RV 10.125 (Griffith)",
+                    "locator": "RV 10.125",
+                    "text": "I am the queen",
+                    "score": 0.88,
+                },
+                {
+                    "chunk_id": "62",
+                    "doc_id": "rv-362",
+                    "title": "Rigveda RV 3.62 (Griffith)",
+                    "locator": "RV 3.62",
+                    "text": "May we attain that excellent glory of Savitar the God",
+                    "score": 0.40,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "62")
 
     def test_roman_x_129_in_body_of_selected_hymns(self):
         pool = [
