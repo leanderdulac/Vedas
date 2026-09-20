@@ -113,10 +113,24 @@ class SmokeGoldSchemaTests(unittest.TestCase):
         example = (PROJECT_ROOT / ".env.example").read_text(encoding="utf-8")
         self.assertIn("VEDIC_ENABLE_RERANKER=false", example)
         self.assertNotRegex(example, r"(?m)^VEDIC_ENABLE_RERANKER=true")
+        self.assertIn("37/37", example)
+        self.assertNotIn("re-rodar o gate", example)
         source = (
             PROJECT_ROOT / "vedic_pipeline" / "search" / "reranker.py"
         ).read_text(encoding="utf-8")
         self.assertIn('os.environ.get("VEDIC_ENABLE_RERANKER", "false")', source)
+
+    def test_promote_gate_docs_record_gold37(self):
+        gate = (PROJECT_ROOT / "docs" / "ce_promote_gate.md").read_text(encoding="utf-8")
+        decision = (PROJECT_ROOT / "docs" / "reranker_decision.md").read_text(encoding="utf-8")
+        self.assertIn("37/37", gate)
+        self.assertIn("PROMOTE", gate)
+        self.assertIn("VEDIC_ENABLE_RERANKER=true", gate)
+        self.assertIn("VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4", gate)
+        self.assertNotIn("re-rodar o gate", gate)
+        self.assertIn("37/37", decision)
+        self.assertIn("PROMOTE", decision)
+        self.assertNotIn("re-rodar o gate", decision)
 
 
 if __name__ == "__main__":

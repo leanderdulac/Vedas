@@ -306,7 +306,7 @@ python -m vedic_pipeline train-model --base-model gpt2 --block-size 128 --max-st
 
 ## Reranker (Cross-Encoder)
 
-**Desligado por padrão.** Domínio v4 passou o gate no gold de 19 (híbrido 19/19, CE 19/19, Nasadiya/RV 10.129 ok) mas continua **opt-in**. Gold atual = **37**; re-rodar o gate no Mac. Genérico e v1–v3 não promover (9/10 no gold antigo). Ver [`docs/reranker_decision.md`](docs/reranker_decision.md).
+**Desligado por padrão.** Domínio v4 passou o gate no gold de **37** (híbrido 37/37, CE 37/37, Nasadiya incl. variantes ok) mas continua **opt-in**. Genérico e v1–v3 não promover (9/10 no gold antigo). Ver [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ```bash
 # Opt-in explícito (só depois de um CE de domínio validado)
@@ -340,7 +340,7 @@ python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_re
 Gold set: `fixtures/smoke_queries.json` (37 queries: 19 anteriores + 18 beyond-stress após locator PRs #5–#9).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json` (recorte rápido de 4 queries). O gate de promote do CE usa o gold expandido, não o CI.
 
-O smoke A/B (v1–v3 HOLD no gold de 10; **v4 PROMOTE** no gold de 19; gold atual 37, default ainda off) está em [`docs/reranker_decision.md`](docs/reranker_decision.md); critérios do gate em [`docs/ce_promote_gate.md`](docs/ce_promote_gate.md).
+O smoke A/B (v1–v3 HOLD no gold de 10; **v4 PROMOTE** no gold de 37, default ainda off) está em [`docs/reranker_decision.md`](docs/reranker_decision.md); critérios do gate em [`docs/ce_promote_gate.md`](docs/ce_promote_gate.md).
 
 ## Docker
 
