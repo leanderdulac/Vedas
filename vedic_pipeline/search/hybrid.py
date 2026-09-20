@@ -263,11 +263,47 @@ LOCATOR_HYMN_TEXT_BOOST = 1.05
 LOCATOR_INJECT_PER_HYMN = 4
 LOCATOR_INJECT_PER_WORK = LOCATOR_INJECT_PER_HYMN
 LOCATOR_WORK_TITLE_BOOST = LOCATOR_HYMN_TITLE_BOOST
+# Antologia que cita o hino/obra no corpo não pode ganhar do título específico
+# (phrase boost 1.25 + text hymn 1.05). Demote depois do phrase boost.
+LOCATOR_ANTHOLOGY_DEMOTE = 1.35
+LOCATOR_SHORT_DEITY_BOOST = 1.05
 
 WORK_ISHA = "isha-upanishad"
 WORK_KATHA = "katha-upanishad"
 WORK_SAMAVEDA = "samaveda"
 WORK_YAJUR_VS = "yajurveda-vs"
+WORK_BRIHADARANYAKA = "brihadaranyaka-upanishad"
+WORK_MANDUKYA = "mandukya-upanishad"
+WORK_RAMAYANA = "ramayana"
+WORK_YOGA_SUTRA = "yoga-sutra"
+
+# Antologias genéricas: título de coleção, não da obra/hino pedido.
+_ANTHOLOGY_TITLE = re.compile(
+    r"selected\s+hymns"
+    r"|principal\s+upanishads"
+    r"|thirteen\s+principal"
+    r"|english\s+core"
+    r"|antholog"
+    r"|selected\s+(?:upanishads|verses|texts|suktas)"
+    r"|(?:^|\s)the\s+upanishads\s*[\(:]"
+    r"|vedic\s+antholog",
+    re.I,
+)
+
+# Query curta de divindade RV: Agni → hinos RV Agni, não Mahābhārata.
+_SHORT_RV_DEITY = {
+    "agni": re.compile(r"\bagni\b|अग्नि", re.I),
+}
+_SHORT_RV_DEITY_TITLE = {
+    "agni": re.compile(
+        r"(?:rigveda|ṛgveda|rig\s*veda|\brv\s+\d).{0,120}\bagni\b"
+        r"|\bagni\b.{0,120}(?:rigveda|ṛgveda|rig\s*veda|\brv\s+\d)",
+        re.I,
+    ),
+}
+_SHORT_DEITY_EXTRA = frozenset(
+    {"fire", "god", "deity", "deva", "devata", "hymn", "sukta", "sūkta"}
+)
 
 # Query → obra/coleção. Intenção nomeada vence rótulo decoy (Nachiketas > Kauṣītaki).
 _NAMED_WORK_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
@@ -303,6 +339,51 @@ _NAMED_WORK_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         ),
         WORK_YAJUR_VS,
     ),
+    # neti neti é o sinal canónico da Bṛhadāraṇyaka (não da antologia).
+    (
+        re.compile(
+            r"b[rṛ]i?had[aā]ra[nṇ]yaka|बृहदारण्यक",
+            re.I,
+        ),
+        WORK_BRIHADARANYAKA,
+    ),
+    (re.compile(r"\bneti[\s\-]*neti\b|नेति[\s\-]*नेति", re.I), WORK_BRIHADARANYAKA),
+    # Māṇḍūkya pelo nome; Om/AUM sozinho é demasiado genérico.
+    (
+        re.compile(r"m[aā][nṇ][dḍ][uū]kya|माण्डूक्य|मांडूक्य", re.I),
+        WORK_MANDUKYA,
+    ),
+    # Rapto de Sītā / Rāvaṇa → Rāmāyaṇa mesmo se a query nomear o Mahābhārata.
+    (
+        re.compile(
+            r"(?:\bs[iī]t[aā]\b|सीता).{0,80}(?:abduct|kidnap|r[aā]va[nṇ]a|रावण|rapto|raptad)"
+            r"|(?:abduct|kidnap|r[aā]va[nṇ]a|रावण|rapto|raptad).{0,80}(?:\bs[iī]t[aā]\b|सीता)",
+            re.I,
+        ),
+        WORK_RAMAYANA,
+    ),
+    (
+        re.compile(r"r[aā]m[aā]ya[nṇ]|रामायण|v[aā]lm[iī]ki|वाल्मीकि", re.I),
+        WORK_RAMAYANA,
+    ),
+    # Definição de yoga (EN/PT) ou Yoga-sūtra / Patañjali explícitos.
+    (
+        re.compile(
+            r"yoga.?s[uū]tra|yogasutra|pata[nñ]jali|patañjali|योगसूत्र|पतञ्जलि"
+            r"|yogaś\s+citta|citta.?v[rṛ]tti.?nirodha",
+            re.I,
+        ),
+        WORK_YOGA_SUTRA,
+    ),
+    (
+        re.compile(
+            r"defini(?:tion|ção|cao|çao|cão)\s+(?:of\s+|de\s+|do\s+)?yoga"
+            r"|yoga\s+defini(?:tion|ção|cao|çao|cão)"
+            r"|o\s+que\s+[eé]\s+(?:o\s+)?yoga",
+            re.I,
+        ),
+        WORK_YOGA_SUTRA,
+    ),
 )
 
 # Título/locator da *obra*, não comentário/antologia que só discute a coleção.
@@ -327,6 +408,22 @@ _WORK_TITLE_MATCH: dict[str, re.Pattern[str]] = {
         r"|शुक्ल\s*यजुर्|वाजसनेयि",
         re.I,
     ),
+    WORK_BRIHADARANYAKA: re.compile(
+        r"b[rṛ]i?had[aā]ra[nṇ]yaka|बृहदारण्यक",
+        re.I,
+    ),
+    WORK_MANDUKYA: re.compile(
+        r"m[aā][nṇ][dḍ][uū]kya|माण्डूक्य|मांडूक्य",
+        re.I,
+    ),
+    WORK_RAMAYANA: re.compile(
+        r"r[aā]m[aā]ya[nṇ]|रामायण|v[aā]lm[iī]ki|वाल्मीकि",
+        re.I,
+    ),
+    WORK_YOGA_SUTRA: re.compile(
+        r"yoga.?s[uū]tra|yogasutra|pata[nñ]jali|patañjali|योगसूत्र|पतञ्जलि",
+        re.I,
+    ),
 }
 
 _WORK_TITLE_EXCLUDE: dict[str, re.Pattern[str]] = {
@@ -344,6 +441,25 @@ _WORK_TITLE_EXCLUDE: dict[str, re.Pattern[str]] = {
         r"|krishna\s+yajur|kṛṣṇa\s+yajur",
         re.I,
     ),
+    WORK_BRIHADARANYAKA: re.compile(
+        r"principal\s+upanishads|english\s+core|antholog|selected\s+hymns"
+        r"|markandeya|mārkaṇḍeya",
+        re.I,
+    ),
+    WORK_MANDUKYA: re.compile(
+        r"principal\s+upanishads|english\s+core|antholog|selected\s+hymns"
+        r"|mu[nṇ][dḍ]aka|मुण्डक",
+        re.I,
+    ),
+    WORK_RAMAYANA: re.compile(
+        r"mahabharata|mahābhārata|ganguli|bhishma|bhīṣma|kurukshetra",
+        re.I,
+    ),
+    WORK_YOGA_SUTRA: re.compile(
+        r"markandeya|mārkaṇḍeya|pur[aā][nṇ]a|mah[aā]bh[aā]rata"
+        r"|upanishad|upani[sṣ]ad|selected\s+hymns|antholog",
+        re.I,
+    ),
 }
 
 # Preferir o prefixo canônico da coleção (Sāmaveda SV / Yajurveda VS) ao injetar.
@@ -352,6 +468,10 @@ _WORK_TITLE_PREFERRED: dict[str, re.Pattern[str]] = {
     WORK_KATHA: re.compile(r"upani[sṣś]h?ad|कठ", re.I),
     WORK_SAMAVEDA: re.compile(r"s[aā]maveda\s+sv\b|\bsv\s+\d", re.I),
     WORK_YAJUR_VS: re.compile(r"yajurveda\s+vs\b|\bvs\s+\d|v[aā]jasaneyi|vajasneyi", re.I),
+    WORK_BRIHADARANYAKA: re.compile(r"b[rṛ]i?had[aā]ra[nṇ]yaka|बृहदारण्यक", re.I),
+    WORK_MANDUKYA: re.compile(r"m[aā][nṇ][dḍ][uū]kya|माण्डूक्य", re.I),
+    WORK_RAMAYANA: re.compile(r"r[aā]m[aā]ya[nṇ]|v[aā]lm[iī]ki|रामायण", re.I),
+    WORK_YOGA_SUTRA: re.compile(r"yoga.?s[uū]tra|yogasutra|pata[nñ]jali", re.I),
 }
 
 
@@ -473,6 +593,8 @@ def locator_hymn_injections(
                 continue
             if chunk_matches_hymn(ch, hymn, text_too=False) != "title":
                 continue
+            if _chunk_is_generic_anthology(ch):
+                continue
             hymn_level = 0 if _hymn_level_locator(ch, hymn) else 1
             ranked.append((hymn_level, idx, ch))
         ranked.sort(key=lambda row: (row[0], row[1]))
@@ -485,17 +607,52 @@ def locator_hymn_injections(
     return injected
 
 
+def _chunk_is_generic_anthology(chunk: dict[str, Any]) -> bool:
+    """True se o metadado é coleção/antologia, não o título da obra pedida."""
+    return bool(_ANTHOLOGY_TITLE.search(_chunk_locator_blob(chunk)))
+
+
+def _chunk_is_specific_hymn_title(chunk: dict[str, Any], hymn: str) -> bool:
+    if _chunk_is_generic_anthology(chunk):
+        return False
+    return chunk_matches_hymn(chunk, hymn, text_too=False) == "title"
+
+
+def _chunk_is_specific_work_title(chunk: dict[str, Any], work: str) -> bool:
+    if _chunk_is_generic_anthology(chunk):
+        return False
+    return chunk_matches_work(chunk, work)
+
+
+def pool_has_specific_locator_hit(query: str, pool: list[dict[str, Any]]) -> bool:
+    """True se o pool já tem o hino/obra nomeado no título (não antologia)."""
+    hymns = extract_query_hymn_ids(query)
+    works = extract_query_work_keys(query)
+    for chunk in pool:
+        if any(_chunk_is_specific_hymn_title(chunk, hymn) for hymn in hymns):
+            return True
+        if any(_chunk_is_specific_work_title(chunk, work) for work in works):
+            return True
+    return False
+
+
 def apply_locator_hymn_boost(query: str, pool: list[dict[str, Any]]) -> None:
     """Sobe candidatos cujo título/locator/texto traz o hino pedido na query.
 
     Corre no híbrido e de novo *depois* do CE (quando ligado): o MiniLM genérico
     e o CE de domínio v1–v3 ainda empurram RV 10.125 / 10.5 no lugar de 10.129.
     Nome canônico tem peso cheio; id explícito conflitante não entra no conjunto.
+    Com o hino real no pool, antologias que só citam o sūkta no corpo não sobem.
     """
     hymns = extract_query_hymn_ids(query)
     if not hymns or not pool:
         return
+    has_specific = any(
+        _chunk_is_specific_hymn_title(chunk, hymn) for chunk in pool for hymn in hymns
+    )
     for chunk in pool:
+        if has_specific and _chunk_is_generic_anthology(chunk):
+            continue
         best = 0.0
         matched: str | None = None
         for hymn in hymns:
@@ -513,11 +670,12 @@ def apply_locator_hymn_boost(query: str, pool: list[dict[str, Any]]) -> None:
 
 
 def extract_query_work_keys(query: str) -> list[str]:
-    """Obras/coleções pedidas na query: Īśā, Kaṭha, Sāmaveda, Śukla Yajur.
+    """Obras/coleções pedidas na query.
 
     Mesma política do hino nomeado: o sinal canónico vence o rótulo decoy.
-    Nachiketas → Kaṭha mesmo se a query disser Kauṣītaki; `īśāvāsyam…` →
-    Īśā, não um RV que só partilha idaṃ/jagat.
+    Nachiketas → Kaṭha mesmo se a query disser Kauṣītaki; Sītā+abduction →
+    Rāmāyaṇa mesmo com rótulo Mahābhārata; neti neti → Bṛhadāraṇyaka, não a
+    antologia Principal Upanishads; definição de yoga (PT/EN) → Yoga-sūtra.
     """
     text = query or ""
     found: list[str] = []
@@ -578,6 +736,8 @@ def locator_work_injections(
                 continue
             if not chunk_matches_work(ch, work):
                 continue
+            if _chunk_is_generic_anthology(ch):
+                continue
             ranked.append((_work_injection_rank(ch, work), idx, ch))
         ranked.sort(key=lambda row: (row[0], row[1]))
         for _level, _idx, ch in ranked[: max(0, per_work)]:
@@ -595,6 +755,8 @@ def apply_locator_work_boost(query: str, pool: list[dict[str, Any]]) -> None:
     if not works or not pool:
         return
     for chunk in pool:
+        if _chunk_is_generic_anthology(chunk):
+            continue
         matched: str | None = None
         for work in works:
             if chunk_matches_work(chunk, work):
@@ -607,6 +769,108 @@ def apply_locator_work_boost(query: str, pool: list[dict[str, Any]]) -> None:
             )
             chunk["_work_boost"] = LOCATOR_WORK_TITLE_BOOST
             chunk["_work_match"] = matched
+
+
+def extract_short_rv_deity(query: str) -> str | None:
+    """Divindade RV em query curta (Agni), sem hino/obra já extraídos.
+
+    ``dharma`` e outros termos ambíguos não entram: não há sinal seguro.
+    """
+    text = query or ""
+    tokens = tokenize(text)
+    if not tokens or len(tokens) > 3:
+        return None
+    if extract_query_hymn_ids(text) or extract_query_work_keys(text):
+        return None
+    folded_tokens = {fold_for_search(t) for t in tokens}
+    for deity, pattern in _SHORT_RV_DEITY.items():
+        if not pattern.search(text):
+            continue
+        leftover = folded_tokens - {deity} - _SHORT_DEITY_EXTRA
+        if leftover:
+            continue
+        return deity
+    return None
+
+
+def chunk_matches_short_rv_deity(chunk: dict[str, Any], deity: str) -> bool:
+    title_re = _SHORT_RV_DEITY_TITLE.get(deity)
+    if not title_re:
+        return False
+    blob = _chunk_locator_blob(chunk)
+    if _EPIC_TITLE.search(blob) or _chunk_is_generic_anthology(chunk):
+        return False
+    return bool(title_re.search(blob))
+
+
+def locator_deity_injections(
+    query: str,
+    all_chunks: list[dict[str, Any]],
+    *,
+    exclude_ids: set[str] | None = None,
+    per_deity: int = LOCATOR_INJECT_PER_HYMN,
+) -> list[dict[str, Any]]:
+    """Injeta hinos RV da divindade curta (teto igual ao hino nomeado)."""
+    deity = extract_short_rv_deity(query)
+    if not deity or not all_chunks:
+        return []
+    skip = set(exclude_ids or ())
+    ranked: list[tuple[int, dict[str, Any]]] = []
+    for idx, ch in enumerate(all_chunks):
+        cid = str(ch.get("chunk_id") or id(ch))
+        if cid in skip:
+            continue
+        if not chunk_matches_short_rv_deity(ch, deity):
+            continue
+        ranked.append((idx, ch))
+    injected: list[dict[str, Any]] = []
+    for _idx, ch in ranked[: max(0, per_deity)]:
+        cid = str(ch.get("chunk_id") or id(ch))
+        skip.add(cid)
+        copy = dict(ch)
+        copy["_deity_injected"] = deity
+        injected.append(copy)
+    return injected
+
+
+def apply_short_rv_deity_boost(query: str, pool: list[dict[str, Any]]) -> None:
+    """Sobe hinos RV da divindade (Agni) contra épicos, só em query curta."""
+    deity = extract_short_rv_deity(query)
+    if not deity or not pool:
+        return
+    for chunk in pool:
+        if chunk_matches_short_rv_deity(chunk, deity):
+            chunk["score"] = round(
+                float(chunk.get("score") or 0.0) + LOCATOR_SHORT_DEITY_BOOST,
+                4,
+            )
+            chunk["_deity_boost"] = LOCATOR_SHORT_DEITY_BOOST
+            chunk["_deity_match"] = deity
+
+
+def apply_anthology_demotion(query: str, pool: list[dict[str, Any]]) -> None:
+    """Rebaixa antologia genérica quando o hino/obra específico já está no pool.
+
+    Principal Upanishads / Rig Veda selected hymns citam neti neti ou Nasadiya
+    no corpo e ganham phrase-boost; o título específico deve ficar no top-1.
+    Sem hit específico no pool, a antologia não é rebaixada (ainda é recall).
+    """
+    if not pool:
+        return
+    if not extract_query_hymn_ids(query) and not extract_query_work_keys(query):
+        return
+    if not pool_has_specific_locator_hit(query, pool):
+        return
+    for chunk in pool:
+        if chunk.get("_anthology_demote"):
+            continue
+        if not _chunk_is_generic_anthology(chunk):
+            continue
+        chunk["score"] = round(
+            float(chunk.get("score") or 0.0) - LOCATOR_ANTHOLOGY_DEMOTE,
+            4,
+        )
+        chunk["_anthology_demote"] = LOCATOR_ANTHOLOGY_DEMOTE
 
 
 def diversify_by_doc(
@@ -668,8 +932,10 @@ def hybrid_rerank(
     (antes do boost).
 
     Pós-processamento: boost de título/hino + locator/RV X.Y + obra nomeada
-    (Īśā, Kaṭha, Sāmaveda, Śukla Yajur) + Cross-Encoder (locator de novo
-    após o CE) + diversificação por doc_id.
+    (Īśā, Kaṭha, Sāmaveda, Śukla Yajur, Bṛhadāraṇyaka, Māṇḍūkya, Rāmāyaṇa,
+    Yoga-sūtra) + demote de antologia quando o título específico está no
+    pool + Cross-Encoder (locator de novo após o CE) + diversificação por
+    doc_id.
     """
     pool: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
@@ -698,6 +964,8 @@ def hybrid_rerank(
         for ch in locator_hymn_injections(query, all_chunks, exclude_ids=seen_ids):
             add(ch)
         for ch in locator_work_injections(query, all_chunks, exclude_ids=seen_ids):
+            add(ch)
+        for ch in locator_deity_injections(query, all_chunks, exclude_ids=seen_ids):
             add(ch)
 
     if not pool:
@@ -734,6 +1002,7 @@ def hybrid_rerank(
     apply_title_and_size_boost(query, pool)
     apply_locator_hymn_boost(query, pool)
     apply_locator_work_boost(query, pool)
+    apply_short_rv_deity_boost(query, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
 
     if use_cross_encoder and is_reranker_enabled() and pool:
@@ -744,8 +1013,10 @@ def hybrid_rerank(
         # CE genérico/domínio ainda inverte Nasadiya → 10.125/10.5; reaplicar o locator.
         apply_locator_hymn_boost(query, pool)
         apply_locator_work_boost(query, pool)
+        apply_short_rv_deity_boost(query, pool)
 
     apply_phrase_boost(query, pool)
+    apply_anthology_demotion(query, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
 
     # pool maior antes de diversificar

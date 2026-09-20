@@ -72,6 +72,8 @@ Quando a query cita **Nasadiya** (→ 10.129), **Purusha Sukta** (→ 10.90), **
 
 **Série seguinte (obra/Veda):** o mesmo padrão em nível de obra e coleção — extrair o rótulo da query, injetar chunks cujo *título* casa, boost (teto como no PR #6). Īśā (`īśāvāsyam…` / `ईशावास्यम्…` / `isavasya`) → Isha Upanishad, não RV que só partilha idaṃ/jagat. Nachiketas → Kaṭha mesmo se a query nomear Kauṣītaki. `Sama Veda` / `सामवेद` → títulos `Sāmaveda SV…`; `Shukla Yajur` / `Vajasaneyi` / `Yajurveda VS` → títulos `Yajurveda VS…`, não Chandogya nem antologia Müller.
 
+**Passo 4 (near-miss / antologia):** se o hino ou a obra nomeada já tem um chunk de *título* específico no pool, rebaixa coleções genéricas (`Rig Veda selected hymns`, `Principal Upanishads (English core)`) — elas citam o texto no corpo e ganhavam o top-1. Bṛhadāraṇyaka (`neti neti`), Māṇḍūkya (pelo nome, não Om sozinho), Rāmāyaṇa (Sītā+abdução/Rāvaṇa vence rótulo Mahābhārata), Yoga-sūtra (definição de yoga PT/EN e Patañjali). Query curta `Agni` prefere hinos RV Agni; `dharma` sozinho não é pinado (sinal inseguro).
+
 Aplicado **no híbrido** (antes do CE, para o hino certo entrar no slice) e **de novo depois do CE** quando o reranker está ligado — senão o CE volta a enterrar 10.129.
 
 Isso **não** liga o CE. Só reduz a regressão se alguém optar pelo modelo local.
