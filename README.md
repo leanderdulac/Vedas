@@ -319,6 +319,9 @@ python scripts/build_rerank_pairs.py --dry-run --out data/rerank/pairs.jsonl
 # Fine-tune ( --dry-run não baixa o modelo nem treina )
 python scripts/train_reranker.py --help
 python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
+
+# Gate A/B (híbrido vs CE de domínio). Exit 0 = apto a opt-in.
+python scripts/eval_reranker_smoke.py --model artifacts/reranker --json-out data/rerank_eval.json
 ```
 
 ## Jurídico
@@ -337,7 +340,7 @@ python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_re
 Gold set: `fixtures/smoke_queries.json` (Isha, Gītā, Nasadiya, Puruṣa, Agni 1.1, Yoga-sūtra, Rāmāyaṇa, Mahābhārata, Manu…).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json`.
 
-O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico 9/10) está em [`docs/reranker_decision.md`](docs/reranker_decision.md).
+O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico 9/10) e o gate train→eval→promote estão em [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ## Docker
 

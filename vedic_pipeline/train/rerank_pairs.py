@@ -1,7 +1,8 @@
 """Geração de pares fracos para fine-tune do CrossEncoder.
 
-Positivos: hits cujo título casa com ``expect_title_any``.
-Negativos hard: hits de alto score híbrido que *não* casam o título.
+Positivos: hits cujo título casa com marcadores estritos de ``expect_title_any``
+(hino ``10.129`` / Nasadiya), não o rótulo amplo "Rig Veda".
+Negativos hard de Nasadiya: 10.125, 10.5, 2.38 quando presentes nos candidatos.
 
 Pode ler candidatos pré-computados (JSON) — caminho de CI / dry-run —
 ou recuperar via híbrido local quando o índice existir.
@@ -11,7 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
-import os
+import re
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -27,10 +28,67 @@ DEFAULT_PAIRS_OUT = PROJECT_ROOT / "data" / "rerank" / "pairs.jsonl"
 
 PAIR_FIELDS = ("query", "text", "label", "query_id", "doc_title", "split")
 
+# Hinos que o CE genérico (ms-marco MiniLM) empurrou no lugar de RV 10.129.
+NASADIYA_HARD_NEG_HYMNS = ("10.125", "10.5", "2.38")
+PIN_TRAIN_QUERY_IDS = frozenset({"nasadiya"})
 
-def title_matches(title: str, patterns: Iterable[str]) -> bool:
-    haystack = (title or "").lower()
-    return any(pattern.lower() in haystack for pattern in patterns if pattern)
+_HYMN_NUM_RE = re.compile(r"^\d+\.\d+$")
+_HYMN_IN_PATTERN_RE = re.compile(r"\d+\.\d+")
+_NASADIYA_NAME_RE = re.compile(r"nasadiya|n[aā]sad[iī]ya", re.I)
+
+
+def hymn_in_blob(blob: str, hymn: str) -> bool:
+    """Casa 10.5 em 'RV 10.5' sem casar 10.50 / 10.125."""
+    escaped = re.escape(hymn.strip())
+    return re.search(rf"(?<![\d.]){escaped}(?!\d)", blob or "", flags=re.I) is not None
+
+
+def is_strict_title_marker(pattern: str) -> bool:
+    """Número de hino (10.129) ou nome Nasadiya — não o rótulo amplo 'Rig Veda'."""
+    text = (pattern or "").strip()
+    if not text:
+        return False
+    if _HYMN_IN_PATTERN_RE.search(text):
+        return True
+    return bool(_NASADIYA_NAME_RE.search(text))
+
+
+def marker_matches_title(title: str, marker: str) -> bool:
+    marker = (marker or "").strip()
+    if not marker:
+        return False
+    if _HYMN_NUM_RE.fullmatch(marker):
+        return hymn_in_blob(title or "", marker)
+    return marker.lower() in (title or "").lower()
+
+
+def title_matches(title: str, patterns: Iterable[str], *, prefer_strict: bool = True) -> bool:
+    """Positivos preferem marcadores estritos (10.129 / Nasadiya) a 'Rig Veda'."""
+    markers = [str(p).strip() for p in patterns if str(p).strip()]
+    if not markers:
+        return False
+    strict = [m for m in markers if is_strict_title_marker(m)]
+    if prefer_strict and strict:
+        return any(marker_matches_title(title, m) for m in strict)
+    return any(marker_matches_title(title, m) for m in markers)
+
+
+def is_nasadiya_query(query_id: str, query: str = "") -> bool:
+    blob = f"{query_id} {query}".lower()
+    return "nasadiya" in blob or "nāsadīya" in blob
+
+
+def hit_title_blob(hit: dict[str, Any]) -> str:
+    return " ".join(
+        str(hit.get(key) or "") for key in ("title", "doc_title", "locator", "heading")
+    )
+
+
+def is_nasadiya_hard_negative(query_id: str, query: str, hit: dict[str, Any]) -> bool:
+    if not is_nasadiya_query(query_id, query):
+        return False
+    blob = hit_title_blob(hit)
+    return any(hymn_in_blob(blob, hymn) for hymn in NASADIYA_HARD_NEG_HYMNS)
 
 
 def load_json(path: Path) -> Any:
@@ -63,13 +121,22 @@ def load_candidates_payload(path: Path) -> dict[str, list[dict[str, Any]]]:
     raise ValueError(f"Candidatos JSON inválidos: {path}")
 
 
-def assign_splits(query_ids: Iterable[str], holdout_ratio: float = 0.2) -> dict[str, str]:
+def assign_splits(
+    query_ids: Iterable[str],
+    holdout_ratio: float = 0.2,
+    pin_train_ids: Iterable[str] = PIN_TRAIN_QUERY_IDS,
+) -> dict[str, str]:
+    """Holdout por query_id; Nasadiya fica no treino (hard negatives do CE genérico)."""
     ids = sorted({str(qid) for qid in query_ids})
+    pinned = {str(qid) for qid in pin_train_ids if str(qid) in ids}
     if len(ids) < 2 or holdout_ratio <= 0:
         return {qid: "train" for qid in ids}
+    eligible = [qid for qid in ids if qid not in pinned]
+    if not eligible:
+        return {qid: "train" for qid in ids}
     n_hold = max(1, int(round(len(ids) * holdout_ratio)))
-    n_hold = min(n_hold, len(ids) - 1)
-    hold = set(ids[-n_hold:])
+    n_hold = min(n_hold, len(eligible))
+    hold = set(eligible[-n_hold:])
     return {qid: ("eval" if qid in hold else "train") for qid in ids}
 
 
@@ -81,8 +148,9 @@ def pair_record(
     query_id: str,
     doc_title: str,
     split: str,
+    pair_kind: str = "",
 ) -> dict[str, Any]:
-    return {
+    rec = {
         "query": query,
         "text": text,
         "label": int(label),
@@ -90,6 +158,9 @@ def pair_record(
         "doc_title": doc_title,
         "split": split,
     }
+    if pair_kind:
+        rec["pair_kind"] = pair_kind
+    return rec
 
 
 def pairs_from_hits(
@@ -101,27 +172,44 @@ def pairs_from_hits(
     split: str = "train",
     max_negatives: int = 8,
 ) -> list[dict[str, Any]]:
-    """Emite pares 0/1 a partir de hits híbridos já recuperados."""
+    """Emite pares 0/1 a partir de hits híbridos já recuperados.
+
+    Positivos: marcadores estritos (10.129 / Nasadiya) quando existem no gold;
+    'Rig Veda' só entra se não houver âncora de hino. Hard negatives de Nasadiya
+    (10.125, 10.5, 2.38) entram sempre que aparecerem nos candidatos.
+    """
     positives: list[dict[str, Any]] = []
-    negatives: list[dict[str, Any]] = []
+    hard_negatives: list[dict[str, Any]] = []
+    other_negatives: list[dict[str, Any]] = []
     for hit in hits:
         text = str(hit.get("text") or "").strip()
         if not text:
             continue
         title = str(hit.get("title") or hit.get("doc_title") or "")
+        hard_neg = is_nasadiya_hard_negative(query_id, query, hit)
+        if hard_neg:
+            kind, label = "hard_negative", 0
+        elif title_matches(title, expect_title_any, prefer_strict=True):
+            kind, label = "strict_positive", 1
+        else:
+            kind, label = "negative", 0
         rec = pair_record(
             query=query,
             text=text,
-            label=1 if title_matches(title, expect_title_any) else 0,
+            label=label,
             query_id=query_id,
             doc_title=title,
             split=split,
+            pair_kind=kind,
         )
-        if rec["label"] == 1:
+        if label == 1:
             positives.append(rec)
+        elif hard_neg:
+            hard_negatives.append(rec)
         else:
-            negatives.append(rec)
-    return positives + negatives[: max(0, max_negatives)]
+            other_negatives.append(rec)
+    kept_other = other_negatives[: max(0, max_negatives)]
+    return positives + hard_negatives + kept_other
 
 
 def build_pairs(
@@ -195,19 +283,10 @@ def summarize_pairs(pairs: list[dict[str, Any]]) -> dict[str, Any]:
 @contextmanager
 def reranker_forced_off() -> Iterator[None]:
     """Garante híbrido sem CE ao minerar candidatos."""
-    from vedic_pipeline.search.reranker import invalidate_reranker
+    from vedic_pipeline.search.reranker import reranker_runtime
 
-    previous = os.environ.get("VEDIC_ENABLE_RERANKER")
-    os.environ["VEDIC_ENABLE_RERANKER"] = "false"
-    invalidate_reranker()
-    try:
+    with reranker_runtime(enabled=False):
         yield
-    finally:
-        if previous is None:
-            os.environ.pop("VEDIC_ENABLE_RERANKER", None)
-        else:
-            os.environ["VEDIC_ENABLE_RERANKER"] = previous
-        invalidate_reranker()
 
 
 def index_is_ready(index_dir: Path) -> bool:

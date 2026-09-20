@@ -24,36 +24,61 @@ Conclusão: o MiniLM ms-marco **não** é ganho gratuito neste gold. O híbrido 
 ## Política atual
 
 1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). O caminho de produção não carrega o CE a menos que se opte explicitamente (`true` / `1` / `on` / `yes`).
-2. Manter o CE genérico desligado até existir um modelo **adaptado ao domínio** que bata o híbrido num gold **expandido** (não só as 10 queries de smoke).
-3. Fine-tune só faz sentido com pares que **protejam Nasadiya** e as demais queries óbvias — labels fracos a partir de `expect_title_any`, sem inventar teologia.
+2. `VEDIC_RERANKER_MODEL` pode ser um id HF **ou** um diretório local (`artifacts/reranker`); o loader resolve o path absoluto quando o dir existe.
+3. Fine-tune só faz sentido com pares que **protejam Nasadiya** — positivos com marcadores de hino (`10.129` / Nasadiya) em vez do rótulo amplo "Rig Veda", e hard negatives 10.125 / 10.5 / 2.38 quando aparecerem nos candidatos.
+4. **Não** treinar GPT-2 / LM causal para ranking.
 
-## Como treinar um CE de domínio (scaffold)
+## Gate train → eval → promote
 
-Não promover automaticamente. Fluxo:
+Não ligar o CE em produção por feeling. O loop é:
+
+```text
+build_rerank_pairs.py  →  train_reranker.py  →  eval_reranker_smoke.py  →  opt-in
+         pares JSONL           artifacts/reranker      híbrido vs CE
+```
 
 ```bash
-# 1. Pares a partir do gold (fixture minúscula, sem embeddings)
+# 1. Pares (fixture minúscula, sem embeddings) ou híbrido local (CE forçado off)
 python scripts/build_rerank_pairs.py --dry-run --out data/rerank/pairs.jsonl
-
-# 1b. Ou candidatos pré-computados / híbrido local (CE forçado off)
 python scripts/build_rerank_pairs.py \
   --gold fixtures/smoke_queries.json \
   --candidates caminho/candidates.json \
   --out data/rerank/pairs.jsonl
 
-# 2. Fine-tune (dry-run não baixa o modelo)
-python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl
+# 2. Fine-tune (dry-run não baixa o modelo; grava train_meta.json com counts/device)
+python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 python scripts/train_reranker.py --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 
-# 3. Avaliar — só ligar o CE se Δ ≥ 0 no gold + hold-out, sem regressão Nasadiya
-VEDIC_ENABLE_RERANKER=true VEDIC_RERANKER_MODEL=artifacts/reranker \
-  python scripts/smoke_rag.py --backend numpy --strict
+# 3. Gate A/B no gold — exit ≠ 0 se o CE de domínio for pior OU se Nasadiya regride
+python scripts/eval_reranker_smoke.py \
+  --model artifacts/reranker \
+  --queries fixtures/smoke_queries.json \
+  --backend numpy \
+  --json-out data/rerank_eval.json
+
+# 4. Só então, opt-in local/prod
+export VEDIC_ENABLE_RERANKER=true
+export VEDIC_RERANKER_MODEL=artifacts/reranker
 ```
 
-Critérios de promote (plano 2026-09-20): smoke ≥ baseline (ideal 10/10); hold-out ≥ baseline; latência p95 CPU não >2× o híbrido.
+### Critérios do gate (`eval_reranker_smoke.py`)
+
+Promote (**exit 0**) somente se **ambos** valerem:
+
+| Critério | Falha (exit 1) |
+|----------|----------------|
+| Pass rate do CE de domínio **≥** pass rate do híbrido (CE off) | `ce_worse_overall` |
+| Se o híbrido **passa** Nasadiya (`nasadiya` / RV 10.129), o CE também passa | `nasadiya_regressed` |
+
+O JSON traz `per_query` (ok híbrido vs CE + `top_titles`) e um bloco dedicado `nasadiya`.
+
+O default permanece **OFF**. `eval_reranker_smoke.py` troca `VEDIC_ENABLE_RERANKER` / `VEDIC_RERANKER_MODEL` no processo e recarrega o singleton; não deixa o CE ligado ao sair.
+
+Latência p95 CPU não deve ficar >2× o híbrido (critério operacional, fora do exit code).
 
 ## O que não fazer agora
 
 - Não substituir `/ask` / xAI por LM causal fine-tuned para “melhorar ranking”.
 - Não treinar embedding sânscrito-específico antes de medir falhas reais do MiniLM atual.
 - Não commitar pesos grandes nem corpus em git.
+- Não ligar o CE genérico `cross-encoder/ms-marco-MiniLM-L-6-v2` em produção.

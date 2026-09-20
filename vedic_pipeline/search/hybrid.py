@@ -13,7 +13,7 @@ from vedic_pipeline.common.sanskrit import (
     get_sanskrit_variants,
     iast_to_ascii,
 )
-from vedic_pipeline.search.reranker import rerank_chunks
+from vedic_pipeline.search.reranker import is_reranker_enabled, rerank_chunks
 
 # Sinônimos / equivalentes úteis para literatura védica (en-sa)
 QUERY_EXPANSIONS: dict[str, list[str]] = {
@@ -322,7 +322,7 @@ def hybrid_rerank(
     apply_title_and_size_boost(query, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
 
-    if use_cross_encoder and pool:
+    if use_cross_encoder and is_reranker_enabled() and pool:
         top_slice_size = max(top_k * 3, 12)
         top_candidates = pool[:top_slice_size]
         reranked_top = rerank_chunks(query, top_candidates, top_k=top_slice_size)
