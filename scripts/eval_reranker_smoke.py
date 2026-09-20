@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Gold smoke A/B: híbrido (CE off) vs Cross-Encoder de domínio.
 
-Por omissão lê o gold expandido (`fixtures/smoke_queries.json`, 19 queries).
+Por omissão lê o gold expandido (`fixtures/smoke_queries.json`, 37 queries).
 O gate de promote deve usar esse arquivo — não o snapshot histórico de 10
 nem o CI reduzido (`smoke_queries_ci.json`).
 
