@@ -32,6 +32,11 @@ class RerankEvalGateTests(unittest.TestCase):
                 }
             )
         )
+        self.assertTrue(
+            is_nasadiya_item(
+                {"id": "nasadiya-deva", "query": "नासदासीन् नो सदासीत् तदानीं 10.129"}
+            )
+        )
         self.assertFalse(is_nasadiya_item({"id": "isha-self", "query": "What is the Self"}))
 
     def test_promote_when_ce_matches_hybrid_including_nasadiya(self):

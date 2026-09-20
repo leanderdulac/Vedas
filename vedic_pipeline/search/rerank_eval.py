@@ -7,7 +7,12 @@ from typing import Any
 
 def is_nasadiya_item(item: dict[str, Any]) -> bool:
     blob = f"{item.get('id') or ''} {item.get('query') or ''}".lower()
-    return "nasadiya" in blob or "nāsadīya" in blob
+    return (
+        "nasadiya" in blob
+        or "nāsadīya" in blob
+        or "नासदीय" in blob
+        or "नासदासीन्" in blob
+    )
 
 
 def _pass_rate(suite: dict[str, Any]) -> tuple[int, int, float]:

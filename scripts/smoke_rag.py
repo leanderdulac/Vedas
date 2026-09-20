@@ -4,7 +4,7 @@ Smoke + regressão de retrieval para o corpus Veda Knowledge.
 
 Verifica:
   1. Saúde do corpus / índice numpy / PostgreSQL (opcional)
-  2. Busca semântica com 10 queries gold (fixtures/smoke_queries.json)
+  2. Busca semântica com o gold expandido (~20–25 queries em fixtures/smoke_queries.json)
   3. Ask extractive em 1 query de amostragem
 
 Uso:

@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Gold smoke A/B: híbrido (CE off) vs Cross-Encoder de domínio.
 
+Por omissão lê o gold expandido (`fixtures/smoke_queries.json`, ~20–25 queries).
+O gate de promote deve usar esse arquivo — não o snapshot histórico de 10
+nem o CI reduzido (`smoke_queries_ci.json`).
+
 Uso:
   python scripts/eval_reranker_smoke.py --model artifacts/reranker
   python scripts/eval_reranker_smoke.py \\

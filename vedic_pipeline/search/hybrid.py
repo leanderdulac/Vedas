@@ -219,7 +219,7 @@ _MANDALA_ROMAN = {
 }
 
 _NAMED_HYMN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"n[aā]sad[iī]ya", re.I), "10.129"),
+    (re.compile(r"n[aā]sad[iī]ya|नासदीय|नासदासीन्", re.I), "10.129"),
     (
         re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta|\bpurusa\s+sukta", re.I),
         "10.90",
@@ -227,7 +227,7 @@ _NAMED_HYMN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
 )
 
 _NAMED_IN_BLOB: dict[str, re.Pattern[str]] = {
-    "10.129": re.compile(r"n[aā]sad[iī]ya", re.I),
+    "10.129": re.compile(r"n[aā]sad[iī]ya|नासदीय|नासदासीन्", re.I),
     "10.90": re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta", re.I),
 }
 

@@ -138,7 +138,7 @@ python scripts/bulk_ingest_open.py --manifest fixtures/sources_sbe_complete.json
 VEDIC_MAX_DOWNLOAD_BYTES=134217728 \
 python scripts/bulk_ingest_open.py --manifest fixtures/sources_markandeya.json --sync-db
 
-# Smoke + 10 queries gold de regressão de retrieval
+# Smoke + gold expandido (~20–25 queries) de regressão de retrieval
 python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 ```
 
@@ -331,16 +331,16 @@ Fontes sem licença na lista permitida são bloqueadas. Material BBT/Vedabase so
 ## Smoke / regressão
 
 ```bash
-# health corpus + índice + 10 gold queries + ask extractive
+# health corpus + índice + gold expandido + ask extractive
 python scripts/smoke_rag.py
 python scripts/smoke_rag.py --backend numpy --strict
 python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_report.json
 ```
 
-Gold set: `fixtures/smoke_queries.json` (Isha, Gītā, Nasadiya, Puruṣa, Agni 1.1, Yoga-sūtra, Rāmāyaṇa, Mahābhārata, Manu…).  
-CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json`.
+Gold set: `fixtures/smoke_queries.json` (~20–25 queries: Isha, Gītā 2.47, Nasadiya também em Devanāgarī, Puruṣa, Agni 1.1, Gayatrī 3.62.10, Asya Vāmasya 1.164, Upaniṣads, Yoga-sūtra 1.2, Rāmāyaṇa, Mahābhārata, Manu…).  
+CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json` (recorte local). O gate de promote do CE usa o gold expandido, não o CI.
 
-O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico **e** domínio v1–v3 em 9/10) e o gate train→eval→promote estão em [`docs/reranker_decision.md`](docs/reranker_decision.md).
+O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico **e** domínio v1–v3 em 9/10, gold de então) e o gate train→eval→promote estão em [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ## Docker
 

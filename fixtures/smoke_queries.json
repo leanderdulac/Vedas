@@ -1,8 +1,8 @@
 {
   "meta": {
     "description": "Gold set de regressão de retrieval (título/tradição esperados no top-k)",
-    "version": 2,
-    "notes": "Queries calibradas após corpus com Mahābhārata completo (muitos chunks dominam ranking genérico)."
+    "version": 3,
+    "notes": "Queries calibradas após corpus com Mahābhārata completo (muitos chunks dominam ranking genérico). v3: ~22 queries — hinos (Gayatrī, Asya Vāmasya, Nasadiya Devanāgarī), Upaniṣads, Gītā 2.47, Yoga 1.2, épicos, Manu. Ids das 10 originais estáveis. CI continua em smoke_queries_ci.json."
   },
   "queries": [
     {
@@ -77,6 +77,94 @@
       "query": "Laws of Manu on dharma and social order",
       "top_k": 8,
       "expect_title_any": ["Manu", "Laws"],
+      "min_hits": 1
+    },
+    {
+      "id": "gayatri-rv362",
+      "query": "Gayatri mantra Savitr light RV 3.62.10",
+      "top_k": 8,
+      "tradition": "vedic",
+      "expect_title_any": ["3.62", "Gayatri", "Gāyatrī"],
+      "min_hits": 1
+    },
+    {
+      "id": "asya-vamasya",
+      "query": "Asya Vamasya hymn of the cosmic riddle RV 1.164",
+      "top_k": 8,
+      "tradition": "vedic",
+      "expect_title_any": ["1.164", "Asya Vamasya", "Asya"],
+      "min_hits": 1
+    },
+    {
+      "id": "chandogya-tattvamasi",
+      "query": "tat tvam asi That thou art Chandogya Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Chandogya", "Chāndogya"],
+      "min_hits": 1
+    },
+    {
+      "id": "brihadaranyaka-neti",
+      "query": "neti neti not this not this Brihadaranyaka Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Brihadaranyaka", "Bṛhadāraṇyaka", "Brhadaranyaka"],
+      "min_hits": 1
+    },
+    {
+      "id": "katha-nachiketa",
+      "query": "Nachiketa and Yama death Katha Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Katha", "Kaṭha"],
+      "min_hits": 1
+    },
+    {
+      "id": "mandukya-om",
+      "query": "OM Aum four states of consciousness Mandukya Upanishad",
+      "top_k": 8,
+      "expect_title_any": ["Mandukya", "Māṇḍūkya"],
+      "min_hits": 1
+    },
+    {
+      "id": "gita-247",
+      "query": "Bhagavad Gita 2.47 you have a right to action not to the fruits Song Celestial",
+      "top_k": 8,
+      "expect_title_any": ["Gita", "Gītā", "Bhagavad", "Song Celestial"],
+      "min_hits": 1
+    },
+    {
+      "id": "yoga-12-paraphrase",
+      "query": "Yoga is the stilling of the fluctuations of the mind Yoga Sutra 1.2 Patanjali",
+      "top_k": 8,
+      "expect_title_any": ["Yoga", "Patanjali", "Patañjali"],
+      "min_hits": 1
+    },
+    {
+      "id": "rama-sita-abduction",
+      "query": "Ravana abducts Sita golden deer Lanka Valmiki Ramayana",
+      "top_k": 10,
+      "tradition": "itihasa",
+      "expect_title_any": ["Ramayan", "Rāmāyaṇ", "Valmiki"],
+      "min_hits": 1
+    },
+    {
+      "id": "bhishma-arrows",
+      "query": "Bhishma falls on a bed of arrows Mahabharata Ganguli",
+      "top_k": 8,
+      "expect_title_any": ["Mahabharata", "Mahābhārata", "Ganguli"],
+      "min_hits": 1
+    },
+    {
+      "id": "nasadiya-deva",
+      "query": "नासदासीन् नो सदासीत् तदानीं 10.129",
+      "top_k": 8,
+      "tradition": "vedic",
+      "expect_title_any": ["10.129", "Nasadiya"],
+      "min_hits": 1
+    },
+    {
+      "id": "isha-opening-deva",
+      "query": "ईशा वास्यमिदं सर्वं यत्किञ्च जगत्यां जगत्",
+      "top_k": 8,
+      "expect_title_any": ["Isha", "Īśā", "Isa", "Upanishad"],
       "min_hits": 1
     }
   ]

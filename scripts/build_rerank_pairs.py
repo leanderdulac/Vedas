@@ -46,7 +46,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Gera pares JSONL para fine-tune do reranker (fracos + hard negatives).",
     )
-    parser.add_argument("--gold", default=str(DEFAULT_GOLD), help="Gold set (smoke_queries.json)")
+    parser.add_argument(
+        "--gold",
+        default=str(DEFAULT_GOLD),
+        help="Gold expandido (fixtures/smoke_queries.json; ~20–25 queries)",
+    )
     parser.add_argument(
         "--candidates",
         default="",

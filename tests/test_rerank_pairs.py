@@ -114,8 +114,9 @@ class PairLogicTests(unittest.TestCase):
         self.assertFalse(any("selected hymns" in t for t in {p["doc_title"] for p in positives}))
 
     def test_assign_splits_pins_nasadiya_to_train(self):
-        splits = assign_splits(["isha-self", "nasadiya"], holdout_ratio=0.5)
+        splits = assign_splits(["isha-self", "nasadiya", "nasadiya-deva"], holdout_ratio=0.5)
         self.assertEqual(splits["nasadiya"], "train")
+        self.assertEqual(splits["nasadiya-deva"], "train")
         self.assertEqual(splits["isha-self"], "eval")
 
     def test_assign_splits_holdout(self):
