@@ -6,7 +6,7 @@ Este documento descreve o procedimento de deploy, configuração de ambiente, mo
 
 ## 1. Requisitos do Servidor
 
-- **CPU**: 2 vCPUs ou superior (4 vCPUs recomendado para inferência e re-ranqueamento local)
+- **CPU**: 2 vCPUs ou superior (4 vCPUs recomendado para inferência; o Cross-Encoder reranker fica **off** por padrão — `VEDIC_ENABLE_RERANKER=false`, ver `docs/reranker_decision.md`)
 - **Memória RAM**: Mínimo 4 GB (8 GB recomendado)
 - **Armazenamento**: 20 GB de disco SSD/NVMe
 - **Software**: Docker Engine 24+ e Docker Compose V2

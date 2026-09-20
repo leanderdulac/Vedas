@@ -9,6 +9,8 @@ data/bulk_state.json
 data/bulk_errors.jsonl
 data/*.log
 data/smoke_report.json
+data/smoke_report_*.json
+data/rerank/
 .DS_Store
 *.egg-info/
 .env

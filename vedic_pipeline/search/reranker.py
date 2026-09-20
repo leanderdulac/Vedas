@@ -19,8 +19,13 @@ def get_reranker_model_name() -> str:
 
 
 def is_reranker_enabled() -> bool:
-    val = os.environ.get("VEDIC_ENABLE_RERANKER", "true").strip().lower()
-    return val not in {"0", "false", "off", "no"}
+    """Opt-in: o CE genérico só carrega com valor explícito true/1/on/yes.
+
+    Default off — o híbrido sozinho já passa o gold set; o MiniLM ms-marco
+    genérico regride Nasadiya. Ver docs/reranker_decision.md.
+    """
+    val = os.environ.get("VEDIC_ENABLE_RERANKER", "false").strip().lower()
+    return val in {"1", "true", "on", "yes"}
 
 
 def get_reranker() -> Any | None:

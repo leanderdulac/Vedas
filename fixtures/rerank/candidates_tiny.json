@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "description": "Candidatos sintéticos (híbrido, CE off) para dry-run do gerador de pares. Não são scores de produção.",
+    "version": 1
+  },
+  "queries": [
+    {
+      "id": "isha-self",
+      "query": "What is the Self according to the Isha Upanishad?",
+      "expect_title_any": ["Isha", "Īśā", "Isa", "Upanishad"],
+      "hits": [
+        {
+          "title": "Isha Upanishad (Müller)",
+          "text": "The Self is all-pervading, bright, bodiless, scatheless.",
+          "score": 0.88
+        },
+        {
+          "title": "Mahabharata Book 1 (Ganguli)",
+          "text": "Then the assembled kings sat around the sacrificial fire.",
+          "score": 0.61
+        }
+      ]
+    },
+    {
+      "id": "nasadiya",
+      "query": "In the beginning there was neither non-existence nor existence then Nasadiya",
+      "expect_title_any": ["10.129", "Nasadiya", "Rig Veda selected"],
+      "hits": [
+        {
+          "title": "Rigveda RV 10.129 (Griffith)",
+          "text": "Then was not non-existent nor existent: there was no realm of air, no sky beyond it.",
+          "score": 0.91
+        },
+        {
+          "title": "Rigveda RV 10.125 (Griffith)",
+          "text": "I am the queen, the gatherer-up of treasures, most thoughtful, first of those who merit worship.",
+          "score": 0.77
+        },
+        {
+          "title": "Rigveda RV 10.5 (Griffith)",
+          "text": "The child of two mothers, of two fathers, the lord of food.",
+          "score": 0.70
+        }
+      ]
+    }
+  ]
+}

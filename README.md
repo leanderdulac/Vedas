@@ -302,6 +302,25 @@ python -m vedic_pipeline train-tokenizer --vocab-size 8000 --eval
 python -m vedic_pipeline train-model --base-model gpt2 --block-size 128 --max-steps 10
 ```
 
+`train-model` monta `TrainingArguments` filtrando kwargs que a versão instalada do `transformers` não aceita (no 5.x, `overwrite_output_dir` foi removido). `--max-steps`, `--batch-size`, `--block-size` e `--out` continuam iguais.
+
+## Reranker (Cross-Encoder)
+
+**Desligado por padrão.** Em 2026-09-20 o híbrido sozinho fez **10/10** no gold de smoke; o `cross-encoder/ms-marco-MiniLM-L-6-v2` caiu para **9/10** (regressão `nasadiya` / RV 10.129). Decisão e critérios de promote: [`docs/reranker_decision.md`](docs/reranker_decision.md).
+
+```bash
+# Opt-in explícito (só depois de um CE de domínio validado)
+export VEDIC_ENABLE_RERANKER=true
+export VEDIC_RERANKER_MODEL=artifacts/reranker   # ou o id HF
+
+# Pares fracos a partir do gold (fixture minúscula, sem embeddings)
+python scripts/build_rerank_pairs.py --dry-run --out data/rerank/pairs.jsonl
+
+# Fine-tune ( --dry-run não baixa o modelo nem treina )
+python scripts/train_reranker.py --help
+python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
+```
+
 ## Jurídico
 
 Fontes sem licença na lista permitida são bloqueadas. Material BBT/Vedabase somente com autorização explícita.
@@ -317,6 +336,8 @@ python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_re
 
 Gold set: `fixtures/smoke_queries.json` (Isha, Gītā, Nasadiya, Puruṣa, Agni 1.1, Yoga-sūtra, Rāmāyaṇa, Mahābhārata, Manu…).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json`.
+
+O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico 9/10) está em [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ## Docker
 
@@ -342,7 +363,7 @@ Eventos SSE: `meta` → `token*` → `done` (ou `error`). UI: página **Pergunta
 - ~~MinIO/S3 para raw e artefatos~~ ✅ (`vedic-pipeline artifacts` + perfil `s3`)
 - ~~Deploy multi-container (crawler / etl / train / api)~~ ✅ parcial (API slim + `train` isolado; fila de jobs em-processo)
 - ~~Dimensão de embedding configurável no schema~~ ✅ (`VEDIC_EMBEDDING_DIM` / `--dim`)  
-- ~~Rerank cross-encoder opcional~~ ✅ (`VEDIC_ENABLE_RERANKER` / `VEDIC_RERANKER_MODEL`)  
+- ~~Rerank cross-encoder opcional~~ ✅ (`VEDIC_ENABLE_RERANKER` default **off**; `VEDIC_RERANKER_MODEL`) — [decisão A/B](docs/reranker_decision.md)
 - ~~Fila de jobs para ops pesadas~~ ✅ (`POST .../async` + `GET /jobs`)  
 
 ## Desenvolvimento local revisado

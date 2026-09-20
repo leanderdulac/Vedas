@@ -24,6 +24,27 @@ class RerankerTests(unittest.TestCase):
     def test_empty_chunks(self):
         self.assertEqual(rerank_chunks("query", []), [])
 
+    def test_default_is_disabled_when_env_unset(self):
+        env = {k: v for k, v in os.environ.items() if k != "VEDIC_ENABLE_RERANKER"}
+        with patch.dict(os.environ, env, clear=True):
+            self.assertFalse(is_reranker_enabled())
+            self.assertIsNone(get_reranker())
+
+    def test_opt_in_values(self):
+        for raw, enabled in (
+            ("true", True),
+            ("1", True),
+            ("yes", True),
+            ("on", True),
+            ("false", False),
+            ("0", False),
+            ("off", False),
+            ("", False),
+            ("maybe", False),
+        ):
+            with self.subTest(raw=raw), patch.dict(os.environ, {"VEDIC_ENABLE_RERANKER": raw}):
+                self.assertEqual(is_reranker_enabled(), enabled)
+
     def test_disabled_reranker_returns_original(self):
         with patch.dict(os.environ, {"VEDIC_ENABLE_RERANKER": "false"}):
             self.assertFalse(is_reranker_enabled())
