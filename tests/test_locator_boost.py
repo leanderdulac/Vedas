@@ -9,14 +9,20 @@ from unittest.mock import MagicMock, patch
 from vedic_pipeline.search.hybrid import (
     LOCATOR_INJECT_PER_HYMN,
     LOCATOR_INJECT_PER_WORK,
+    WORK_BRIHADARANYAKA,
     WORK_ISHA,
     WORK_KATHA,
+    WORK_MANDUKYA,
+    WORK_RAMAYANA,
     WORK_SAMAVEDA,
     WORK_YAJUR_VS,
+    WORK_YOGA_SUTRA,
+    apply_anthology_demotion,
     apply_locator_hymn_boost,
     apply_locator_work_boost,
     extract_query_hymn_ids,
     extract_query_work_keys,
+    extract_short_rv_deity,
     hybrid_rerank,
     hymn_id_in_blob,
     locator_hymn_injections,
@@ -801,6 +807,412 @@ class NamedWorkRecallInjectionTests(unittest.TestCase):
         )
         self.assertEqual([c["chunk_id"] for c in injected], ["inject-vs-40"])
         self.assertEqual(injected[0].get("_work_injected"), WORK_YAJUR_VS)
+
+
+class NearMissNamedWorkExtractTests(unittest.TestCase):
+    def test_neti_and_brihadaranyaka_map_to_brihad(self):
+        self.assertEqual(
+            extract_query_work_keys("neti neti Brihadaranyaka Upanishad"),
+            [WORK_BRIHADARANYAKA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("neti-neti not this not this"),
+            [WORK_BRIHADARANYAKA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("नेति नेति"),
+            [WORK_BRIHADARANYAKA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("Bṛhadāraṇyaka on the Self"),
+            [WORK_BRIHADARANYAKA],
+        )
+
+    def test_mandukya_name_maps_but_om_alone_does_not(self):
+        self.assertEqual(
+            extract_query_work_keys("Mandukya Upanishad Om AUM"),
+            [WORK_MANDUKYA],
+        )
+        self.assertEqual(extract_query_work_keys("Māṇḍūkya on Aum"), [WORK_MANDUKYA])
+        self.assertEqual(extract_query_work_keys("Om AUM pranava"), [])
+        self.assertEqual(
+            extract_query_work_keys("Mundaka Upanishad two birds"),
+            [],
+        )
+
+    def test_sita_abduction_maps_to_ramayana_even_with_mahabharata_label(self):
+        self.assertEqual(
+            extract_query_work_keys(
+                "Sita was abducted by Ravana in the Mahabharata"
+            ),
+            [WORK_RAMAYANA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("rapto de Sītā por Rāvaṇa"),
+            [WORK_RAMAYANA],
+        )
+        self.assertEqual(extract_query_work_keys("Sita"), [])
+        self.assertEqual(
+            extract_query_work_keys("Kurukshetra war Mahabharata Bhishma"),
+            [],
+        )
+
+    def test_pt_yoga_definition_maps_to_yoga_sutra_not_bare_yoga(self):
+        self.assertEqual(
+            extract_query_work_keys("qual é a definição de yoga"),
+            [WORK_YOGA_SUTRA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("definição de yoga"),
+            [WORK_YOGA_SUTRA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("definition of yoga"),
+            [WORK_YOGA_SUTRA],
+        )
+        self.assertEqual(
+            extract_query_work_keys("Patanjali Yoga Sutras yogaś citta-vṛtti-nirodhaḥ"),
+            [WORK_YOGA_SUTRA],
+        )
+        self.assertEqual(extract_query_work_keys("yoga"), [])
+        self.assertEqual(extract_query_work_keys("yoga meditation samadhi"), [])
+
+    def test_short_agni_is_safe_deity_signal_dharma_is_not(self):
+        self.assertEqual(extract_short_rv_deity("Agni"), "agni")
+        self.assertEqual(extract_short_rv_deity("Agni fire"), "agni")
+        self.assertIsNone(extract_short_rv_deity("Agni priest of the sacrifice Rig Veda hymn 1.1"))
+        self.assertIsNone(extract_short_rv_deity("dharma"))
+        self.assertIsNone(extract_short_rv_deity("Dharma duty law"))
+        self.assertEqual(extract_query_work_keys("dharma"), [])
+        self.assertEqual(extract_query_hymn_ids("Agni"), [])
+        self.assertEqual(extract_query_hymn_ids("dharma"), [])
+
+
+class NearMissAnthologyDemotionTests(unittest.TestCase):
+    def test_wrong_nasadiya_10_125_prefers_real_10_129_over_selected_hymns(self):
+        """Mac near-miss: named 10.129 still lost to Rig Veda selected hymns."""
+        hits = hybrid_rerank(
+            "Nasadiya creation hymn RV 10.125",
+            [
+                {
+                    "chunk_id": "sel",
+                    "doc_id": "rv-selected",
+                    "title": "Rig Veda selected hymns",
+                    "locator": "",
+                    "text": "HYMN X.129 — Nasadiya Sukta (Creation Hymn)\n"
+                    "Then was not non-existent nor existent.",
+                    "score": 0.97,
+                },
+                {
+                    "chunk_id": "125",
+                    "doc_id": "rv-125",
+                    "title": "Rigveda RV 10.125 (Griffith)",
+                    "locator": "RV 10.125",
+                    "text": "I am the queen, the gatherer-up of treasures.",
+                    "score": 0.90,
+                },
+                {
+                    "chunk_id": "129",
+                    "doc_id": "rv-129",
+                    "title": "Rigveda RV 10.129 Nasadiya (Griffith)",
+                    "locator": "RV 10.129",
+                    "text": "Then was not non-existent nor existent.",
+                    "score": 0.32,
+                },
+            ],
+            top_k=3,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "129")
+        self.assertGreater(hits[0].get("_hymn_boost") or 0, 0)
+        anthology = next(h for h in hits if h["chunk_id"] == "sel")
+        self.assertGreater(anthology.get("_anthology_demote") or 0, 0)
+        self.assertIsNone(anthology.get("_hymn_match"))
+
+    def test_anthology_not_demoted_when_no_specific_hymn_title(self):
+        pool = [
+            {
+                "chunk_id": "sel",
+                "title": "Rig Veda selected hymns",
+                "locator": "",
+                "text": "HYMN X.129 — Nasadiya Sukta (Creation Hymn)\nThen was not non-existent.",
+                "score": 2.0,
+            },
+            {
+                "chunk_id": "125",
+                "title": "Rigveda RV 10.125",
+                "locator": "RV 10.125",
+                "text": "I am the queen",
+                "score": 0.9,
+            },
+        ]
+        apply_locator_hymn_boost("Nasadiya creation hymn", pool)
+        apply_anthology_demotion("Nasadiya creation hymn", pool)
+        by_id = {c["chunk_id"]: c for c in pool}
+        self.assertGreater(by_id["sel"]["score"], by_id["125"]["score"])
+        self.assertIsNone(by_id["sel"].get("_anthology_demote"))
+
+    def test_brihad_neti_beats_principal_upanishads_anthology(self):
+        hits = hybrid_rerank(
+            "neti neti Brihadaranyaka Upanishad",
+            [
+                {
+                    "chunk_id": "anth-up",
+                    "doc_id": "principal-up",
+                    "title": "Principal Upanishads (English core)",
+                    "locator": "",
+                    "text": "Neti neti — not this, not this. The Self is not this, not that.",
+                    "score": 0.96,
+                },
+                {
+                    "chunk_id": "brihad-4",
+                    "doc_id": "brihad",
+                    "title": "Brihadaranyaka Upanishad — seção 4 (Müller, SBE15, sacred-texts)",
+                    "locator": "Brihadaranyaka 4",
+                    "text": "The Self is to be described as not this, not this.",
+                    "score": 0.28,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "brihad-4")
+        self.assertEqual(hits[0].get("_work_match"), WORK_BRIHADARANYAKA)
+        decoy = next(h for h in hits if h["chunk_id"] == "anth-up")
+        self.assertIsNone(decoy.get("_work_match"))
+        self.assertGreater(decoy.get("_anthology_demote") or 0, 0)
+
+    def test_mandukya_om_beats_principal_upanishads_anthology(self):
+        hits = hybrid_rerank(
+            "Mandukya Upanishad Om AUM",
+            [
+                {
+                    "chunk_id": "anth-up",
+                    "doc_id": "principal-up",
+                    "title": "Principal Upanishads (English core)",
+                    "locator": "",
+                    "text": "Aum, this syllable is all this. All that is past, present and future is indeed Aum.",
+                    "score": 0.95,
+                },
+                {
+                    "chunk_id": "mandukya-1",
+                    "doc_id": "mandukya",
+                    "title": "Mandukya Upanishad (English, sacred-texts)",
+                    "locator": "Mandukya 1",
+                    "text": "Om. This syllable is all this. The Self has four quarters.",
+                    "score": 0.30,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "mandukya-1")
+        self.assertEqual(hits[0].get("_work_match"), WORK_MANDUKYA)
+        decoy = next(h for h in hits if h["chunk_id"] == "anth-up")
+        self.assertIsNone(decoy.get("_work_match"))
+        self.assertGreater(decoy.get("_anthology_demote") or 0, 0)
+
+    def test_sita_abduction_wrong_epic_prefers_ramayana(self):
+        hits = hybrid_rerank(
+            "Sita was abducted by Ravana in the Mahabharata",
+            [
+                {
+                    "chunk_id": "mb-sita",
+                    "doc_id": "mb-ganguli",
+                    "title": "The Mahabharata Volume 3 (Ganguli, Gutenberg)",
+                    "locator": "",
+                    "text": "Sita is named in passing among the women of the epic.",
+                    "score": 0.94,
+                },
+                {
+                    "chunk_id": "ram-aranya",
+                    "doc_id": "ramayana",
+                    "title": "The Ramayan of Valmiki — English verse (Gutenberg #24869)",
+                    "locator": "Aranya",
+                    "text": "Ravana seized Sita and bore her through the air from the forest hermitage.",
+                    "score": 0.25,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "ram-aranya")
+        self.assertEqual(hits[0].get("_work_match"), WORK_RAMAYANA)
+        decoy = next(h for h in hits if h["chunk_id"] == "mb-sita")
+        self.assertIsNone(decoy.get("_work_match"))
+
+    def test_pt_yoga_definicao_prefers_yoga_sutras_over_markandeya(self):
+        hits = hybrid_rerank(
+            "qual é a definição de yoga",
+            [
+                {
+                    "chunk_id": "mark-ocr",
+                    "doc_id": "markandeya",
+                    "title": "The Markandeya Purana (Pargiter, 1904, Cornell scan OCR)",
+                    "locator": "",
+                    "text": "yoga is mentioned in this OCR page among many puranic topics.",
+                    "score": 0.93,
+                },
+                {
+                    "chunk_id": "ys-1-2",
+                    "doc_id": "yoga-sutras",
+                    "title": "The Yoga Sutras of Patanjali (Charles Johnston, Gutenberg #2526)",
+                    "locator": "YS 1.2",
+                    "text": "Yoga is the inhibition of the modifications of the mind.",
+                    "score": 0.22,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "ys-1-2")
+        self.assertEqual(hits[0].get("_work_match"), WORK_YOGA_SUTRA)
+        decoy = next(h for h in hits if h["chunk_id"] == "mark-ocr")
+        self.assertIsNone(decoy.get("_work_match"))
+
+    def test_short_agni_prefers_rv_agni_over_mahabharata(self):
+        hits = hybrid_rerank(
+            "Agni",
+            [
+                {
+                    "chunk_id": "mb-agni",
+                    "doc_id": "mb-ganguli",
+                    "title": "The Mahabharata Volume 1 (Ganguli, Gutenberg)",
+                    "locator": "",
+                    "text": "Agni the fire god appears in the epic narrative.",
+                    "score": 0.92,
+                },
+                {
+                    "chunk_id": "rv-11",
+                    "doc_id": "rv-1-1",
+                    "title": "Rigveda RV 1.1 Agni (Griffith, sacred-texts)",
+                    "locator": "RV 1.1",
+                    "text": "I Laud Agni, the chosen Priest, God, minister of sacrifice.",
+                    "score": 0.33,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertEqual(hits[0]["chunk_id"], "rv-11")
+        self.assertEqual(hits[0].get("_deity_match"), "agni")
+        decoy = next(h for h in hits if h["chunk_id"] == "mb-agni")
+        self.assertIsNone(decoy.get("_deity_match"))
+
+    def test_short_dharma_does_not_force_a_work(self):
+        """Ultra-short dharma is unsafe to pin; leave as near_miss."""
+        hits = hybrid_rerank(
+            "dharma",
+            [
+                {
+                    "chunk_id": "mb-dharma",
+                    "doc_id": "mb-ganguli",
+                    "title": "The Mahabharata Volume 1 (Ganguli, Gutenberg)",
+                    "locator": "",
+                    "text": "Dharma and the duties of kings are discussed at length.",
+                    "score": 0.91,
+                },
+                {
+                    "chunk_id": "manu-dharma",
+                    "doc_id": "manu",
+                    "title": "Laws of Manu (sacred-texts)",
+                    "locator": "Manu 1",
+                    "text": "Dharma is the law of social order.",
+                    "score": 0.40,
+                },
+            ],
+            top_k=2,
+            use_cross_encoder=False,
+        )
+        self.assertTrue(all(h.get("_work_match") is None for h in hits))
+        self.assertTrue(all(h.get("_deity_match") is None for h in hits))
+        self.assertTrue(all(h.get("_hymn_match") is None for h in hits))
+        self.assertEqual(extract_query_work_keys("dharma"), [])
+
+
+class NearMissWorkInjectionTests(unittest.TestCase):
+    def test_brihad_injects_titled_chunk_not_principal_anthology(self):
+        anthology = {
+            "chunk_id": "inject-anth-up",
+            "title": "Principal Upanishads (English core)",
+            "locator": "",
+            "text": "Neti neti — not this, not this.",
+            "score": 0.9,
+        }
+        brihad = {
+            "chunk_id": "inject-brihad",
+            "title": "Brihadaranyaka Upanishad excerpts (English, sacred-texts SBE15)",
+            "locator": "Brihadaranyaka 2",
+            "text": "The Self is not this, not that.",
+            "score": 0.01,
+        }
+        injected = locator_work_injections(
+            "neti neti Brihadaranyaka",
+            [anthology, brihad],
+        )
+        self.assertEqual([c["chunk_id"] for c in injected], ["inject-brihad"])
+        self.assertEqual(injected[0].get("_work_injected"), WORK_BRIHADARANYAKA)
+
+    def test_mandukya_injection_skips_anthology(self):
+        anthology = {
+            "chunk_id": "inject-anth-om",
+            "title": "Principal Upanishads (English core)",
+            "text": "Aum this syllable is all this",
+        }
+        mandukya = {
+            "chunk_id": "inject-mandukya",
+            "title": "Mandukya Upanishad (English, sacred-texts)",
+            "locator": "Mandukya 1",
+            "text": "Om. This Self is Brahman.",
+        }
+        injected = locator_work_injections(
+            "Mandukya Upanishad Om AUM",
+            [anthology, mandukya],
+        )
+        self.assertEqual([c["chunk_id"] for c in injected], ["inject-mandukya"])
+        self.assertEqual(injected[0].get("_work_injected"), WORK_MANDUKYA)
+
+    def test_sita_injection_skips_mahabharata(self):
+        mb = {
+            "chunk_id": "inject-mb",
+            "title": "The Mahabharata Volume 3 (Ganguli)",
+            "text": "Sita and Ravana are mentioned",
+        }
+        ram = {
+            "chunk_id": "inject-ram",
+            "title": "The Ramayan of Valmiki — English verse",
+            "locator": "Aranya",
+            "text": "Ravana abducts Sita",
+        }
+        injected = locator_work_injections(
+            "Sita was abducted by Ravana in the Mahabharata",
+            [mb, ram],
+        )
+        self.assertEqual([c["chunk_id"] for c in injected], ["inject-ram"])
+        self.assertEqual(injected[0].get("_work_injected"), WORK_RAMAYANA)
+
+    def test_yoga_injection_skips_markandeya_and_caps(self):
+        mark = {
+            "chunk_id": "inject-mark",
+            "title": "The Markandeya Purana (Pargiter OCR)",
+            "text": "definição de yoga in passing",
+        }
+        sutras = [
+            {
+                "chunk_id": f"ys-{n}",
+                "title": f"The Yoga Sutras of Patanjali pada {n}",
+                "locator": f"YS 1.{n}",
+                "text": "sutra body",
+            }
+            for n in range(1, 13)
+        ]
+        injected = locator_work_injections(
+            "definição de yoga",
+            [mark] + sutras,
+        )
+        self.assertEqual(len(injected), LOCATOR_INJECT_PER_WORK)
+        self.assertTrue(all(c.get("_work_injected") == WORK_YOGA_SUTRA for c in injected))
+        self.assertFalse(any(c["chunk_id"] == "inject-mark" for c in injected))
 
 
 if __name__ == "__main__":
