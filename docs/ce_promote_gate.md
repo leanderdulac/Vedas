@@ -8,9 +8,11 @@ Resumo operacional da decisão: [`docs/reranker_decision.md`](reranker_decision.
 
 Sempre `fixtures/smoke_queries.json` — **37** queries (19 anteriores + 18 beyond-stress após locator PRs #5–#9, verificadas no híbrido Mac top-1; CE off). Não usar o recorte histórico de 10 nem `fixtures/smoke_queries_ci.json` (recorte rápido de CI, 4 queries — não explode o runtime; não substitui o gate).
 
-O gold cresceu. Os critérios de promote **não** mudam: CE ≥ híbrido no pass rate, incluindo Nasadiya. Medição Mac no gold-37: **PROMOTE** (37/37 ambos os lados). Default do CE continua off. Short-dharma ficou de fora de propósito (24/25 no stress).
+O gold cresceu. Os critérios de promote **não** mudam: CE ≥ híbrido no pass rate, incluindo Nasadiya. Medição Mac no gold-37: **PROMOTE** (37/37 ambos os lados) para domínio **v5** e **v4**. Default do CE continua off. Short-dharma ficou de fora de propósito (24/25 no stress).
 
 Pares usados no treino local do v4 (não commitados): `data/rerank/pairs_gold19.jsonl` (381 pares) — medição histórica no gold de 19.
+
+Pares usados no treino local do v5 (não commitados): `data/rerank/pairs_gold37.jsonl` (487 pares: 210 pos / 277 neg; train 407 / eval 80).
 
 ## Critérios (exit 0 = PROMOTE)
 
@@ -25,7 +27,7 @@ Latência p95 CPU não deve ficar >2× o híbrido (critério operacional, **fora
 
 ```bash
 python scripts/eval_reranker_smoke.py \
-  --model artifacts/reranker_domain_v4 \
+  --model artifacts/reranker_domain_v5 \
   --queries fixtures/smoke_queries.json \
   --backend numpy \
   --json-out data/rerank_eval.json
@@ -71,12 +73,37 @@ Nasadiya no gold-37 — híbrido ✓ e CE ✓, inclusive variantes:
 - Devanāgarī (`nasadiya-devanagari-only`)
 - PT (`pt-nasadiya`)
 
-Saída: **PROMOTE** (CE >= híbrido, Nasadiya ok). Apto a opt-in. Default **continua off**.
+Saída: **PROMOTE** (CE >= híbrido, Nasadiya ok). Apto a opt-in (caminho anterior). Default **continua off**.
+
+## Resultado v5 no gold-37 (Mac, 2026-09-20)
+
+Comando (parent, Mac, backend numpy):
+
+```bash
+python scripts/eval_reranker_smoke.py \
+  --model artifacts/reranker_domain_v5 \
+  --queries fixtures/smoke_queries.json \
+  --backend numpy
+```
+
+| Modo | Pass | Notas |
+|------|------|-------|
+| Híbrido (CE off) | **37/37** | gold expandido (19 + 18 beyond-stress) |
+| Domínio CE `artifacts/reranker_domain_v5` | **37/37** | CE ≥ híbrido |
+
+Nasadiya no gold-37 — híbrido ✓ e CE ✓, inclusive variantes:
+
+- `nasadiya` (canônico)
+- wrong-number (`wrong-nasadiya-10-125`)
+- Devanāgarī (`nasadiya-devanagari-only`)
+- PT (`pt-nasadiya`)
+
+Saída: **PROMOTE** (CE >= híbrido, Nasadiya ok). Apto a opt-in; **recomendado** quando os pesos existem localmente. Default **continua off**.
 
 ```bash
 # Continua off sem estas variáveis (ou com ENABLE=false)
 export VEDIC_ENABLE_RERANKER=true
-export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v5
 ```
 
 ## Política depois do PROMOTE
@@ -84,7 +111,7 @@ export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
 PROMOTE = **apto a opt-in**, não “ligar em produção”.
 
 - Default permanece `VEDIC_ENABLE_RERANKER=false`.
-- Opt-in: `VEDIC_ENABLE_RERANKER=true` e `VEDIC_RERANKER_MODEL` apontando para um **dir local** (ex. `artifacts/reranker_domain_v4`).
+- Opt-in: `VEDIC_ENABLE_RERANKER=true` e `VEDIC_RERANKER_MODEL` apontando para um **dir local**. Prefira `artifacts/reranker_domain_v5` quando existir; `artifacts/reranker_domain_v4` continua um caminho válido.
 - Não commitar pesos, `data/rerank/*.jsonl` nem o modelo.
 
 Série de locator (híbrido, CE continua off): **PR #5** mapa nomeado de hino (Gāyatrī→3.62, Hiraṇyagarbha→10.121, Vāk→10.125; nome vence id conflitante) → **PR #6** injeção de recall pelo id RV → **PR #8** locator de obra/Veda (Īśā, Nachiketas→Kaṭha, Sāmaveda SV, Śukla Yajur / Vājasaneyi VS) → **este (passo 4)** near-miss / demote de antologia: quando o título específico da obra/hino está no pool, coleções genéricas (`Rig Veda selected hymns`, `Principal Upanishads`) descem; Sītā+abdução → Rāmāyaṇa (mesmo com rótulo Mahābhārata); neti neti → Bṛhadāraṇyaka; Māṇḍūkya pelo nome; definição de yoga PT/EN → Yoga-sūtra. Mesmo teto de injeção. Isso não liga o CE.

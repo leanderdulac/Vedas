@@ -60,20 +60,38 @@ Medição Mac no gold atual (`fixtures/smoke_queries.json`, **37** queries):
 | Nasadiya (canônico + wrong-number / Devanāgarī / PT) | híbrido ✓ e CE ✓ |
 | `eval_reranker_smoke.py` | **PROMOTE** (CE >= híbrido, Nasadiya ok) |
 
-Apto a opt-in. Default **continua OFF**.
+Apto a opt-in (caminho anterior). Default **continua OFF**.
+
+## Gate v5 no gold-37 (Mac, 2026-09-20)
+
+Medição Mac 2026-09-20 no gold atual (`fixtures/smoke_queries.json`, **37** queries). Treino local no gold-37; pesos **não** commitados. Default continua off.
+
+| Item | Valor |
+|------|--------|
+| Gold | `fixtures/smoke_queries.json` (**37** queries) |
+| Pares locais (não commitados) | `data/rerank/pairs_gold37.jsonl` (**487** pares: 210 pos / 277 neg; train 407 / eval 80) |
+| Modelo | `artifacts/reranker_domain_v5` (pesos locais; **não** commitados) |
+| Base | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
+| Treino | epochs 3, batch 8, max_length 256, lr 2e-5, device mps (Mac); `train_meta.json` |
+| Híbrido (CE off) | **37/37** |
+| Domínio CE v5 | **37/37** |
+| Nasadiya (canônico + wrong-number / Devanāgarī / PT) | híbrido ✓ e CE ✓ |
+| `eval_reranker_smoke.py` | **PROMOTE** (CE >= híbrido, Nasadiya ok) |
+
+v5 é o candidato mais recente treinado no gold-37 e o **opt-in recomendado** quando os pesos existem localmente. v4 continua um caminho de opt-in válido. Isso **não** liga o CE no default.
 
 ```bash
 # Continua off sem estas variáveis (ou com ENABLE=false)
 export VEDIC_ENABLE_RERANKER=true
-export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v5
 ```
 
 Critérios e o que o exit code mede: [`docs/ce_promote_gate.md`](ce_promote_gate.md).
 
 ## Política atual
 
-1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). Genérico e domínio v1–v3: **não promover**. Domínio **v4** passou o gate no gold de 19 e de novo no gold de **37** (seção acima) mas **não** vira default — só opt-in via env apontando para um dir local.
-2. `VEDIC_RERANKER_MODEL` pode ser um id HF **ou** um diretório local (`artifacts/reranker_domain_v4`); o loader resolve o path absoluto quando o dir existe.
+1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). Genérico e domínio v1–v3: **não promover**. Domínio **v5** (e **v4**) passaram o gate no gold de **37** (seções acima) mas **não** viram default — só opt-in via env apontando para um dir local. Prefira **v5** quando os pesos existirem localmente.
+2. `VEDIC_RERANKER_MODEL` pode ser um id HF **ou** um diretório local (`artifacts/reranker_domain_v5`; v4 permanece válido); o loader resolve o path absoluto quando o dir existe.
 3. Fine-tune só faz sentido com pares que **protejam Nasadiya** — positivos com marcadores de hino (`10.129` / Nasadiya) em vez do rótulo amplo "Rig Veda", e hard negatives 10.125 / 10.5 / 2.38 quando aparecerem nos candidatos — **e** com o boost de locator abaixo.
 4. **Não** treinar GPT-2 / LM causal para ranking.
 
@@ -123,7 +141,7 @@ python scripts/eval_reranker_smoke.py \
 
 # 4. Só então, opt-in local (default continua false)
 export VEDIC_ENABLE_RERANKER=true
-export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v5
 ```
 
 ### Critérios do gate (`eval_reranker_smoke.py`)
@@ -141,6 +159,8 @@ Medição Mac 2026-09-20 (domínio **v4**, gold de 19): **PROMOTE** — híbrido
 
 Medição Mac 2026-09-20 (domínio **v4**, gold de **37**): **PROMOTE** — híbrido 37/37, CE 37/37, Nasadiya (incl. wrong-number / Devanāgarī / PT) ok. Default **continua OFF**.
 
+Medição Mac 2026-09-20 (domínio **v5**, gold de **37**): **PROMOTE** — híbrido 37/37, CE 37/37, Nasadiya (incl. wrong-number / Devanāgarī / PT) ok. Default **continua OFF**. Opt-in recomendado quando `artifacts/reranker_domain_v5` existir localmente.
+
 O JSON traz `per_query` (ok híbrido vs CE + `top_titles`) e um bloco dedicado `nasadiya`.
 
 **Gold do gate:** sempre `fixtures/smoke_queries.json` expandido (**37** queries: 19 anteriores + 18 beyond-stress pós locator PRs #5–#9 — decoys de hino, Devanāgarī/IAST, PT, Veda/obra nomeada, épico errado). Só entram queries com `expect_title_any` estrito que passaram no híbrido (CE off; short-dharma excluído). O CI reduzido (`smoke_queries_ci.json`, 4 queries) não substitui o gate. CE continua **off** por default.
@@ -155,5 +175,5 @@ Latência p95 CPU não deve ficar >2× o híbrido (critério operacional, fora d
 - Não treinar embedding sânscrito-específico antes de medir falhas reais do MiniLM atual.
 - Não commitar pesos grandes, `data/rerank/*.jsonl` nem corpus em git.
 - Não ligar o CE genérico `cross-encoder/ms-marco-MiniLM-L-6-v2` **nem** o CE de domínio v1–v3 em produção.
-- Não tratar o fine-tune gold-only (v1–v3) como correção de Nasadiya. v4 passou o gate; mesmo assim o default fica **off**.
+- Não tratar o fine-tune gold-only (v1–v3) como correção de Nasadiya. v5 (e v4) passaram o gate; mesmo assim o default fica **off**.
 - Não setar `VEDIC_ENABLE_RERANKER=true` no `.env` de deploy sem um dir local validado.
