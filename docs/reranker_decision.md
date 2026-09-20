@@ -33,9 +33,9 @@ Conclusão: CE fine-tune **sozinho** não é suficiente para opt-in. Antes de li
 1. **Boost de locator/hino** no híbrido (e de novo após o CE) — PoC local restaurou Nasadiya sob pressão do CE; agora está em `apply_locator_hymn_boost`.
 2. **Pares maiores/melhores** (mais decoys, mais âncoras de hino, holdout real) — o snapshot de 10 queries era estreito demais para o CE generalizar 10.129 vs 10.125. O gold expandido (Kaṭha, Gītā 2.47, Yoga 1.2, épicos, Īśā em Devanāgarī, Śvetāśvatara, Praśna, Muṇḍaka) é o conjunto que o gate deve medir.
 
-## Gate v4 (gold de 19; gold atual = 37)
+## Gate v4 (gold de 19; histórico)
 
-Medição Mac 2026-09-20 no gold de **19** (antes da expansão beyond-stress). Gold atual: **37** queries — re-rodar o gate no Mac; critérios inalterados (CE ≥ híbrido, incluindo Nasadiya). Default continua off.
+Medição Mac 2026-09-20 no gold de **19** (antes da expansão beyond-stress). Critérios inalterados (CE ≥ híbrido, incluindo Nasadiya). Default continua off.
 
 | Item | Valor |
 |------|--------|
@@ -47,7 +47,20 @@ Medição Mac 2026-09-20 no gold de **19** (antes da expansão beyond-stress). G
 | Nasadiya | OK — RV **10.129** no topo (locator boost + CE) |
 | `eval_reranker_smoke.py` | **PROMOTE** (CE >= híbrido, Nasadiya ok) |
 
-v4 é **apto a opt-in**. Isso **não** liga o CE no default.
+v4 foi **apto a opt-in** já no gold de 19. Isso **não** ligou o CE no default.
+
+## Gate v4 no gold-37 (Mac, 2026-09-20)
+
+Medição Mac no gold atual (`fixtures/smoke_queries.json`, **37** queries):
+
+| Item | Valor |
+|------|--------|
+| Híbrido (CE off) | **37/37** |
+| Domínio CE v4 | **37/37** |
+| Nasadiya (canônico + wrong-number / Devanāgarī / PT) | híbrido ✓ e CE ✓ |
+| `eval_reranker_smoke.py` | **PROMOTE** (CE >= híbrido, Nasadiya ok) |
+
+Apto a opt-in. Default **continua OFF**.
 
 ```bash
 # Continua off sem estas variáveis (ou com ENABLE=false)
@@ -59,7 +72,7 @@ Critérios e o que o exit code mede: [`docs/ce_promote_gate.md`](ce_promote_gate
 
 ## Política atual
 
-1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). Genérico e domínio v1–v3: **não promover**. Domínio **v4** passou o gate no gold de 19 (seção acima) mas **não** vira default — só opt-in via env apontando para um dir local. Gold atual = 37; re-rodar o gate após esta expansão.
+1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). Genérico e domínio v1–v3: **não promover**. Domínio **v4** passou o gate no gold de 19 e de novo no gold de **37** (seção acima) mas **não** vira default — só opt-in via env apontando para um dir local.
 2. `VEDIC_RERANKER_MODEL` pode ser um id HF **ou** um diretório local (`artifacts/reranker_domain_v4`); o loader resolve o path absoluto quando o dir existe.
 3. Fine-tune só faz sentido com pares que **protejam Nasadiya** — positivos com marcadores de hino (`10.129` / Nasadiya) em vez do rótulo amplo "Rig Veda", e hard negatives 10.125 / 10.5 / 2.38 quando aparecerem nos candidatos — **e** com o boost de locator abaixo.
 4. **Não** treinar GPT-2 / LM causal para ranking.
@@ -123,6 +136,8 @@ Promote (**exit 0**) somente se **ambos** valerem:
 Medição Mac 2026-09-20 (domínio v1–v3, gold de 10): **não promove** — 9/10 vs híbrido 10/10, Nasadiya falha com tops 10.125 / 10.5.
 
 Medição Mac 2026-09-20 (domínio **v4**, gold de 19): **PROMOTE** — híbrido 19/19, CE 19/19, Nasadiya com RV 10.129 no topo. Default **continua OFF**.
+
+Medição Mac 2026-09-20 (domínio **v4**, gold de **37**): **PROMOTE** — híbrido 37/37, CE 37/37, Nasadiya (incl. wrong-number / Devanāgarī / PT) ok. Default **continua OFF**.
 
 O JSON traz `per_query` (ok híbrido vs CE + `top_titles`) e um bloco dedicado `nasadiya`.
 

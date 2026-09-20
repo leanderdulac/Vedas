@@ -8,7 +8,7 @@ Resumo operacional da decisão: [`docs/reranker_decision.md`](reranker_decision.
 
 Sempre `fixtures/smoke_queries.json` — **37** queries (19 anteriores + 18 beyond-stress após locator PRs #5–#9, verificadas no híbrido Mac top-1; CE off). Não usar o recorte histórico de 10 nem `fixtures/smoke_queries_ci.json` (recorte rápido de CI, 4 queries — não explode o runtime; não substitui o gate).
 
-O gold cresceu. Os critérios de promote **não** mudam: CE ≥ híbrido no pass rate, incluindo Nasadiya. Re-rodar o gate neste gold expandido no Mac (o parent corre). Default do CE continua off. Short-dharma ficou de fora de propósito (24/25 no stress).
+O gold cresceu. Os critérios de promote **não** mudam: CE ≥ híbrido no pass rate, incluindo Nasadiya. Medição Mac no gold-37: **PROMOTE** (37/37 ambos os lados). Default do CE continua off. Short-dharma ficou de fora de propósito (24/25 no stress).
 
 Pares usados no treino local do v4 (não commitados): `data/rerank/pairs_gold19.jsonl` (381 pares) — medição histórica no gold de 19.
 
@@ -33,18 +33,49 @@ python scripts/eval_reranker_smoke.py \
 
 O script troca `VEDIC_ENABLE_RERANKER` / `VEDIC_RERANKER_MODEL` só no processo e restaura ao sair. Não deixa o CE ligado.
 
-## Resultado v4 (Mac, 2026-09-20)
+## Resultado v4 no gold de 19 (Mac, 2026-09-20) — histórico
 
-Medição histórica no gold de **19** (antes desta expansão):
+Medição histórica no gold de **19** (antes da expansão beyond-stress):
 
 | Modo | Pass | Notas |
 |------|------|-------|
 | Híbrido (CE off) | **19/19** | locator/hymn boost |
 | Domínio CE `artifacts/reranker_domain_v4` | **19/19** | Nasadiya OK — RV **10.129** no topo (locator boost + CE) |
 
-Saída: **PROMOTE** (CE >= híbrido, Nasadiya ok). Gold atual = **37**; re-rodar o gate no Mac antes de qualquer opt-in novo. Isso **não** liga o CE.
+Saída: **PROMOTE** (CE >= híbrido, Nasadiya ok). Isso **não** ligou o CE.
 
 v1–v3 (gold de 10): HOLD — 9/10 vs híbrido 10/10, Nasadiya com tops 10.125 / 10.5.
+
+## Resultado v4 no gold-37 (Mac, 2026-09-20)
+
+Comando (parent, Mac, backend numpy):
+
+```bash
+python scripts/eval_reranker_smoke.py \
+  --model artifacts/reranker_domain_v4 \
+  --queries fixtures/smoke_queries.json \
+  --backend numpy
+```
+
+| Modo | Pass | Notas |
+|------|------|-------|
+| Híbrido (CE off) | **37/37** | gold expandido (19 + 18 beyond-stress) |
+| Domínio CE `artifacts/reranker_domain_v4` | **37/37** | CE ≥ híbrido |
+
+Nasadiya no gold-37 — híbrido ✓ e CE ✓, inclusive variantes:
+
+- `nasadiya` (canônico)
+- wrong-number (`wrong-nasadiya-10-125`)
+- Devanāgarī (`nasadiya-devanagari-only`)
+- PT (`pt-nasadiya`)
+
+Saída: **PROMOTE** (CE >= híbrido, Nasadiya ok). Apto a opt-in. Default **continua off**.
+
+```bash
+# Continua off sem estas variáveis (ou com ENABLE=false)
+export VEDIC_ENABLE_RERANKER=true
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
+```
 
 ## Política depois do PROMOTE
 
