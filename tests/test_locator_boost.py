@@ -109,6 +109,10 @@ class HymnIdExtractTests(unittest.TestCase):
         self.assertFalse(hymn_id_in_blob("Rigveda RV 10.125 (Griffith)", "10.5"))
         self.assertEqual(extract_query_hymn_ids("Rigveda 10.5"), ["10.5"])
         self.assertEqual(extract_query_hymn_ids("Rigveda 10.50"), ["10.50"])
+        self.assertTrue(hymn_id_in_blob("Rigveda RV 3.62 (Griffith, sacred-texts)", "3.62"))
+        self.assertTrue(hymn_id_in_blob("RV 3.62.1–2", "3.62"))
+        self.assertTrue(hymn_id_in_blob("Rigveda RV 10.121 (Griffith)", "10.121"))
+        self.assertFalse(hymn_id_in_blob("Chandogya III.12", "3.62"))
 
 
 class LocatorHymnBoostTests(unittest.TestCase):
@@ -524,6 +528,59 @@ class LocatorHymnRecallInjectionTests(unittest.TestCase):
         self.assertTrue(any(h["chunk_id"] == "121" for h in hits))
         matched = next(h for h in hits if h["chunk_id"] == "121")
         self.assertGreater(matched.get("_hymn_boost") or 0, 0)
+
+    def test_mac_griffith_title_locator_shapes_inject_3_62(self):
+        """Live Mac chunks.jsonl titles/locators (id-only; not Chandogya by name)."""
+        chandogya = {
+            "chunk_id": "ch-iii12",
+            "doc_id": "chandogya",
+            "title": "Chandogya Upanishad III.12 (Müller, SBE01, sacred-texts)",
+            "locator": "Chandogya III.12",
+            "text": "Gayatri is everything whatsoever here exists. Gayatri is speech.",
+            "score": 0.95,
+        }
+        rv362 = {
+            "chunk_id": "mac-362",
+            "doc_id": "rv-3-62",
+            "title": "Rigveda RV 3.62 (Griffith, sacred-texts)",
+            "locator": "RV 3.62.1–2",
+            "text": "May we attain that excellent glory of Savitar the God.",
+            "score": 0.10,
+        }
+        rv121 = {
+            "chunk_id": "mac-121",
+            "doc_id": "rv-10-121",
+            "title": "Rigveda RV 10.121 (Griffith)",
+            "locator": "RV 10.121.1",
+            "text": "In the beginning rose Hiranyagarbha.",
+            "score": 0.10,
+        }
+        injected = collect_locator_hymn_injections(
+            "Gayatri mantra Savitr Rig Veda",
+            [chandogya, rv362, rv121],
+        )
+        self.assertEqual([c["chunk_id"] for c in injected], ["mac-362"])
+        self.assertTrue(chunk_matches_hymn(injected[0], "3.62", text_too=False))
+        self.assertEqual(
+            [
+                c["chunk_id"]
+                for c in collect_locator_hymn_injections(
+                    "Hiranyagarbha golden womb",
+                    [chandogya, rv362, rv121],
+                )
+            ],
+            ["mac-121"],
+        )
+        hits = hybrid_rerank(
+            "Gayatri mantra Savitr Rig Veda",
+            [chandogya],
+            all_chunks=[chandogya, rv362, rv121],
+            top_k=8,
+            use_cross_encoder=False,
+        )
+        self.assertTrue(any(h["chunk_id"] == "mac-362" for h in hits))
+        decoy = next(h for h in hits if h["chunk_id"] == "ch-iii12")
+        self.assertIsNone(decoy.get("_hymn_match"))
 
 
 if __name__ == "__main__":

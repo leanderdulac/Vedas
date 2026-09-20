@@ -418,10 +418,13 @@ def collect_locator_hymn_injections(
 
     PR #5 mapeou nomes→ids e deu boost nos hits já recuperados. Sem o hino no
     pool (Gāyatrī / Chandogya III.12, Hiraṇyagarbha / antologia) o boost não
-    atua. Aqui o id extraído puxa chunks do corpus *antes* do scoring.
+    atua. Aqui o id extraído puxa chunks do corpus *antes* do primeiro
+    ``apply_locator_hymn_boost`` (após a fusão de scores).
 
     Casamento = title/locator, mesmas regras id-only do boost para
     Gāyatrī/Hiraṇyagarbha/Vāk (não injeta Chandogya só pela palavra Gayatri).
+    Formas do índice Mac (`artifacts/embeddings/chunks.jsonl`): título
+    ``Rigveda RV 3.62 (Griffith, sacred-texts)`` e locator ``RV 3.62.1–2``.
     Teto barato por id.
     """
     hymns = extract_query_hymn_ids(query)
@@ -537,7 +540,7 @@ def hybrid_rerank(
             ch = dict(all_chunks[i])
             ch["_lex_score"] = scores[i]
             add(ch)
-        # Named-hymn recall: o boost (PR #5) só reordena o que já entrou no pool.
+        # Named-hymn recall: entra no pool *antes* do primeiro apply_locator_hymn_boost.
         for ch in collect_locator_hymn_injections(query, all_chunks):
             ch["_locator_injected"] = True
             add(ch)
