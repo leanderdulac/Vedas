@@ -84,6 +84,22 @@ export default function AboutPage() {
                 .map(([k, v]) => `${k}${v.available ? "✓" : ""}`)
                 .join(" · ")}
             </div>
+            <div className="muted" style={{ fontSize: "0.92rem" }}>
+              Cross-Encoder:{" "}
+              {health.reranker?.enabled ? "ligado (opt-in)" : "off (default)"}
+              {health.reranker?.gate ? ` · gate ${health.reranker.gate}` : ""}
+              {health.reranker?.version ? ` ${health.reranker.version}` : ""}
+              {" · "}
+              corpus:{" "}
+              {health.corpus_profile?.matched_profiles?.length
+                ? health.corpus_profile.matched_profiles.join(", ")
+                : health.corpus_profile?.default_profile || "—"}
+              {health.generation?.open_paid
+                ? " · geração paga aberta (instância privada)"
+                : health.generation?.require_token
+                  ? " · geração exige token"
+                  : ""}
+            </div>
           </div>
         )}
       </section>

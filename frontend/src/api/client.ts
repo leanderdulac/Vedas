@@ -190,6 +190,25 @@ export type Health = {
   embedding_index_numpy: boolean;
   database: { reachable?: boolean; counts?: Record<string, number> };
   llm_providers: Record<string, { available?: boolean; model?: string }>;
+  reranker?: {
+    enabled?: boolean;
+    default_enabled?: boolean;
+    eligible_opt_in?: boolean;
+    gate?: string;
+    version?: string;
+  };
+  generation?: {
+    require_token?: boolean;
+    token_configured?: boolean;
+    xai_configured?: boolean;
+    open_paid?: boolean;
+  };
+  corpus_profile?: {
+    documents?: number;
+    matched_profiles?: string[];
+    reproducible?: boolean;
+    default_profile?: string;
+  };
 };
 
 export const api = {

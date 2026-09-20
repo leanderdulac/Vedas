@@ -144,9 +144,15 @@ python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 
 ### Contagens canônicas (snapshot 2026-08-07/08)
 
-> Snapshot de um ambiente específico (bulk ingest completo). Deploys novos
-> partem de `fixtures/` e crescem conforme o manifesto usado — os números
-> abaixo não são automáticos nem garantidos.
+> Snapshot de **um** ambiente (bulk ingest completo), perfil
+> `canonical-snapshot` em `fixtures/corpus_profiles.json`. **Não** é o default
+> de um clone: isso começa em `bootstrap` (`fixtures/sources_vedic_corpus.json`).
+> Depois do ingest, grave um lock e verifique:
+>
+> ```bash
+> vedic-pipeline corpus-status --profile bootstrap
+> vedic-pipeline corpus-status --write-lock data/corpus.lock.json
+> ```
 
 | Métrica | Valor |
 |---------|-------|
@@ -367,11 +373,20 @@ Eventos SSE: `meta` → `token*` → `done` (ou `error`). UI: página **Pergunta
 - ~~Deploy multi-container (crawler / etl / train / api)~~ ✅ parcial (API slim + `train` isolado; fila de jobs em-processo)
 - ~~Dimensão de embedding configurável no schema~~ ✅ (`VEDIC_EMBEDDING_DIM` / `--dim`)  
 - ~~Rerank cross-encoder opcional~~ ✅ (`VEDIC_ENABLE_RERANKER` default **off**; `VEDIC_RERANKER_MODEL`) — [decisão A/B](docs/reranker_decision.md)
-- ~~Fila de jobs para ops pesadas~~ ✅ (`POST .../async` + `GET /jobs`)  
+- ~~Fila de jobs para ops pesadas~~ ✅ (`POST .../async` + `GET /jobs`)
+- ~~Corpus reproduzível vs snapshot~~ ✅ (`vedic-pipeline corpus-status` + lock)
+- ~~Checklist de deploy / geração fail-closed~~ ✅ (`deploy-check`, `VEDIC_REQUIRE_GENERATION_TOKEN`)
+- ~~CE pós-PROMOTE sem default on~~ ✅ (`reranker-status`, `fixtures/reranker_promote.json`)  
 
 ## Desenvolvimento local revisado
 
-Veja `docs/DEVELOPMENT_REVIEW.md` para correções, prioridades, execução local e validação.
+Veja `docs/DEVELOPMENT_REVIEW.md` para o estado atual (corpus, deploy, CE). Comandos:
+
+```bash
+vedic-pipeline corpus-status --profile bootstrap
+vedic-pipeline deploy-check --mode local   # ou --mode prod
+vedic-pipeline reranker-status
+```
 
 As operações HTTP `/ingest`, `/tokenize`, `/train`, `/build-index`, `/db/init` e `/db/sync` (e suas variantes `/async`, mais `GET /jobs`) exigem `VEDIC_PIPELINE_API_TOKEN` e o cabeçalho `Authorization: Bearer <token>`. Sem token configurado, ficam desabilitadas (503). Os comandos da CLI continuam disponíveis sem esse token.
 

@@ -162,7 +162,10 @@ def create_app():
     @app.get("/api/v1/health")
     def health() -> dict[str, Any]:
         from vedic_pipeline.api.catalog_service import corpus_stats
+        from vedic_pipeline.api.request_policy import public_generation_policy
+        from vedic_pipeline.common.corpus_status import public_corpus_profile
         from vedic_pipeline.llm.generate import list_providers
+        from vedic_pipeline.search.reranker_status import public_reranker_status
         from vedic_pipeline.storage.db import check_db, get_database_url
 
         stats = corpus_stats()
@@ -201,6 +204,9 @@ def create_app():
             },
             "allowed_licenses": sorted(ALLOWED_LICENSES),
             "default_base_model": DEFAULT_BASE_MODEL,
+            "reranker": public_reranker_status(),
+            "generation": public_generation_policy(),
+            "corpus_profile": public_corpus_profile(),
         }
 
     # ------------------------------------------------------------------ app v1

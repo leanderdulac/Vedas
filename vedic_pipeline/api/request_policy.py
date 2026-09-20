@@ -7,7 +7,13 @@ from pathlib import Path
 from fastapi import HTTPException
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR, PROJECT_ROOT
+from vedic_pipeline.common.env import env_flag
 from vedic_pipeline.llm.generate import DEFAULT_XAI_MODEL
+
+GENERATION_TOKEN_UNSET = (
+    "Geração paga exige VEDIC_GENERATION_API_TOKEN nesta instância "
+    "(VEDIC_REQUIRE_GENERATION_TOKEN=true)"
+)
 
 _MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-/]{0,127}(?::[A-Za-z0-9._\-]{1,64})?$")
 
@@ -75,6 +81,23 @@ def validate_index_dir(value: str) -> str:
     return resolved
 
 
+def generation_token_required() -> bool:
+    """Prod/compose.prod: fail-closed. Dev local continua aberto se o token estiver vazio."""
+    return env_flag("VEDIC_REQUIRE_GENERATION_TOKEN")
+
+
+def public_generation_policy() -> dict[str, bool]:
+    xai = bool((os.environ.get("XAI_API_KEY") or "").strip())
+    token = bool((os.environ.get("VEDIC_GENERATION_API_TOKEN") or "").strip())
+    require = generation_token_required()
+    return {
+        "require_token": require,
+        "token_configured": token,
+        "xai_configured": xai,
+        "open_paid": bool(xai and not token and not require),
+    }
+
+
 def authorize_generation(provider: str, model: str | None, authorization: str | None) -> tuple[str, str | None]:
     # Resolve auto before checking authorization so a configured key cannot
     # silently turn an anonymous request into paid generation.
@@ -86,8 +109,11 @@ def authorize_generation(provider: str, model: str | None, authorization: str | 
 
     expected = os.environ.get('VEDIC_GENERATION_API_TOKEN', '')
     if not expected:
+        if generation_token_required():
+            raise HTTPException(503, GENERATION_TOKEN_UNSET)
         # Instância local/privada: a chave xAI no servidor já autoriza a geração.
-        # Em API pública, defina VEDIC_GENERATION_API_TOKEN.
+        # Em API pública, defina VEDIC_GENERATION_API_TOKEN ou
+        # VEDIC_REQUIRE_GENERATION_TOKEN=true.
         configured = (os.environ.get('XAI_MODEL') or DEFAULT_XAI_MODEL) if selected == 'xai' else (os.environ.get('VEDIC_LOCAL_LM') or 'gpt2')
         if model is not None and model != configured:
             raise HTTPException(422, 'Modelo não autorizado pelo servidor')
@@ -111,6 +137,8 @@ def authorize_media(authorization: str | None) -> None:
     """
     expected = os.environ.get('VEDIC_GENERATION_API_TOKEN', '')
     if not expected:
+        if generation_token_required():
+            raise HTTPException(503, GENERATION_TOKEN_UNSET)
         return
     supplied = authorization.removeprefix('Bearer ') if authorization and authorization.startswith('Bearer ') else ''
     if not secrets.compare_digest(supplied.encode(), expected.encode()):

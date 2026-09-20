@@ -16,6 +16,11 @@ from vedic_pipeline.search.reranker import (
     rerank_chunks,
     resolve_reranker_model_source,
 )
+from vedic_pipeline.search.reranker_status import (
+    load_promote_record,
+    public_reranker_status,
+    reranker_runtime_status,
+)
 
 
 class RerankerTests(unittest.TestCase):
@@ -77,6 +82,25 @@ class RerankerTests(unittest.TestCase):
         with patch.dict(os.environ, env, clear=True):
             self.assertFalse(is_reranker_enabled())
             self.assertIsNone(get_reranker())
+
+    def test_promote_record_is_opt_in_only(self):
+        record = load_promote_record()
+        self.assertEqual(record["gate"], "PROMOTE")
+        self.assertEqual(record["version"], "v5")
+        self.assertTrue(record["eligible_opt_in"])
+        self.assertFalse(record["default_enabled"])
+        self.assertFalse(record["weights_committed"])
+        self.assertEqual(record["gold_n"], 37)
+        self.assertIn("reranker_domain_v5", record["model_path"])
+        with patch.dict(os.environ, {"VEDIC_ENABLE_RERANKER": "false"}, clear=False):
+            status = reranker_runtime_status()
+            public = public_reranker_status()
+        self.assertFalse(status["enabled"])
+        self.assertFalse(status["default_enabled"])
+        self.assertTrue(status["eligible_opt_in"])
+        self.assertFalse(status["ready_to_opt_in"])  # pesos locais não commitados
+        self.assertNotIn("opt_in", public)
+        self.assertFalse(public["enabled"])
 
     def test_opt_in_values(self):
         for raw, enabled in (

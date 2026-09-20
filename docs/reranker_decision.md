@@ -139,10 +139,15 @@ python scripts/eval_reranker_smoke.py \
   --backend numpy \
   --json-out data/rerank_eval.json
 
-# 4. Só então, opt-in local (default continua false)
+# 4. Status do gate (não liga o CE). Só então, opt-in local.
+vedic-pipeline reranker-status
 export VEDIC_ENABLE_RERANKER=true
 export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v5
 ```
+
+`fixtures/reranker_promote.json` é o registro machine-readable: `gate=PROMOTE`,
+`default_enabled=false`, pesos **não** commitados. `deploy-check` recusa CE
+ligado no MiniLM genérico.
 
 ### Critérios do gate (`eval_reranker_smoke.py`)
 
