@@ -92,7 +92,7 @@ def retrieve_hits(
         except Exception:  # noqa: BLE001
             all_chunks = None
 
-        # all_chunks alimenta léxico + injeção de locator (RV id nomeado).
+        # all_chunks alimenta léxico + injeção de locator (RV id + obra/coleção).
         hits = hybrid_rerank(
             query,
             fused,

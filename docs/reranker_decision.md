@@ -68,7 +68,9 @@ Critérios e o que o exit code mede: [`docs/ce_promote_gate.md`](ce_promote_gate
 
 Quando a query cita **Nasadiya** (→ 10.129), **Purusha Sukta** (→ 10.90), **Gāyatrī** (→ 3.62, também `tat savitur…` / `तत्सवितुर्…`), **Hiraṇyagarbha** (→ 10.121), **Vāk/Vāc Sūkta** (→ 10.125) ou um **RV X.Y** explícito (`hymn 1.1`, `10.129`, `RV 10.90`), os candidatos cujo `title` / `locator` / texto contêm esse **id** sobem. Casa `10.5` sem `10.50`; também `HYMN X.129` (romano). Gāyatrī não sobe Chandogya III.12 só porque o texto fala do metro. Se o nome canônico e um id explícito discordam (ex. “Nasadiya … 10.125”), o nome vence — o id conflitante não entra no boost.
 
-**PR #5** = mapa nomeado + boost (reordena o que já está no pool). **Este PR** = injeção de recall: se `extract_query_hymn_ids` devolve um id RV, chunks cujo título/locator casam esse id entram no conjunto híbrido *antes* do score/boost (teto por id; mesmas regras de match — sem Chandogya pelo nome). Sem isso, “Gayatri mantra…” nunca vê RV 3.62 no top-40 e o boost não tem o que subir.
+**PR #5** = mapa nomeado + boost (reordena o que já está no pool). **PR #6** = injeção de recall: se `extract_query_hymn_ids` devolve um id RV, chunks cujo título/locator casam esse id entram no conjunto híbrido *antes* do score/boost (teto por id; mesmas regras de match — sem Chandogya pelo nome). Sem isso, “Gayatri mantra…” nunca vê RV 3.62 no top-40 e o boost não tem o que subir.
+
+**Série seguinte (obra/Veda):** o mesmo padrão em nível de obra e coleção — extrair o rótulo da query, injetar chunks cujo *título* casa, boost (teto como no PR #6). Īśā (`īśāvāsyam…` / `ईशावास्यम्…` / `isavasya`) → Isha Upanishad, não RV que só partilha idaṃ/jagat. Nachiketas → Kaṭha mesmo se a query nomear Kauṣītaki. `Sama Veda` / `सामवेद` → títulos `Sāmaveda SV…`; `Shukla Yajur` / `Vajasaneyi` / `Yajurveda VS` → títulos `Yajurveda VS…`, não Chandogya nem antologia Müller.
 
 Aplicado **no híbrido** (antes do CE, para o hino certo entrar no slice) e **de novo depois do CE** quando o reranker está ligado — senão o CE volta a enterrar 10.129.
 

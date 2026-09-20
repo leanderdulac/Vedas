@@ -50,4 +50,4 @@ PROMOTE = **apto a opt-in**, não “ligar em produção”.
 - Opt-in: `VEDIC_ENABLE_RERANKER=true` e `VEDIC_RERANKER_MODEL` apontando para um **dir local** (ex. `artifacts/reranker_domain_v4`).
 - Não commitar pesos, `data/rerank/*.jsonl` nem o modelo.
 
-O mapa nomeado de locator (PR #5, pós-v4, híbrido) inclui também Gāyatrī→3.62, Hiraṇyagarbha→10.121 e Vāk/Vāc Sūkta→10.125; nome canônico vence id explícito conflitante. A injeção de recall (PR seguinte) coloca no pool híbrido chunks cujo título/locator casam o id extraído — o boost do PR #5 sozinho não recupera Gāyatrī se RV 3.62 nunca entrou nos candidatos. Isso não liga o CE.
+Série de locator (híbrido, CE continua off): **PR #5** mapa nomeado de hino (Gāyatrī→3.62, Hiraṇyagarbha→10.121, Vāk→10.125; nome vence id conflitante) → **PR #6** injeção de recall pelo id RV → **este** locator de obra/Veda (Īśā, Nachiketas→Kaṭha, Sāmaveda SV, Śukla Yajur / Vājasaneyi VS). Mesmo padrão: extrair → injetar título → boost; teto por chave. Isso não liga o CE.
