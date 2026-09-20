@@ -66,7 +66,7 @@ Critérios e o que o exit code mede: [`docs/ce_promote_gate.md`](ce_promote_gate
 
 ## Boost de locator / hino (híbrido ± CE)
 
-Quando a query cita **Nasadiya** (→ 10.129), **Purusha Sukta** (→ 10.90) ou um **RV X.Y** explícito (`hymn 1.1`, `10.129`, `RV 10.90`), os candidatos cujo `title` / `locator` / texto contêm esse id sobem. Casa `10.5` sem `10.50`; também `HYMN X.129` (romano).
+Quando a query cita **Nasadiya** (→ 10.129), **Purusha Sukta** (→ 10.90), **Gāyatrī** (→ 3.62), **Hiraṇyagarbha** (→ 10.121), **Vāk/Vāc Sūkta** (→ 10.125) ou um **RV X.Y** explícito (`hymn 1.1`, `10.129`, `RV 10.90`), os candidatos cujo `title` / `locator` / texto contêm esse **id** sobem. Casa `10.5` sem `10.50`; também `HYMN X.129` (romano). Gāyatrī não sobe Chandogya III.12 só porque o texto fala do metro. Se o nome canônico e um id explícito discordam (ex. “Nasadiya … 10.125”), o nome vence — o id conflitante não entra no boost.
 
 Aplicado **no híbrido** (antes do CE, para o hino certo entrar no slice) e **de novo depois do CE** quando o reranker está ligado — senão o CE volta a enterrar 10.129.
 

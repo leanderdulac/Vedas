@@ -224,11 +224,24 @@ _NAMED_HYMN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta|\bpurusa\s+sukta", re.I),
         "10.90",
     ),
+    (re.compile(r"g[aā]yat(?:h)?r[iī]|गायत्री", re.I), "3.62"),
+    (re.compile(r"hira[nṇ]yagarbha|हिरण्यगर्भ", re.I), "10.121"),
+    (
+        re.compile(
+            r"\bv[aā][kcç]\s+s[uū]kta|\bvak\s+sukta|\bvac\s+sukta|\bv[aā]k\b|\bvāc\b"
+            r"|वाक्\s*सूक्त|वाच्\s*सूक्त|वाक\s*सूक्त|वाक्सूक्त",
+            re.I,
+        ),
+        "10.125",
+    ),
 )
 
+# Só nomes distintivos no *chunk*. Gāyatrī/Hiraṇyagarbha/Vāk na query
+# extraem o id (3.62 / 10.121 / 10.125); casar o nome no texto também
+# subiria Chandogya III.12 (metro Gāyatrī) ou antologias genéricas.
 _NAMED_IN_BLOB: dict[str, re.Pattern[str]] = {
     "10.129": re.compile(r"n[aā]sad[iī]ya|नासदीय|नासदासीन्", re.I),
-    "10.90": re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta", re.I),
+    "10.90": re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta|\bpurusa\s+sukta", re.I),
 }
 
 # "RV 10.129", "hymn 1.1", ou id solto "10.129" / "10.90".
@@ -267,10 +280,16 @@ def hymn_id_variants(hymn: str) -> list[str]:
 
 
 def extract_query_hymn_ids(query: str) -> list[str]:
-    """Hinos pedidos na query: Nasadiya→10.129, Purusha Sukta→10.90, RV X.Y explícito."""
+    """Hinos pedidos na query: nomes canônicos e RV X.Y explícito.
+
+    Nomes: Nasadiya→10.129, Purusha Sukta→10.90, Gāyatrī→3.62,
+    Hiraṇyagarbha→10.121, Vāk/Vāc Sūkta→10.125. Se um nome casa e um id
+    explícito discorda, o nome vence — o id conflitante não entra no boost.
+    """
     text = query or ""
     found: list[str] = []
     seen: set[str] = set()
+    named: set[str] = set()
 
     def add(hymn: str) -> None:
         key = hymn.strip()
@@ -280,9 +299,13 @@ def extract_query_hymn_ids(query: str) -> list[str]:
 
     for pattern, hymn in _NAMED_HYMN_PATTERNS:
         if pattern.search(text):
+            named.add(hymn)
             add(hymn)
     for match in _EXPLICIT_HYMN_RE.finditer(text):
-        add(match.group(1) or match.group(2) or "")
+        explicit = (match.group(1) or match.group(2) or "").strip()
+        if named and explicit not in named:
+            continue
+        add(explicit)
     return found
 
 
@@ -293,7 +316,10 @@ def _chunk_locator_blob(chunk: dict[str, Any]) -> str:
 
 
 def chunk_matches_hymn(chunk: dict[str, Any], hymn: str, *, text_too: bool = True) -> str | None:
-    """Retorna 'title' | 'text' conforme onde o id (ou nome canônico) aparece."""
+    """Retorna 'title' | 'text' conforme onde o id (ou nome distintivo) aparece.
+
+    Gāyatrī → 3.62 casa o id RV, não a palavra 'Gayatri' em Chandogya III.12.
+    """
     loc_blob = _chunk_locator_blob(chunk)
     text_blob = str(chunk.get("text") or "") if text_too else ""
     named = _NAMED_IN_BLOB.get(hymn)
@@ -317,6 +343,7 @@ def apply_locator_hymn_boost(query: str, pool: list[dict[str, Any]]) -> None:
 
     Corre no híbrido e de novo *depois* do CE (quando ligado): o MiniLM genérico
     e o CE de domínio v1–v3 ainda empurram RV 10.125 / 10.5 no lugar de 10.129.
+    Nome canônico tem peso cheio; id explícito conflitante não entra no conjunto.
     """
     hymns = extract_query_hymn_ids(query)
     if not hymns or not pool:

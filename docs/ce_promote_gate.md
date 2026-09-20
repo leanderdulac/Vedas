@@ -49,3 +49,5 @@ PROMOTE = **apto a opt-in**, não “ligar em produção”.
 - Default permanece `VEDIC_ENABLE_RERANKER=false`.
 - Opt-in: `VEDIC_ENABLE_RERANKER=true` e `VEDIC_RERANKER_MODEL` apontando para um **dir local** (ex. `artifacts/reranker_domain_v4`).
 - Não commitar pesos, `data/rerank/*.jsonl` nem o modelo.
+
+O mapa nomeado de locator (pós-v4, híbrido) inclui também Gāyatrī→3.62, Hiraṇyagarbha→10.121 e Vāk/Vāc Sūkta→10.125; nome canônico vence id explícito conflitante. Isso não liga o CE.
