@@ -306,12 +306,12 @@ python -m vedic_pipeline train-model --base-model gpt2 --block-size 128 --max-st
 
 ## Reranker (Cross-Encoder)
 
-**Desligado por padrão.** Não promover: o híbrido faz **10/10**; CE genérico e CE de domínio v1–v3 ficam **9/10** (Nasadiya / RV 10.129, tops 10.125 e 10.5). Fine-tune sozinho não corrigiu; o híbrido aplica boost de locator/hino e o gate exige CE ≥ híbrido **e** Nasadiya ok. Ver [`docs/reranker_decision.md`](docs/reranker_decision.md).
+**Desligado por padrão.** Domínio v4 passou o gate no gold de 19 (híbrido 19/19, CE 19/19, Nasadiya/RV 10.129 ok) mas continua **opt-in**. Genérico e v1–v3 não promover (9/10 no gold antigo). Ver [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ```bash
 # Opt-in explícito (só depois de um CE de domínio validado)
 export VEDIC_ENABLE_RERANKER=true
-export VEDIC_RERANKER_MODEL=artifacts/reranker   # ou o id HF
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
 
 # Pares fracos a partir do gold (fixture minúscula, sem embeddings)
 python scripts/build_rerank_pairs.py --dry-run --out data/rerank/pairs.jsonl
@@ -321,7 +321,7 @@ python scripts/train_reranker.py --help
 python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 
 # Gate A/B (híbrido vs CE de domínio). Exit 0 = apto a opt-in.
-python scripts/eval_reranker_smoke.py --model artifacts/reranker --json-out data/rerank_eval.json
+python scripts/eval_reranker_smoke.py --model artifacts/reranker_domain_v4 --json-out data/rerank_eval.json
 ```
 
 ## Jurídico
@@ -340,7 +340,7 @@ python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_re
 Gold set: `fixtures/smoke_queries.json` (19 queries: 10 originais + Kaṭha, Gītā 2.47, Yoga 1.2, rapto de Sītā, leito de flechas de Bhīṣma, Īśā em Devanāgarī, Śvetāśvatara, Praśna, Muṇḍaka).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json` (recorte local). O gate de promote do CE usa o gold expandido, não o CI.
 
-O smoke A/B de 2026-09-20 (híbrido 10/10 vs CE genérico **e** domínio v1–v3 em 9/10, gold de então) e o gate train→eval→promote estão em [`docs/reranker_decision.md`](docs/reranker_decision.md).
+O smoke A/B (v1–v3 HOLD no gold de 10; **v4 PROMOTE** no gold de 19, default ainda off) está em [`docs/reranker_decision.md`](docs/reranker_decision.md); critérios do gate em [`docs/ce_promote_gate.md`](docs/ce_promote_gate.md).
 
 ## Docker
 

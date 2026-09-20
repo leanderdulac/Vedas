@@ -33,10 +33,34 @@ Conclusão: CE fine-tune **sozinho** não é suficiente para opt-in. Antes de li
 1. **Boost de locator/hino** no híbrido (e de novo após o CE) — PoC local restaurou Nasadiya sob pressão do CE; agora está em `apply_locator_hymn_boost`.
 2. **Pares maiores/melhores** (mais decoys, mais âncoras de hino, holdout real) — o snapshot de 10 queries era estreito demais para o CE generalizar 10.129 vs 10.125. O gold expandido (Kaṭha, Gītā 2.47, Yoga 1.2, épicos, Īśā em Devanāgarī, Śvetāśvatara, Praśna, Muṇḍaka) é o conjunto que o gate deve medir.
 
+## Gate v4 (gold expandido, 19 queries)
+
+Medição Mac 2026-09-20 no gold atual:
+
+| Item | Valor |
+|------|--------|
+| Gold | `fixtures/smoke_queries.json` (**19** queries) |
+| Pares locais (não commitados) | `data/rerank/pairs_gold19.jsonl` (**381** pares) |
+| Modelo | `artifacts/reranker_domain_v4` (pesos locais; **não** commitados) |
+| Híbrido (CE off) | **19/19** |
+| Domínio CE v4 | **19/19** |
+| Nasadiya | OK — RV **10.129** no topo (locator boost + CE) |
+| `eval_reranker_smoke.py` | **PROMOTE** (CE >= híbrido, Nasadiya ok) |
+
+v4 é **apto a opt-in**. Isso **não** liga o CE no default.
+
+```bash
+# Continua off sem estas variáveis (ou com ENABLE=false)
+export VEDIC_ENABLE_RERANKER=true
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
+```
+
+Critérios e o que o exit code mede: [`docs/ce_promote_gate.md`](ce_promote_gate.md).
+
 ## Política atual
 
-1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). **Não promover** o CE (genérico nem domínio v1–v3).
-2. `VEDIC_RERANKER_MODEL` pode ser um id HF **ou** um diretório local (`artifacts/reranker`); o loader resolve o path absoluto quando o dir existe.
+1. `VEDIC_ENABLE_RERANKER` **default off** (`false`). Genérico e domínio v1–v3: **não promover**. Domínio **v4** passou o gate no gold de 19 (seção acima) mas **não** vira default — só opt-in via env apontando para um dir local.
+2. `VEDIC_RERANKER_MODEL` pode ser um id HF **ou** um diretório local (`artifacts/reranker_domain_v4`); o loader resolve o path absoluto quando o dir existe.
 3. Fine-tune só faz sentido com pares que **protejam Nasadiya** — positivos com marcadores de hino (`10.129` / Nasadiya) em vez do rótulo amplo "Rig Veda", e hard negatives 10.125 / 10.5 / 2.38 quando aparecerem nos candidatos — **e** com o boost de locator abaixo.
 4. **Não** treinar GPT-2 / LM causal para ranking.
 
@@ -76,9 +100,9 @@ python scripts/eval_reranker_smoke.py \
   --backend numpy \
   --json-out data/rerank_eval.json
 
-# 4. Só então, opt-in local/prod (default continua false)
+# 4. Só então, opt-in local (default continua false)
 export VEDIC_ENABLE_RERANKER=true
-export VEDIC_RERANKER_MODEL=artifacts/reranker
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
 ```
 
 ### Critérios do gate (`eval_reranker_smoke.py`)
@@ -92,6 +116,8 @@ Promote (**exit 0**) somente se **ambos** valerem:
 
 Medição Mac 2026-09-20 (domínio v1–v3, gold de 10): **não promove** — 9/10 vs híbrido 10/10, Nasadiya falha com tops 10.125 / 10.5.
 
+Medição Mac 2026-09-20 (domínio **v4**, gold de 19): **PROMOTE** — híbrido 19/19, CE 19/19, Nasadiya com RV 10.129 no topo. Default **continua OFF**.
+
 O JSON traz `per_query` (ok híbrido vs CE + `top_titles`) e um bloco dedicado `nasadiya`.
 
 **Gold do gate:** sempre `fixtures/smoke_queries.json` expandido (19 queries: ids originais estáveis + Kaṭha Nachiketas, Gītā 2.47, Yoga 1.2, rapto de Sītā, leito de flechas de Bhīṣma, Īśā em Devanāgarī, Śvetāśvatara, Praśna, Muṇḍaka). Só entram queries com `expect_title_any` estrito que passaram no híbrido (CE off). O CI reduzido (`smoke_queries_ci.json`) não substitui o gate. CE continua **off** por default.
@@ -104,6 +130,7 @@ Latência p95 CPU não deve ficar >2× o híbrido (critério operacional, fora d
 
 - Não substituir `/ask` / xAI por LM causal fine-tuned para “melhorar ranking”.
 - Não treinar embedding sânscrito-específico antes de medir falhas reais do MiniLM atual.
-- Não commitar pesos grandes nem corpus em git.
+- Não commitar pesos grandes, `data/rerank/*.jsonl` nem corpus em git.
 - Não ligar o CE genérico `cross-encoder/ms-marco-MiniLM-L-6-v2` **nem** o CE de domínio v1–v3 em produção.
-- Não tratar o fine-tune gold-only como correção de Nasadiya.
+- Não tratar o fine-tune gold-only (v1–v3) como correção de Nasadiya. v4 passou o gate; mesmo assim o default fica **off**.
+- Não setar `VEDIC_ENABLE_RERANKER=true` no `.env` de deploy sem um dir local validado.
