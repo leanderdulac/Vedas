@@ -109,6 +109,8 @@ python scripts/build_rerank_pairs.py \
   --out data/rerank/pairs.jsonl
 
 # 2. Fine-tune (dry-run não baixa o modelo; grava train_meta.json com counts/device)
+#    No Mac, --device auto usa MPS quando disponível (cuda → mps → cpu); não cai em CPU em silêncio.
+#    Override: --device cpu|cuda|mps|auto
 python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 python scripts/train_reranker.py --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 
