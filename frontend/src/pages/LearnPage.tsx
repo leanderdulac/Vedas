@@ -24,21 +24,28 @@ const TABS: { id: Tab; label: string; hint: string }[] = [
 
 function VarnaCard({ v }: { v: (typeof VARNA_GROUPS)[0]["items"][0] }) {
   return (
-    <button
-      type="button"
-      className="learn-letter"
-      onClick={() => speakSanskrit(v.example?.word ?? v.deva)}
-      title="Ouvir pronúncia"
-    >
-      <span className="learn-letter-deva">{v.deva}</span>
-      <span className="learn-letter-iast">{v.iast}</span>
-      <span className="learn-letter-art">{v.articulation}</span>
+    <div className="learn-letter">
+      <button
+        type="button"
+        className="learn-letter-main"
+        onClick={() => speakSanskrit(v.deva, v.iast, undefined, 0.72)}
+        title="Ouvir a sílaba"
+      >
+        <span className="learn-letter-deva">{v.deva}</span>
+        <span className="learn-letter-iast">{v.iast}</span>
+        <span className="learn-letter-art">{v.articulation}</span>
+      </button>
       {v.example && (
-        <span className="learn-letter-ex">
+        <button
+          type="button"
+          className="learn-letter-ex"
+          onClick={() => speakSanskrit(v.example!.word, v.example!.iast, undefined, 0.78)}
+          title="Ouvir a palavra"
+        >
           {v.example.word} <span className="dim">· {v.example.iast}</span>
-        </span>
+        </button>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -46,7 +53,12 @@ function VocabCard({ entry }: { entry: (typeof VOCAB)[0] }) {
   return (
     <article className="card learn-word">
       <div className="learn-word-head">
-        <button type="button" className="learn-word-deva" onClick={() => speakSanskrit(entry.deva)} title="Ouvir">
+        <button
+          type="button"
+          className="learn-word-deva"
+          onClick={() => speakSanskrit(entry.deva, entry.iast)}
+          title="Ouvir"
+        >
           {entry.deva}
         </button>
         <div>
@@ -59,7 +71,11 @@ function VocabCard({ entry }: { entry: (typeof VOCAB)[0] }) {
         <Link className="btn btn-ghost verse-btn" to={`/busca?q=${encodeURIComponent(entry.query)}&lang=sa`}>
           Ver no corpus
         </Link>
-        <button type="button" className="btn btn-ghost verse-btn" onClick={() => speakSanskrit(entry.deva)}>
+        <button
+          type="button"
+          className="btn btn-ghost verse-btn"
+          onClick={() => speakSanskrit(entry.deva, entry.iast)}
+        >
           ▶ Ouvir
         </button>
       </div>
@@ -85,7 +101,11 @@ function LessonCard({ lesson }: { lesson: (typeof LESSONS)[0] }) {
               <tbody>
                 {s.examples.map((ex, k) => (
                   <tr key={k}>
-                    <td className="deva learn-table-deva" onClick={() => speakSanskrit(ex.deva)} title="Ouvir">
+                    <td
+                      className="deva learn-table-deva"
+                      onClick={() => speakSanskrit(ex.deva, ex.iast)}
+                      title="Ouvir"
+                    >
                       {ex.deva}
                     </td>
                     <td className="learn-table-iast">{ex.iast}</td>

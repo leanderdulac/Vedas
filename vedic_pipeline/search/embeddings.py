@@ -26,21 +26,49 @@ _MODEL_CACHE: dict[str, Any] = {}
 _MODEL_LOCK = threading.Lock()
 
 
+def needs_e5_prompts(model_name: str) -> bool:
+    """Modelos da família E5 exigem prefixos `query: `/`passage: `."""
+    lowered = (model_name or "").lower()
+    return "e5" in lowered and "instructor" not in lowered
+
+
+def embedding_device() -> str:
+    """CPU por omissão. `VEDIC_DEVICE=mps` (ou cuda) tira o encode da CPU."""
+    from vedic_pipeline.train.device import torch_device
+
+    return str(torch_device().type)
+
+
 def _load_st_model(model_name: str):
     from sentence_transformers import SentenceTransformer
 
-    cached = _MODEL_CACHE.get(model_name)
+    device = embedding_device()
+    cache_key = f"{model_name}\0{device}"
+    cached = _MODEL_CACHE.get(cache_key)
     if cached is not None:
         return cached
     with _MODEL_LOCK:
-        cached = _MODEL_CACHE.get(model_name)
+        cached = _MODEL_CACHE.get(cache_key)
         if cached is not None:
             return cached
-        logger.info("Carregando embedding model: %s", model_name)
-        # MPS + dois loads em paralelo já derrubou o processo (SIGSEGV).
-        model = SentenceTransformer(model_name, device="cpu")
-        _MODEL_CACHE[model_name] = model
+        logger.info("Carregando embedding model: %s (%s)", model_name, device)
+        # Dois loads em paralelo no MPS já derrubaram o processo (SIGSEGV).
+        # O lock serializa. O device só muda com VEDIC_DEVICE / VEDIC_ENABLE_MPS.
+        model = SentenceTransformer(model_name, device=device)
+        _MODEL_CACHE[cache_key] = model
         return model
+
+
+def _passage_texts(model_name: str, texts: list[str]) -> list[str]:
+    if needs_e5_prompts(model_name):
+        return [f"passage: {t}" for t in texts]
+    return texts
+
+
+def _query_text(model_name: str, query: str) -> str:
+    if needs_e5_prompts(model_name):
+        return f"query: {query}"
+    return query
 
 
 def build_embedding_index(
@@ -56,6 +84,7 @@ def build_embedding_index(
       - embeddings.npy
       - chunks.jsonl
       - index_meta.json
+      - lexical.npz (BM25 invertido; a busca não retokeniza o corpus)
     """
     if not corpus_path.exists():
         raise FileNotFoundError(f"Corpus não encontrado: {corpus_path}")
@@ -71,7 +100,7 @@ def build_embedding_index(
         raise ValueError("Nenhum chunk gerado.")
 
     model = _load_st_model(model_name)
-    texts = [c["text"] for c in chunks]
+    texts = _passage_texts(model_name, [c["text"] for c in chunks])
     logger.info("Gerando embeddings para %d chunks...", len(texts))
     vectors = model.encode(
         texts,
@@ -116,6 +145,10 @@ def build_embedding_index(
     os.replace(tmp_chunks, out_dir / "chunks.jsonl")
     os.replace(tmp_meta, out_dir / "index_meta.json")
 
+    from vedic_pipeline.search.lexical_index import save_lexical_index
+
+    save_lexical_index(out_dir, chunks)
+
     logger.info("Índice salvo atomicamente em %s (%d chunks, dim=%d)", out_dir, len(chunks), vectors.shape[1])
     return meta
 
@@ -154,6 +187,13 @@ def load_embedding_index(index_dir: Path = DEFAULT_EMBED_DIR) -> dict[str, Any]:
             f"Mismatch chunks ({len(chunks)}) vs embeddings ({len(vectors)})"
         )
 
+    from vedic_pipeline.search.lexical_index import ensure_lexical_index
+
+    try:
+        ensure_lexical_index(index_dir, chunks)
+    except Exception:  # noqa: BLE001
+        logger.exception("Falha ao preparar o índice lexical; a busca usa o BM25 em memória")
+
     return {"vectors": vectors, "chunks": chunks, "meta": meta, "index_dir": index_dir}
 
 
@@ -171,7 +211,7 @@ def search_index(
     )
     model = _load_st_model(model_name)
     q = model.encode(
-        [query],
+        [_query_text(model_name, query)],
         convert_to_numpy=True,
         normalize_embeddings=True,
     )[0].astype(np.float32)

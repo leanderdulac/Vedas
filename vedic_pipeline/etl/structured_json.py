@@ -418,11 +418,14 @@ def expand_structured_payload(
                         f"({compact.get('edition') or 'Griffith, DharmicData'})"
                     ),
                     url=(
-                        f"{DHARMICDATA_REPO}/blob/main/Samaveda/Samaveda.json"
-                        f"#p{part}-b{book}-c{chapter}-h{n}"
+                        hymn.get("source_url")
+                        or (
+                            f"{DHARMICDATA_REPO}/blob/main/Samaveda/Samaveda.json"
+                            f"#p{part}-b{book}-c{chapter}-h{n}"
+                        )
                     ),
                     tradition=src.get("tradition") or "vedic",
-                    language="en",
+                    language=compact.get("language") or "en",
                 )
             )
         return records

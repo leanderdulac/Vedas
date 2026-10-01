@@ -17,12 +17,9 @@ EVAL_SPLITS = frozenset({"holdout", "eval", "test", "valid", "validation", "dev"
 
 
 def detect_device() -> str:
-    try:
-        import torch
+    from vedic_pipeline.train.device import detect_device as _detect
 
-        return "cuda" if torch.cuda.is_available() else "cpu"
-    except ImportError:
-        return "cpu"
+    return _detect()
 
 
 def coerce_label(value: Any) -> float:

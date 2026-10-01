@@ -259,10 +259,14 @@ def explain_verse(
 
 
 def recitation_text(bundle: dict[str, Any]) -> str | None:
+    """Texto recitável do verso: só o corpo, sem rubrica `[RV 1.1.1]`, sem
+    versos consecutivos do chunk, sem anukramaṇí, numerais e acentos védicos
+    (o TTS leria tudo isso literalmente)."""
     for role in ("sa", "iast", "en"):
         for w in bundle.get("witnesses") or []:
             if w.get("role") == role and (w.get("text") or "").strip():
-                return w["text"].strip()
+                body = _verse_body(w["text"], bundle.get("verse_id") or "")
+                return _strip_tts_noise(body) or None
     return None
 
 
@@ -277,6 +281,34 @@ _DEVA_DIGIT_RE = re.compile(r"[०-९]")
 # acentos védicos (udātta/anudātta): o verso recitável vem acentuado nas
 # edições védicas; a rubrica de anukramaṇí, não.
 _ACCENT_RE = re.compile(r"[॒॑]")
+
+
+def _strip_tts_noise(text: str) -> str:
+    """Remove do corpo do verso o que o TTS leria literalmente:
+
+    - rubrica de anukramaṇí fundida ao verso (linhas sem acento védico antes
+      da primeira linha acentuada — ex. AV: '१-४ अथर्वा। वाचस्पतिः।');
+    - numerais de fechamento `॥ १ ॥` / `॥६९०॥` (o nº do arca, não é fala);
+    - acentos védicos ॒॑ (sinal de tom combinante, não letra — a síntese
+      gagueja/interfere neles);
+    - preserva textos em IAST ou inglês sem descartar as linhas.
+    """
+    has_deva = bool(re.search(r"[\u0900-\u097F]", text))
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    if has_deva and len(lines) > 1 and _ACCENT_RE.search(text):
+        while lines and not _ACCENT_RE.search(lines[0]):
+            lines = lines[1:]
+    clean = "\n".join(lines)
+    clean = _DEVA_DIGIT_RE.sub("", clean)
+    clean = re.sub(r"[॥।|]\s*[॥।|]?", " ", clean)
+    clean = _ACCENT_RE.sub("", clean)
+    clean = re.sub(r"[ \t]+", " ", clean).strip()
+    if has_deva:
+        # linhas remanescentes sem nenhuma letra devanāgarī (restos de rubrica)
+        clean = "\n".join(
+            ln for ln in clean.split("\n") if re.search(r"[\u0900-\u097F]", ln)
+        )
+    return clean.strip()
 
 
 def _verse_body(text: str, verse_id: str) -> str:

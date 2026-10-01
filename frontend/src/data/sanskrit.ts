@@ -90,7 +90,7 @@ export const VARNA_GROUPS: { id: string; label: string; items: Varna[] }[] = [
     id: "tavarga",
     label: GROUP_LABELS.tavarga,
     items: [
-      { deva: "ट", iast: "ṭa", group: "tavarga", articulation: "surda, não aspirada — retroflexa", example: { word: "ऋत", iast: "ṛta" } },
+      { deva: "ट", iast: "ṭa", group: "tavarga", articulation: "surda, não aspirada — retroflexa", example: { word: "पट", iast: "paṭa" } },
       { deva: "ठ", iast: "ṭha", group: "tavarga", articulation: "surda, aspirada — retroflexa" },
       { deva: "ड", iast: "ḍa", group: "tavarga", articulation: "sonora, não aspirada — retroflexa" },
       { deva: "ढ", iast: "ḍha", group: "tavarga", articulation: "sonora, aspirada — retroflexa" },
@@ -124,7 +124,7 @@ export const VARNA_GROUPS: { id: string; label: string; items: Varna[] }[] = [
     label: GROUP_LABELS.antahstha,
     items: [
       { deva: "य", iast: "ya", group: "antahstha", articulation: "semivogal — palatal", example: { word: "यज्ञ", iast: "yajña" } },
-      { deva: "र", iast: "ra", group: "antahstha", articulation: "semivogal — retroflexa", example: { word: "ऋत", iast: "ṛta" } },
+      { deva: "र", iast: "ra", group: "antahstha", articulation: "semivogal — retroflexa", example: { word: "रथ", iast: "ratha" } },
       { deva: "ल", iast: "la", group: "antahstha", articulation: "semivogal — dental", example: { word: "लोक", iast: "loka" } },
       { deva: "व", iast: "va", group: "antahstha", articulation: "semivogal — labial", example: { word: "विद्या", iast: "vidyā" } },
     ],
@@ -259,19 +259,532 @@ export const LESSONS: Lesson[] = [
   },
 ];
 
-export function speakSanskrit(text: string): void {
-  // TTS do navegador para sílabas sa/iast — fallback simples, offline.
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = "hi-IN";
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
+// ---------------------------------------------------------------- fonética e voz (Web Speech API)
+
+/**
+ * Converte devanāgarī para aproximação fonética legível por qualquer voz sintetizada
+ * (inglês, português ou padrão do SO), caso o dispositivo não possua voz nativa em Hindi/Sânscrito.
+ * Isso impede que navegadores no macOS/Windows fiquem em silêncio absoluto ao tentar ler glifos devanāgarī.
+ */
+export function devaToPhonetic(text: string): string {
+  if (!/[\u0900-\u097F]/.test(text)) {
+    return text;
+  }
+
+  const vowels: Record<string, string> = {
+    "अ": "a", "आ": "aa", "इ": "i", "ई": "ee", "उ": "u", "ऊ": "oo",
+    "ऋ": "ri", "ॠ": "ree", "ऌ": "li", "ॡ": "lee",
+    "ए": "e", "ऐ": "ai", "ओ": "o", "औ": "au",
+  };
+
+  const matras: Record<string, string> = {
+    "ा": "aa", "ि": "i", "ी": "ee", "ु": "u", "ू": "oo",
+    "ृ": "ri", "ॄ": "ree", "ॢ": "li", "ॣ": "lee",
+    "े": "e", "ै": "ai", "ो": "o", "ौ": "au",
+  };
+
+  const consonants: Record<string, string> = {
+    "क": "k", "ख": "kh", "ग": "g", "घ": "gh", "ङ": "ng",
+    "च": "ch", "छ": "chh", "ज": "j", "झ": "jh", "ञ": "ny",
+    "ट": "t", "ठ": "th", "ड": "d", "ढ": "dh", "ण": "n",
+    "त": "t", "थ": "th", "द": "d", "ध": "dh", "न": "n",
+    "प": "p", "फ": "ph", "ब": "b", "भ": "bh", "म": "m",
+    "य": "y", "र": "r", "ल": "l", "व": "v",
+    "श": "sh", "ष": "sh", "स": "s", "ह": "h",
+    "ळ": "l", "क्ष": "ksha", "ज्ञ": "gya",
+  };
+
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (ch === "ॐ") {
+      out += " Om ";
+      i++;
+      continue;
+    }
+    if (vowels[ch]) {
+      out += vowels[ch];
+      i++;
+      continue;
+    }
+    if (consonants[ch]) {
+      const cons = consonants[ch];
+      const next = text[i + 1];
+      if (next === "्") {
+        out += cons;
+        i += 2;
+      } else if (matras[next]) {
+        out += cons + matras[next];
+        i += 2;
+      } else {
+        out += cons + "a";
+        i++;
+      }
+      continue;
+    }
+    if (ch === "ं") {
+      out += "m";
+      i++;
+      continue;
+    }
+    if (ch === "ः") {
+      out += "h";
+      i++;
+      continue;
+    }
+    if (ch === "ऽ") {
+      out += "'";
+      i++;
+      continue;
+    }
+    if (ch === "्") {
+      i++;
+      continue;
+    }
+    // Acentos védicos / danda
+    if (ch >= "\u0951" && ch <= "\u0954") {
+      i++;
+      continue;
+    }
+    if (ch === "।" || ch === "॥") {
+      out += ". ";
+      i++;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out.replace(/\s+/g, " ").trim();
 }
 
-export function speakPortuguese(text: string): void {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
+const _CONS = [
+  "kṣ", "jñ",
+  "kh", "gh", "ch", "jh", "ṭh", "ḍh", "th", "dh", "ph", "bh",
+  "ṅ", "ñ", "ṭ", "ḍ", "ṇ", "ś", "ṣ",
+  "k", "g", "c", "j", "t", "d", "n", "p", "b", "m", "y", "r", "l", "v", "s", "h",
+];
+const _VOWELS = ["ai", "au", "ā", "ī", "ū", "ṝ", "ḹ", "ṛ", "e", "o", "a", "i", "u"];
+
+const _BASE: Record<string, string> = {
+  k: "k", kh: "k", g: "g", gh: "g", ṅ: "ng",
+  c: "ch", ch: "ch", j: "j", jh: "j", ñ: "ny",
+  ṭ: "t", ṭh: "t", ḍ: "d", ḍh: "d", ṇ: "n",
+  t: "t", th: "t", d: "d", dh: "d", n: "n",
+  p: "p", ph: "p", b: "b", bh: "b", m: "m",
+  y: "y", r: "r", l: "l", v: "v",
+  ś: "sh", ṣ: "shr", s: "s", h: "h",
+  kṣ: "ksh", jñ: "gny",
+};
+const _VOWEL_SOUND: Record<string, string> = {
+  a: "uh", ā: "aah", i: "ih", ī: "ee", u: "oo", ū: "ooo",
+  ṛ: "rih", ṝ: "ree", ḷ: "lih", ḹ: "lee",
+  e: "eh", ai: "eye", o: "oh", au: "ow",
+};
+
+function _aspirated(cons: string): boolean {
+  return cons.length > 1 && cons.endsWith("h") && cons !== "h";
+}
+
+function _withVowel(cons: string, vowel: string): string {
+  const head = (_BASE[cons] ?? cons) + _VOWEL_SOUND[vowel];
+  return _aspirated(cons) ? `${head}-huh` : head;
+}
+
+function _starts(s: string, i: number, tokens: string[]): string | null {
+  for (const t of tokens) {
+    if (s.startsWith(t, i)) return t;
+  }
+  return null;
+}
+
+/**
+ * Reescreve IAST para uma voz latina.
+ * "a" sozinho seria lido como o nome da letra ("ei"); "tha"/"pha" virariam
+ * o th e o f do inglês. Cada sílaba sai como "kuh", "kuh-huh", "tuh-huh".
+ */
+export function iastToSpeakable(iast: string): string {
+  const src = (iast || "")
+    .replace(/ṁ/g, "ṃ")
+    .replace(/[|।॥]/g, " ")
+    .trim();
+  if (!src) return "";
+  if (/[\u0900-\u097F]/.test(src) && !/[a-zA-Zāīūṛṝḷḹṃḥṅñṭḍṇśṣ]/.test(src)) {
+    return iastToSpeakable(devaToIast(src));
+  }
+
+  const syllables: string[] = [];
+  let pending: string[] = [];
+  let i = 0;
+  const flushBare = () => {
+    if (!pending.length) return;
+    const bare = pending.map((c) => _BASE[c] ?? c).join("");
+    pending = [];
+    if (syllables.length) syllables[syllables.length - 1] += bare;
+    else syllables.push(bare);
+  };
+
+  while (i < src.length) {
+    const ch = src[i];
+    if (ch === " " || ch === "\n" || ch === "\t") {
+      flushBare();
+      i++;
+      continue;
+    }
+    if (ch === "ṃ" || ch === "ḥ" || ch === "m̐") {
+      flushBare();
+      const mark = ch === "ḥ" ? "-huh" : "m";
+      if (syllables.length && syllables[syllables.length - 1] !== " ") syllables[syllables.length - 1] += mark;
+      else syllables.push(ch === "ḥ" ? "huh" : "m");
+      i++;
+      continue;
+    }
+    const vowel = _starts(src, i, _VOWELS);
+    if (vowel) {
+      const onset = pending;
+      pending = [];
+      const head = onset.slice(0, -1).map((c) => _BASE[c] ?? c).join("");
+      const nucleus = onset.length
+        ? head + _withVowel(onset[onset.length - 1], vowel)
+        : _VOWEL_SOUND[vowel];
+      syllables.push(nucleus);
+      i += vowel.length;
+      continue;
+    }
+    // ळ/ḷ antes de vogal é a consoante retroflexa (ईळे = īḷe), não a vogal ऌ.
+    if (src.startsWith("ḷ", i) && _starts(src, i + "ḷ".length, _VOWELS)) {
+      pending.push("l");
+      i += "ḷ".length;
+      continue;
+    }
+    if (src.startsWith("ḷ", i)) {
+      flushBare();
+      syllables.push(_VOWEL_SOUND["ḷ"]);
+      i += "ḷ".length;
+      continue;
+    }
+    const cons = _starts(src, i, _CONS);
+    if (cons) {
+      pending.push(cons);
+      i += cons.length;
+      continue;
+    }
+    flushBare();
+    i++;
+  }
+  flushBare();
+  return syllables.filter((s) => s !== " ").join(" ").replace(/\s+/g, " ").trim();
+}
+
+/** Devanāgarī → IAST, o bastante para a pronúncia (vogal inerente incluída). */
+export function devaToIast(text: string): string {
+  const vowels: Record<string, string> = {
+    "अ": "a", "आ": "ā", "इ": "i", "ई": "ī", "उ": "u", "ऊ": "ū",
+    "ऋ": "ṛ", "ॠ": "ṝ", "ऌ": "ḷ", "ॡ": "ḹ",
+    "ए": "e", "ऐ": "ai", "ओ": "o", "औ": "au",
+  };
+  const matras: Record<string, string> = {
+    "ा": "ā", "ि": "i", "ी": "ī", "ु": "u", "ू": "ū",
+    "ृ": "ṛ", "ॄ": "ṝ", "ॢ": "ḷ", "ॣ": "ḹ",
+    "े": "e", "ै": "ai", "ो": "o", "ौ": "au",
+  };
+  const consonants: Record<string, string> = {
+    "क": "k", "ख": "kh", "ग": "g", "घ": "gh", "ङ": "ṅ",
+    "च": "c", "छ": "ch", "ज": "j", "झ": "jh", "ञ": "ñ",
+    "ट": "ṭ", "ठ": "ṭh", "ड": "ḍ", "ढ": "ḍh", "ण": "ṇ",
+    "त": "t", "थ": "th", "द": "d", "ध": "dh", "न": "n",
+    "प": "p", "फ": "ph", "ब": "b", "भ": "bh", "म": "m",
+    "य": "y", "र": "r", "ल": "l", "व": "v",
+    "श": "ś", "ष": "ṣ", "स": "s", "ह": "h",
+    "ळ": "ḷ",
+  };
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (ch === "ॐ") {
+      out += "oṃ";
+      i++;
+      continue;
+    }
+    if (vowels[ch]) {
+      out += vowels[ch];
+      i++;
+      continue;
+    }
+    if (consonants[ch]) {
+      const next = text[i + 1];
+      if (next === "्") {
+        out += consonants[ch];
+        i += 2;
+      } else if (matras[next]) {
+        out += consonants[ch] + matras[next];
+        i += 2;
+      } else {
+        out += consonants[ch] + "a";
+        i++;
+      }
+      continue;
+    }
+    if (ch === "ं" || ch === "ँ") {
+      out += "ṃ";
+      i++;
+      continue;
+    }
+    if (ch === "ः") {
+      out += "ḥ";
+      i++;
+      continue;
+    }
+    if (ch === "ऽ" || (ch >= "\u0951" && ch <= "\u0954")) {
+      i++;
+      continue;
+    }
+    if (ch === "।" || ch === "॥") {
+      out += " ";
+      i++;
+      continue;
+    }
+    if (ch !== "्") out += ch;
+    i++;
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
+let cachedVoices: SpeechSynthesisVoice[] = [];
+
+function getVoicesList(): SpeechSynthesisVoice[] {
+  if (typeof window === "undefined" || !window.speechSynthesis) return [];
+  const list = window.speechSynthesis.getVoices();
+  if (list && list.length > 0) {
+    cachedVoices = list;
+  }
+  return cachedVoices.length > 0 ? cachedVoices : list;
+}
+
+if (typeof window !== "undefined" && window.speechSynthesis) {
+  try {
+    getVoicesList();
+    window.speechSynthesis.addEventListener("voiceschanged", () => {
+      getVoicesList();
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+function normLang(lang: string): string {
+  return lang.replace("_", "-").toLowerCase();
+}
+
+function isIndicLang(lang: string): boolean {
+  const n = normLang(lang);
+  return n.startsWith("hi") || n.startsWith("sa");
+}
+
+/**
+ * Seleciona voz hi/sa. Sem ela, devolve null e a leitura usa a soletração latina.
+ */
+export function pickSanskritVoice(): SpeechSynthesisVoice | null {
+  const list = getVoicesList();
+  if (!list.length) return null;
+  const norm = (v: SpeechSynthesisVoice) => normLang(v.lang);
+
+  // Hindi/sânscrito em qualquer serviço: uma voz inglesa local leria "a" como "ei".
+  const indicList = list.filter(
+    (v) => isIndicLang(v.lang) || /lekha|sanskrit|hindi/i.test(v.name)
+  );
+  const pool = indicList.length > 0 ? indicList : list.filter((v) => v.localService !== false);
+  const voices = pool.length > 0 ? pool : list;
+
+  for (const want of ["sa-in", "hi-in", "sa", "hi"]) {
+    const exact = pool.find((v) => norm(v) === want);
+    if (exact) return exact;
+  }
+  const byName = pool.find(
+    (v) =>
+      v.name.toLowerCase().includes("lekha") ||
+      v.name.toLowerCase().includes("sanya") ||
+      v.name.toLowerCase().includes("hindi") ||
+      v.name.toLowerCase().includes("sanskrit")
+  );
+  if (byName) return byName;
+  const indic = voices.find((v) => norm(v).startsWith("hi") || norm(v).startsWith("sa"));
+  if (indic) return indic;
+  return null;
+}
+
+/** Voz capaz de ler IAST/fonética: inglês primeiro, depois português. */
+export function pickLatinVoice(): SpeechSynthesisVoice | null {
+  const list = getVoicesList();
+  if (!list.length) return null;
+  const norm = (v: SpeechSynthesisVoice) => normLang(v.lang);
+  const localList = list.filter((v) => v.localService !== false);
+  const pool = localList.length > 0 ? localList : list;
+
+  for (const want of ["en-us", "en-gb", "en-in", "en", "pt-br", "pt-pt", "pt"]) {
+    const exact = pool.find((v) => norm(v) === want);
+    if (exact) return exact;
+  }
+  return (
+    pool.find((v) => norm(v).startsWith("en")) ||
+    pool.find((v) => norm(v).startsWith("pt")) ||
+    pool[0] ||
+    null
+  );
+}
+
+export function pickPortugueseVoice(): SpeechSynthesisVoice | null {
+  const list = getVoicesList();
+  if (!list.length) return null;
+  const norm = (v: SpeechSynthesisVoice) => normLang(v.lang);
+  const localList = list.filter((v) => v.localService !== false);
+  const pool = localList.length > 0 ? localList : list;
+
+  for (const want of ["pt-br", "pt-pt", "pt"]) {
+    const exact = pool.find((v) => norm(v) === want);
+    if (exact) return exact;
+  }
+  const byName = pool.find(
+    (v) =>
+      v.name.toLowerCase().includes("luciana") ||
+      v.name.toLowerCase().includes("eddy") ||
+      v.name.toLowerCase().includes("portuguese") ||
+      v.name.toLowerCase().includes("português")
+  );
+  if (byName) return byName;
+  return pool.find((v) => norm(v).startsWith("pt")) || null;
+}
+
+// Conjunto para evitar que o Garbage Collector do V8/WebKit descarte o Utterance antes do término
+const activeUtterances = new Set<SpeechSynthesisUtterance>();
+
+export function stopSpeaking(): void {
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+      activeUtterances.clear();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/**
+ * Dispara a síntese de fala imediatamente no mesmo ciclo de eventos do clique do usuário.
+ * IMPORTANTE: Nunca usar setTimeout antes de synth.speak(), pois navegadores modernos (Safari/Chrome)
+ * revogam o gesto do usuário ("user activation") em callbacks assíncronos e descartam o áudio.
+ */
+function safeSpeak(utter: SpeechSynthesisUtterance, onEnd?: () => void): void {
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    onEnd?.();
+    return;
+  }
+  const synth = window.speechSynthesis;
+
+  activeUtterances.add(utter);
+
+  let finished = false;
+  let safetyTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const cleanup = () => {
+    if (!finished) {
+      finished = true;
+      if (safetyTimer) {
+        clearTimeout(safetyTimer);
+        safetyTimer = null;
+      }
+      activeUtterances.delete(utter);
+      onEnd?.();
+    }
+  };
+
+  utter.onend = () => {
+    cleanup();
+  };
+  utter.onerror = () => {
+    cleanup();
+  };
+
+  // Timer de segurança longo para não travar a UI caso o motor do browser não dispare onend
+  safetyTimer = setTimeout(cleanup, Math.max(6000, utter.text.length * 250));
+
+  try {
+    synth.cancel();
+    if (synth.paused) {
+      synth.resume();
+    }
+    synth.speak(utter);
+  } catch {
+    cleanup();
+  }
+}
+
+export type SanskritSpeechPlan = {
+  text: string;
+  lang: string;
+  voice: SpeechSynthesisVoice | null;
+};
+
+/**
+ * Decide o que a síntese vai ler.
+ * Voz indiana lê o devanāgarī. As outras recebem uma soletração ("kuh",
+ * "kuh-huh"), nunca o IAST cru — "a" e "tha" sairiam como letras inglesas.
+ */
+export function planSanskritSpeech(
+  text: string,
+  iastFallback?: string,
+  voice: SpeechSynthesisVoice | null = null,
+  latinVoice: SpeechSynthesisVoice | null = null,
+): SanskritSpeechPlan {
+  if (voice && isIndicLang(voice.lang)) {
+    return { text, lang: voice.lang, voice };
+  }
+  const source = (iastFallback && iastFallback.trim()) || text;
+  const spoken = iastToSpeakable(source);
+  const english = voice && normLang(voice.lang).startsWith("en") ? voice : null;
+  const reader = english || latinVoice;
+  return { text: spoken, lang: reader?.lang || "en-US", voice: reader };
+}
+
+export function speakSanskrit(text: string, iastFallback?: string, onEnd?: () => void, rate = 0.85): void {
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    onEnd?.();
+    return;
+  }
+
+  const plan = planSanskritSpeech(text, iastFallback, pickSanskritVoice(), pickLatinVoice());
+  const utter = new SpeechSynthesisUtterance(plan.text);
+  if (plan.voice) {
+    utter.voice = plan.voice;
+  }
+  utter.lang = plan.lang;
+  utter.rate = rate;
+  safeSpeak(utter, onEnd);
+}
+
+export function speakSanskritWithPromise(text: string, iastFallback?: string, rate = 0.85): Promise<void> {
+  return new Promise((resolve) => {
+    speakSanskrit(text, iastFallback, resolve, rate);
+  });
+}
+
+export function speakPortuguese(text: string, onEnd?: () => void): void {
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    onEnd?.();
+    return;
+  }
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = "pt-BR";
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
+  const voice = pickPortugueseVoice();
+  if (voice) {
+    utter.voice = voice;
+    utter.lang = voice.lang;
+  } else {
+    utter.lang = "pt-BR";
+  }
+  utter.rate = 0.95;
+  safeSpeak(utter, onEnd);
 }

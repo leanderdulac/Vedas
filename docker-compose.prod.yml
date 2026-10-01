@@ -45,6 +45,7 @@ services:
       # POSTGRES_PASSWORD alfanumérico longo (ex.: openssl rand -hex 24).
       DATABASE_URL: postgresql://${POSTGRES_USER:-vedas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-vedas}
       VEDIC_PIPELINE_API_TOKEN: ${VEDIC_PIPELINE_API_TOKEN:-}
+      VEDIC_PUBLIC_API: "true"
       VEDIC_GENERATION_API_TOKEN: ${VEDIC_GENERATION_API_TOKEN:-}
       VEDIC_API_INDEX_DIR: /app/artifacts/embeddings
       VEDIC_LOG_FORMAT: json

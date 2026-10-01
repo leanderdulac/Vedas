@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import re
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -36,12 +37,35 @@ def image_path(verse_id: str) -> Path:
     return MEDIA_DIR / f"{_safe_id(verse_id)}.jpg"
 
 
+def figure_image_path(figure_id: str) -> Path:
+    return MEDIA_DIR / "figures" / f"{_safe_id(figure_id)}.jpg"
+
+
 def video_path(verse_id: str) -> Path:
     return MEDIA_DIR / f"{_safe_id(verse_id)}.mp4"
 
 
 def job_path(verse_id: str) -> Path:
     return MEDIA_DIR / "jobs" / f"{_safe_id(verse_id)}.json"
+
+
+def _read_job(verse_id: str) -> dict[str, Any] | None:
+    meta = job_path(verse_id)
+    if not meta.exists():
+        return None
+    try:
+        job = json.loads(meta.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    return job if isinstance(job, dict) else None
+
+
+def _write_job(verse_id: str, job: dict[str, Any]) -> None:
+    jp = job_path(verse_id)
+    jp.parent.mkdir(parents=True, exist_ok=True)
+    tmp = jp.with_suffix(".tmp")
+    tmp.write_text(json.dumps(job), encoding="utf-8")
+    tmp.replace(jp)
 
 
 def list_cached_media() -> dict[str, list[str]]:
@@ -138,14 +162,12 @@ def _download_media_bytes(url: str, *, timeout: float = 60.0, limit: int = 25 * 
     raise ValueError("Muitos redirects ao baixar mídia")
 
 
-def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
-    dest = image_path(verse_id)
-    if dest.exists() and dest.stat().st_size > 1000 and not force:
-        return dest
-    bundle = get_verse(verse_id)
-    if not bundle:
-        raise FileNotFoundError(f"Verso {verse_id} não encontrado")
-    prompt = visual_prompt(bundle)
+def _provider_image(prompt: str, init: Path | None) -> bytes:
+    from vedic_pipeline.llm.diffusion import media_backend, render_image
+
+    if media_backend() == "diffusion":
+        # Still já gerado: img2img preserva a cena e refina o pigmento.
+        return render_image(prompt, init_image=init)
     with _client() as client:
         resp = client.post(
             "/images/generations",
@@ -169,14 +191,75 @@ def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
         payload = resp.json()
     data = (payload.get("data") or [payload])[0]
     if data.get("b64_json"):
-        return _save_image_bytes(dest, base64.b64decode(data["b64_json"]))
+        return base64.b64decode(data["b64_json"])
     url = data.get("url")
     if not url:
         raise RuntimeError("Imagine não devolveu imagem")
-    return _save_image_bytes(dest, _download_media_bytes(url, timeout=60.0))
+    return _download_media_bytes(url, timeout=60.0)
+
+
+def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
+    dest = image_path(verse_id)
+    cached = dest.exists() and dest.stat().st_size > 1000
+    if cached and not force:
+        return dest
+    bundle = get_verse(verse_id)
+    if not bundle:
+        raise FileNotFoundError(f"Verso {verse_id} não encontrado")
+    raw = _provider_image(visual_prompt(bundle), dest if cached else None)
+    return _save_image_bytes(dest, raw)
+
+
+def generate_figure_image(figure_id: str, prompt: str, *, force: bool = False) -> Path:
+    dest = figure_image_path(figure_id)
+    cached = dest.exists() and dest.stat().st_size > 1000
+    if cached and not force:
+        return dest
+    raw = _provider_image(prompt, dest if cached else None)
+    return _save_image_bytes(dest, raw)
+
+
+def _diffusion_video_worker(verse_id: str) -> None:
+    from vedic_pipeline.llm.diffusion import render_video
+
+    try:
+        bundle = get_verse(verse_id) or {}
+        render_video(image_path(verse_id), video_path(verse_id), motion_prompt(bundle))
+        _write_job(verse_id, {"verse_id": verse_id, "status": "done", "backend": "diffusion"})
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Stable Video Diffusion falhou para %s", verse_id)
+        _write_job(
+            verse_id,
+            {
+                "verse_id": verse_id,
+                "status": "failed",
+                "backend": "diffusion",
+                "detail": str(exc),
+            },
+        )
+
+
+def _start_diffusion_video(verse_id: str) -> dict[str, Any]:
+    generate_verse_image(verse_id)
+    current = _read_job(verse_id)
+    if current and current.get("backend") == "diffusion" and current.get("status") == "pending":
+        return current
+    job = {"verse_id": verse_id, "status": "pending", "backend": "diffusion"}
+    _write_job(verse_id, job)
+    threading.Thread(
+        target=_diffusion_video_worker,
+        args=(verse_id,),
+        name=f"svd-{_safe_id(verse_id)}",
+        daemon=True,
+    ).start()
+    return job
 
 
 def start_verse_video(verse_id: str, *, duration: int = 6) -> dict[str, Any]:
+    from vedic_pipeline.llm.diffusion import media_backend
+
+    if media_backend() == "diffusion":
+        return _start_diffusion_video(verse_id)
     still = generate_verse_image(verse_id)
     bundle = get_verse(verse_id) or {}
     b64 = base64.b64encode(still.read_bytes()).decode("ascii")
@@ -206,12 +289,8 @@ def start_verse_video(verse_id: str, *, duration: int = 6) -> dict[str, Any]:
     request_id = payload.get("request_id") or payload.get("id")
     if not request_id:
         raise RuntimeError(f"Imagine vídeo sem request_id: {payload}")
-    job = {"verse_id": verse_id, "request_id": request_id, "status": "pending"}
-    jp = job_path(verse_id)
-    jp.parent.mkdir(parents=True, exist_ok=True)
-    tmp = jp.with_suffix(".tmp")
-    tmp.write_text(json.dumps(job), encoding="utf-8")
-    tmp.replace(jp)
+    job = {"verse_id": verse_id, "request_id": request_id, "status": "pending", "backend": "xai"}
+    _write_job(verse_id, job)
     return job
 
 
@@ -219,13 +298,19 @@ def poll_verse_video(verse_id: str) -> dict[str, Any]:
     dest = video_path(verse_id)
     if dest.exists() and dest.stat().st_size > 1000:
         return {"verse_id": verse_id, "status": "done", "ready": True}
-    meta = job_path(verse_id)
-    if not meta.exists():
+    job = _read_job(verse_id)
+    if not job:
         return {"verse_id": verse_id, "status": "missing", "ready": False}
-    try:
-        job = json.loads(meta.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return {"verse_id": verse_id, "status": "missing", "ready": False}
+    if job.get("backend") == "diffusion":
+        status = str(job.get("status") or "pending")
+        if status in {"failed", "error"}:
+            return {
+                "verse_id": verse_id,
+                "status": status,
+                "ready": False,
+                "detail": job.get("detail"),
+            }
+        return {"verse_id": verse_id, "status": status, "ready": status == "done"}
     request_id = job.get("request_id")
     if not request_id or not isinstance(request_id, str) or len(request_id) > 128:
         return {"verse_id": verse_id, "status": "missing", "ready": False}
@@ -235,9 +320,7 @@ def poll_verse_video(verse_id: str) -> dict[str, Any]:
         payload = resp.json()
     status = (payload.get("status") or "").lower()
     job["status"] = status
-    tmp = meta.with_suffix(".tmp")
-    tmp.write_text(json.dumps(job), encoding="utf-8")
-    tmp.replace(meta)
+    _write_job(verse_id, job)
     if status in {"done", "completed", "succeeded"}:
         url = (payload.get("video") or {}).get("url") or payload.get("url")
         if not url:

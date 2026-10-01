@@ -37,6 +37,17 @@ def retrieve_hits(
     backend = (backend or "auto").lower()
     fetch_k = max(top_k * 2, DEFAULT_FETCH_K)
 
+    # O modelo gravado no índice numpy é a fonte da verdade — evita que o
+    # pgvector consulte com um modelo diferente do usado para indexar.
+    if embed_model == DEFAULT_EMBEDDING_MODEL:
+        try:
+            meta = (get_index(Path(index_dir)).get("meta") or {}) if Path(index_dir).exists() else {}
+            stored = meta.get("model_name")
+            if stored and str(stored).strip():
+                embed_model = str(stored)
+        except Exception:  # noqa: BLE001
+            pass
+
     if backend == "auto":
         if get_database_url():
             try:

@@ -116,14 +116,32 @@ def get_chunk_tokens(chunk: dict[str, Any]) -> list[str]:
     tokens = tokenize(combined)
     if cid:
         with _CHUNK_TOKEN_CACHE_LOCK:
-            if len(_CHUNK_TOKEN_CACHE) > 50_000:
-                _CHUNK_TOKEN_CACHE.clear()
-            _CHUNK_TOKEN_CACHE[cid] = tokens
+            # Não apaga o cache ao passar de um teto: com 67 mil chunks isso
+            # refazia a tokenização em toda consulta. Acima do teto, calcula
+            # e segue sem guardar.
+            if len(_CHUNK_TOKEN_CACHE) < 250_000:
+                _CHUNK_TOKEN_CACHE[cid] = tokens
     return tokens
 
 
+def clear_chunk_token_cache() -> None:
+    with _CHUNK_TOKEN_CACHE_LOCK:
+        _CHUNK_TOKEN_CACHE.clear()
+
+
 def lexical_scores(query: str, chunks: list[dict[str, Any]]) -> list[float]:
-    """BM25-light sobre tokens unicode com cache de tokenização."""
+    """BM25-light. Usa o índice invertido em disco quando os chunks são dele."""
+    if chunks:
+        from vedic_pipeline.search.lexical_index import scores_for_chunks
+
+        fast = scores_for_chunks(query, chunks)
+        if fast is not None:
+            return fast
+    return _lexical_scores_scan(query, chunks)
+
+
+def _lexical_scores_scan(query: str, chunks: list[dict[str, Any]]) -> list[float]:
+    """BM25 varrendo os chunks. O índice persistente reproduz esta conta."""
     q_tokens = tokenize(query)
     if not q_tokens or not chunks:
         return [0.0] * len(chunks)

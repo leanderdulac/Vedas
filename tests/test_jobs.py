@@ -148,11 +148,20 @@ class JobApiTests(_TempJobsDirMixin, unittest.TestCase):
             self.assertEqual(client.get("/jobs/nope", headers=headers).status_code, 404)
 
     def test_nullable_payloads_from_ui_accepted(self):
-        """A UI envia embedding_dim/max_steps como null — o schema deve aceitar."""
+        """A UI envia embedding_dim/max_steps como null — o schema deve aceitar.
+
+        train_causal_model é mockado: com deps de treino instaladas, um job real
+        treinaria o corpus inteiro em background (minutos/horas) e travaria o
+        processo no shutdown (threads do executor são não-daemon).
+        """
         with patch.dict(os.environ, {"VEDIC_PIPELINE_API_TOKEN": "tok"}), patch(
             "vedic_pipeline.search.embeddings.build_embedding_index", return_value={"ok": True}
         ), patch(
             "vedic_pipeline.search.rag.get_index", return_value={"chunks": []}
+        ), patch(
+            "vedic_pipeline.train.model.train_causal_model", return_value="/tmp/model"
+        ), patch(
+            "vedic_pipeline.storage.db.init_schema", return_value={"ok": True}
         ), TestClient(create_app()) as client:
             headers = {"Authorization": "Bearer tok"}
             res = client.post(

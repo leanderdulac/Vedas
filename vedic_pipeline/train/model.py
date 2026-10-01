@@ -111,7 +111,6 @@ def train_causal_model(
     incompatibilidade embeddings↔vocabulário. O BPE separado serve para
     treino do zero ou adaptação arquitetural posterior.
     """
-    import torch
     from datasets import Dataset
     from transformers import (
         AutoModelForCausalLM,
@@ -193,7 +192,15 @@ def train_causal_model(
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    use_cuda = torch.cuda.is_available()
+    from vedic_pipeline.train.device import detect_device, use_amp
+
+    device = detect_device()
+    if device == "mps":
+        logger.warning(
+            "Treino em MPS: mantenha VEDIC_DEVICE=cpu se ocorrer SIGSEGV "
+            "(cargas paralelas de modelo em MPS)."
+        )
+    use_amp_flag = use_amp(device)
     args = build_training_arguments(
         TrainingArguments,
         causal_lm_training_kwargs(
@@ -203,9 +210,16 @@ def train_causal_model(
             learning_rate=learning_rate,
             max_steps=max_steps,
             fp16=fp16,
-            use_cuda=use_cuda,
+            use_cuda=device in {"cuda", "mps"},
         ),
     )
+    # MPS não suporta fp16 nativo em todas as ops — força bf16 no device certo.
+    if device == "mps" and args.bf16 is False:
+        try:
+            args.bf16 = use_amp_flag
+            args.fp16 = False
+        except Exception:  # noqa: BLE001
+            pass
 
     collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     trainer = Trainer(
@@ -216,10 +230,10 @@ def train_causal_model(
     )
 
     logger.info(
-        "Iniciando treino: epochs=%s blocks=%d cuda=%s",
+        "Iniciando treino: epochs=%s blocks=%d device=%s",
         epochs,
         len(lm_ds),
-        use_cuda,
+        device,
     )
     trainer.train()
     trainer.save_model(str(out_dir))
@@ -235,7 +249,7 @@ def train_causal_model(
         "documents": len(texts),
         "lm_blocks": len(lm_ds),
         "trained_at": utc_now_iso(),
-        "device": "cuda" if use_cuda else "cpu",
+        "device": device,
     }
     (out_dir / "train_meta.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2),

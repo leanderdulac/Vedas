@@ -1,15 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, VerseAnalysis, VerseBundle, VerseTranslation, VerseUnit } from "../api/client";
-
-function speakBrowser(text: string, lang: string) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = lang;
-  utter.rate = 0.85;
-  window.speechSynthesis.speak(utter);
-}
+import { speakPortuguese, speakSanskrit, stopSpeaking } from "../data/sanskrit";
 
 function revoke(url: string | null) {
   if (url && url.startsWith("blob:")) {
@@ -74,60 +66,80 @@ export default function VerseCard({
     return next;
   }
 
+  function getIastWitness(): string | undefined {
+    return bundle?.witnesses?.find((w) => w.role === "iast" || w.role === "translit")?.text;
+  }
+
   async function play() {
     setError(null);
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      } catch { /* ignore */ }
+      audioRef.current = null;
+    }
+    stopSpeaking();
+    setPlaying(false);
     setBusy("audio");
-    try {
-      await ensureBundle().catch(() => undefined);
-      const url = api.verseAudioUrl(unit.verse_id);
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 30000);
-      const res = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(timer);
-      if (res.ok) {
-        const blob = await res.blob();
-        const src = URL.createObjectURL(blob);
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        const prev = (audioRef.current as HTMLAudioElement & { __src?: string } | null)?.__src;
-        revoke(prev ?? null);
-        const audio = new Audio(src);
-        (audio as HTMLAudioElement & { __src?: string }).__src = src;
-        audioRef.current = audio;
-        audio.onended = () => setPlaying(false);
-        await audio.play();
-        setPlaying(true);
-        return;
-      }
-      speakBrowser(unit.text, unit.verse_id.startsWith("BG") || /[\u0900-\u097F]/.test(unit.text) ? "hi-IN" : "en-US");
-      setPlaying(true);
-    } catch (e) {
-      speakBrowser(unit.text, "hi-IN");
-      setPlaying(true);
-      setError(e instanceof Error ? e.message : "Áudio do navegador");
-    } finally {
+
+    const url = api.verseAudioUrl(unit.verse_id);
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    let fellBack = false;
+
+    const fallback = () => {
+      if (fellBack) return;
+      fellBack = true;
       setBusy(null);
+      setPlaying(true);
+      setError("♪ Usando voz sintetizada");
+      const iast = getIastWitness();
+      speakSanskrit(unit.text, iast, () => {
+        setPlaying(false);
+      });
+    };
+
+    audio.onended = () => {
+      setPlaying(false);
+      setBusy(null);
+    };
+
+    audio.onerror = () => {
+      fallback();
+    };
+
+    try {
+      await audio.play();
+      if (fellBack) return;
+      setPlaying(true);
+      setBusy(null);
+    } catch {
+      fallback();
     }
   }
 
   function stop() {
-    audioRef.current?.pause();
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      } catch {
+        /* ignore */
+      }
+      audioRef.current = null;
+    }
+    stopSpeaking();
     setPlaying(false);
+    setBusy(null);
   }
 
   function speakTranslation() {
     if (!translation?.translation) return;
     setError(null);
     stop();
-    speakBrowser(translation.translation, "pt-BR");
     setPlaying(true);
-    const done = () => setPlaying(false);
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      // utterance.onend dispara só se o texto ainda existir; fallback por tempo.
-      setTimeout(done, Math.max(4000, translation.translation.length * 90));
-    }
+    speakPortuguese(translation.translation, () => setPlaying(false));
   }
 
   async function illustrate() {
@@ -136,7 +148,7 @@ export default function VerseCard({
     try {
       await ensureBundle();
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 60000);
+      const timer = setTimeout(() => ctrl.abort(), 180000);
       const res = await fetch(api.verseImageUrl(unit.verse_id), { signal: ctrl.signal });
       clearTimeout(timer);
       if (!res.ok) {
@@ -174,7 +186,7 @@ export default function VerseCard({
         });
       }
       await api.startVerseVideo(unit.verse_id);
-      for (let i = 0; i < 40; i += 1) {
+      for (let i = 0; i < 90; i += 1) {
         if (cancelled.current) return;
         const st = await api.verseVideoStatus(unit.verse_id);
         if (st.ready || st.status === "done") {
@@ -185,7 +197,8 @@ export default function VerseCard({
           return;
         }
         if (st.status === "failed" || st.status === "expired" || st.status === "error") {
-          throw new Error(`Vídeo ${st.status}`);
+          const detail = typeof st.detail === "string" ? st.detail : "";
+          throw new Error(detail || `Vídeo ${st.status}`);
         }
         if (!cancelled.current) setVideoNote(`Vídeo ${st.status || "pendente"}…`);
         await new Promise((r) => setTimeout(r, 4000));
@@ -355,7 +368,7 @@ export default function VerseCard({
               <tbody>
                 {analysis.words.map((wd, i) => (
                   <tr key={`${wd.form}-${i}`}>
-                    <td className="analysis-word-deva" onClick={() => speakBrowser(wd.form, "hi-IN")} title="Ouvir">
+                    <td className="analysis-word-deva" onClick={() => speakSanskrit(wd.form, wd.iast)} title="Ouvir">
                       {wd.form}
                     </td>
                     <td className="analysis-word-iast">{wd.iast}</td>

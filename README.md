@@ -54,7 +54,7 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 | POST | `/api/v1/ask` | Q&A RAG |
 | GET | `/api/v1/verses/{id}` | bundle do verso (testemunhas sa/IAST/EN) |
 | GET | `/api/v1/verses/{id}/padas` | **pāda do verso** (segmentação determinística; alimenta o modo eco) |
-| GET | `/api/v1/verses/{id}/audio` | recitação TTS (cache em disco) |
+| GET | `/api/v1/verses/{id}/audio` | recitação sânscrito (TTS, cache em disco) |
 | POST | `/api/v1/verses/{id}/explain` | explicação PT/EN (LLM ou extrativa) |
 | POST | `/api/v1/verses/{id}/translate` | **tradução do sânscrito** para PT/EN (LLM; cache aberto) |
 | POST | `/api/v1/verses/{id}/analyze` | **vyākaraṇa interlinear**: pāda + análise palavra-por-palavra (LLM; cache aberto) |
@@ -142,22 +142,23 @@ python scripts/bulk_ingest_open.py --manifest fixtures/sources_markandeya.json -
 python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 ```
 
-### Contagens canônicas (snapshot 2026-08-07/08)
+### Contagens canônicas (índice local, 2026-09-17)
 
-> Snapshot de um ambiente específico (bulk ingest completo). Deploys novos
-> partem de `fixtures/` e crescem conforme o manifesto usado — os números
-> abaixo não são automáticos nem garantidos.
+> Snapshot desta máquina (`artifacts/embeddings/index_meta.json`). Deploys
+> novos partem de `fixtures/` e crescem conforme o manifesto — os números
+> abaixo não são automáticos nem garantidos. O README de agosto citava
+> 1.054 documentos e 23.702 chunks; o índice numpy atual é o da tabela.
 
 | Métrica | Valor |
 |---------|-------|
-| Documentos no corpus / PG | **1054** (alinhados, purge on) |
-| Caracteres | **~19,8M** |
-| Chunks + embeddings | **23.702** (numpy e pgvector) |
+| Documentos no corpus | **6.973** (5.061 em sânscrito, 1.912 em inglês) |
+| Caracteres | **~31,1M** |
+| Chunks + embeddings | **67.170**, dim **384**, modelo `paraphrase-multilingual-MiniLM-L12-v2` |
 | Hinos Ṛgveda (Griffith) | **1028** (mandalas **1–10** completas) |
 | Upaniṣads PD adicionais | Kena, Kaṭha, Muṇḍaka, Māṇḍūkya, Taittirīya, Aitareya, Praśna, Chāndogya, Bṛhadāraṇyaka, Śvetāśvatara (+ Müller) |
 | Ranking | híbrido + boost título/hino + **max 2 chunks/doc** |
 | Ask | JSON + **SSE** `/api/v1/ask/stream` |
-| Smoke retrieval | **10/10** (`python scripts/smoke_rag.py --strict`) |
+| Smoke retrieval | **37/37** no gold (`fixtures/smoke_queries.json`); o CI usa 4 queries |
 
 **Obras de base:** Mahābhārata Ganguli vols. 1–4, Rāmāyaṇa Valmiki, Upaniṣads (Müller + páginas SBE/sacred-texts), Gītā Arnold, Yoga-sūtra Johnston, Manu, Viṣṇu Purāṇa integral (Wilson), Garuḍa Purāṇa (Wood), Mārkaṇḍeya Purāṇa (Pargiter en + Devanāgarī, scans OCR), Ṛgveda Griffith completo, Chāndogya e Bṛhadāraṇyaka integrais (SBE01/SBE15), saṃhitās Vedic Heritage em sânscrito.
 
@@ -253,6 +254,70 @@ Runtime slim: a imagem Docker instala `requirements-api.txt` (sem
 `datasets`/`accelerate`/`sentencepiece` de treino). Para treino local use
 `pip install -r requirements_vedic_pipeline.txt` ou `pip install -e ".[train]"`;
 `/tokenize` e `/train` na imagem de API respondem 501.
+
+## Ilustração, vídeo e áudio (Stable Diffusion)
+
+`VEDIC_MEDIA_BACKEND=auto` usa a família Stable Diffusion quando o extra
+está instalado e, sem ele, o xAI Imagine.
+
+```bash
+pip install -e ".[media]"
+# Apple Silicon. Na primeira geração, HF_HUB_OFFLINE=0 para baixar os pesos.
+export VEDIC_MEDIA_BACKEND=diffusion VEDIC_DEVICE=mps HF_HUB_OFFLINE=0
+```
+
+| Mídia | Modelo | O que faz |
+| --- | --- | --- |
+| Imagem | `stabilityai/sd-turbo` | Still do verso. Um refresh (`?refresh=1`) refina o JPEG que já existe, em vez de inventar outra cena. |
+| Vídeo | `stable-video-diffusion-img2vid-xt` | Alguns segundos a partir do still, com movimento lento. |
+| Áudio | TTS + `stable-audio-open-1.0` | A fala continua no TTS. O Stable Audio só acrescenta um drone de tanpura por baixo — ele não pronuncia sânscrito. |
+
+Sem `ffmpeg` no `PATH`, a recitação é gravada sem o drone. `VEDIC_AUDIO_BED=0`
+desliga a cama e mantém a voz sozinha.
+
+## SLM local (continued-pretraining LoRA) + migração de embeddings
+
+**SLM** — adaptar um modelo pequeno ao corpus védico (base recomendada
+`Qwen/Qwen2.5-0.5B`; vocab cobre Devanāgarī; no Apple Silicon use
+`VEDIC_DEVICE=mps`). Docs com OCR ruidoso (scans) são excluídos do treino:
+
+```bash
+# stats do dataset sem baixar nada
+python scripts/train_slm_lora.py --dry-run
+
+# treino (HF_HUB_OFFLINE=0 na primeira vez para baixar o modelo-base)
+HF_HUB_OFFLINE=0 VEDIC_DEVICE=mps python scripts/train_slm_lora.py \
+  --base-model Qwen/Qwen2.5-0.5B --max-steps 500 --out artifacts/slm-qwen05
+
+# usar como fallback de geração local
+export VEDIC_LOCAL_LM=artifacts/slm-qwen05
+```
+
+Device de treino unificado (`VEDIC_DEVICE=cuda|mps|cpu`, default conservador
+cpu; MPS exige flag explícita por causa do histórico de SIGSEGV): vale para
+`train-model`, `train_slm_lora.py`, o fine-tune do reranker, a difusão e o
+encode dos embeddings. Sem a variável, a busca semântica continua em CPU.
+
+**Embeddings** — trocar o modelo de embeddings (ex.: `intfloat/multilingual-e5-small`,
+mesma dim 384, prefixos `query:`/`passage:` aplicados automaticamente):
+
+```bash
+# backup do índice atual + reindex (numpy e/ou pgvector) + smoke de validação
+VEDIC_EMBEDDING_MODEL=intfloat/multilingual-e5-small \
+  python scripts/migrate_embeddings.py --backend both --smoke gold
+
+# ou fixar no env para todos os comandos
+export VEDIC_EMBEDDING_MODEL=intfloat/multilingual-e5-small
+```
+
+O modelo gravado no `index_meta.json` é a fonte da verdade na busca (o
+pgvector passa a consultar com o mesmo modelo do índice, mesmo que o env
+mude depois).
+
+`build-index` também grava o BM25 invertido (`lexical.npz` ao lado dos
+embeddings). A busca usa esse arquivo em vez de retokenizar os chunks.
+Se o arquivo não existir ou o corpus tiver mudado, ele é refeito na
+primeira carga do índice.
 
 ## Artefatos remotos (S3/MinIO) + treino isolado
 
@@ -381,6 +446,13 @@ Testes & Qualidade: `pytest -v` (ou `python -m unittest discover -s tests -v`) e
 
 Busca e chat aceitam somente o diretório definido em `VEDIC_API_INDEX_DIR` (padrão `artifacts/embeddings`). A CLI mantém a possibilidade de escolher outros diretórios.
 
-Para usar `provider=xai` ou `provider=local` por HTTP, configure `VEDIC_GENERATION_API_TOKEN` e envie `Authorization: Bearer <token>`. O modelo permitido vem de `XAI_MODEL` ou `VEDIC_LOCAL_LM`; o cliente não pode escolher outro. `auto` também exige autorização se selecionar xAI. Sem configuração do token, geração HTTP retorna 503; com token ausente ou incorreto na requisição, retorna 401. Essas respostas acontecem antes de iniciar o streaming ou recuperar documentos.
+Há dois modos de geração (`/ask` com xAI ou modelo local, e a mídia nova em `/audio`, `/image`, `/video`):
 
-`provider=extractive` continua público e não aceita `model`. A interface web atual usa esse modo automaticamente quando não há chave xAI; para usar geração protegida, clientes HTTP precisam enviar o cabeçalho. Não exponha o token em `VITE_*` nem no bundle público. O token do pipeline não concede acesso à geração.
+| Modo | Quando | Sem `VEDIC_GENERATION_API_TOKEN` |
+|------|--------|----------------------------------|
+| Privado (default) | `VEDIC_PUBLIC_API` desligado | A chave do servidor autoriza. A UI local funciona. |
+| Público | `VEDIC_PUBLIC_API=1` (`docker-compose.prod.yml`) | **503.** Com o token configurado, a requisição envia `Authorization: Bearer <token>` ou recebe **401**. |
+
+O modelo permitido vem de `XAI_MODEL` ou `VEDIC_LOCAL_LM`; o cliente não escolhe outro. `auto` com `XAI_API_KEY` cai em xAI e segue a mesma regra. A checagem acontece antes do streaming e antes de recuperar documentos.
+
+`provider=extractive` continua aberto nos dois modos e não aceita `model`. Não exponha o token em `VITE_*` nem no bundle público. O token do pipeline não concede acesso à geração. Leitura de mídia já em cache continua aberta.

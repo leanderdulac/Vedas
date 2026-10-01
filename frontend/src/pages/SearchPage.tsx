@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { api, SearchHit } from "../api/client";
+import { api, RemissiveEntry, SearchFigure, SearchHit } from "../api/client";
 import HitCard from "../components/HitCard";
+import SearchAside from "../components/SearchAside";
 
 const DEFAULT_TRADITIONS = [
   { id: "vedic", name: "Védico" },
@@ -20,6 +21,9 @@ export default function SearchPage() {
   const [language, setLanguage] = useState(params.get("lang") || "");
   const [topK, setTopK] = useState(5);
   const [hits, setHits] = useState<SearchHit[]>([]);
+  const [figure, setFigure] = useState<SearchFigure | null>(null);
+  const [remissive, setRemissive] = useState<RemissiveEntry[]>([]);
+  const [focusHit, setFocusHit] = useState<number | null>(null);
   const [backend, setBackend] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,27 +42,43 @@ export default function SearchPage() {
       });
   }, []);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!query.trim()) return;
+  async function runSearch(nextQuery: string) {
+    const q = nextQuery.trim();
+    if (!q) return;
+    setQuery(q);
     setLoading(true);
     setError(null);
+    setFocusHit(null);
     try {
       const res = await api.search({
-        query: query.trim(),
+        query: q,
         top_k: topK,
         tradition: tradition || undefined,
         language: language || undefined,
         backend: "auto",
       });
       setHits(res.hits || []);
+      setFigure(res.figure ?? null);
+      setRemissive(res.remissive ?? []);
       setBackend(res.retrieval_backend);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setHits([]);
+      setFigure(null);
+      setRemissive([]);
     } finally {
       setLoading(false);
     }
+  }
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    void runSearch(query);
+  }
+
+  function locate(index: number) {
+    setFocusHit(index);
+    document.getElementById(`hit-${index}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -134,9 +154,17 @@ export default function SearchPage() {
         </div>
       )}
 
+      {!loading && (figure || remissive.length > 0) && (
+        <div style={{ marginTop: "1rem" }}>
+          <SearchAside figure={figure} entries={remissive} onSeek={(name) => void runSearch(name)} onLocate={locate} />
+        </div>
+      )}
+
       <div className="stack" style={{ marginTop: "1rem" }}>
         {hits.map((h, i) => (
-          <HitCard key={h.chunk_id || i} hit={h} index={i} />
+          <div key={h.chunk_id || i} id={`hit-${i}`} className={focusHit === i ? "hit-focus" : undefined}>
+            <HitCard hit={h} index={i} />
+          </div>
         ))}
       </div>
     </div>

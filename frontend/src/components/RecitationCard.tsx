@@ -1,25 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, Pada } from "../api/client";
 import { RECITATIONS, echoGapMs } from "../data/recitation";
+import { speakSanskritWithPromise, stopSpeaking } from "../data/sanskrit";
 
 type Phase = "idle" | "loading" | "reciting" | "echo" | "done";
-
-function speak(text: string, rate: number): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return resolve();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "hi-IN";
-    utter.rate = rate;
-    utter.onend = () => resolve();
-    utter.onerror = () => resolve();
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utter);
-  });
-}
-
-function stopSpeaking() {
-  if (typeof window !== "undefined") window.speechSynthesis?.cancel();
-}
 
 export default function RecitationCard() {
   const [entry, setEntry] = useState(RECITATIONS[0]);
@@ -77,7 +61,7 @@ export default function RecitationCard() {
       }
       setStep(next);
       setPhase("reciting");
-      await speak(padas[next].sa || padas[next].iast, 0.7);
+      await speakSanskritWithPromise(padas[next].sa || padas[next].iast, padas[next].iast, 0.7);
       if (runId.current !== myRun) return;
       setPhase("echo");
       if (echoTimer.current) window.clearTimeout(echoTimer.current);
@@ -93,7 +77,7 @@ export default function RecitationCard() {
     reset();
     const myRun = runId.current;
     setPhase("reciting");
-    await speak(padas[0].sa || padas[0].iast, 0.7);
+    await speakSanskritWithPromise(padas[0].sa || padas[0].iast, padas[0].iast, 0.7);
     if (runId.current !== myRun) return;
     setPhase("echo");
     if (echoTimer.current) window.clearTimeout(echoTimer.current);
@@ -115,7 +99,7 @@ export default function RecitationCard() {
     if (echoTimer.current) window.clearTimeout(echoTimer.current);
     stopSpeaking();
     setPhase("reciting");
-    void speak(p.sa || p.iast, 0.6).then(() => {
+    void speakSanskritWithPromise(p.sa || p.iast, p.iast, 0.6).then(() => {
       setPhase("echo");
       echoTimer.current = window.setTimeout(() => {
         void advance(step);
@@ -204,7 +188,7 @@ export default function RecitationCard() {
                 onClick={() => {
                   if (i !== step) return;
                   stopSpeaking();
-                  void speak(p.sa || p.iast, 0.6);
+                  void speakSanskritWithPromise(p.sa || p.iast, p.iast, 0.6);
                 }}
                 title="Ouvir novamente"
               >

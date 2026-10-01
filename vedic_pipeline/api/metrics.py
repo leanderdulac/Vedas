@@ -41,6 +41,8 @@ class MetricsCollector:
         (ex.: /api/v1/verses/RV.10.129.1/audio), causando crescimento de memória e
         cardinalidade explodida no scrape.
         """
+        if path.startswith("/api/v1/figures/"):
+            return "/api/v1/figures/:id/image"
         if path.startswith("/api/v1/documents/"):
             return "/api/v1/documents/:id"
         if path.startswith("/api/v1/traditions/"):
