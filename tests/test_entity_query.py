@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from vedic_pipeline.search import lexical_index
 from vedic_pipeline.search.entity import (
+    apply_entity_mention_boost,
     coverage_note,
     diversify_by_work,
     missing_reference_works,
@@ -118,6 +119,33 @@ class DiversifyByWorkTests(unittest.TestCase):
         out = diversify_by_work(hits[:8], top_k=6, max_per_doc=2)
         self.assertEqual(len(out), 6)
 
+    def test_work_cap_is_a_quarter_of_large_top_k(self):
+        self.assertEqual(work_cap(6), 3)
+        self.assertEqual(work_cap(14), 3)
+        self.assertEqual(work_cap(20), 5)
+
+    def test_titled_work_gets_one_slot_and_substantive_works_are_seeded(self):
+        smrti = "Nārada Smṛti — Quotations from Nārada, VI. Ordeals (J. Jolly, SBE 33, 1889)"
+        hits = [_c(f"s{i}", smrti, "Narada says ...", f"smrti{i}", 2.0 - i * 0.01) for i in range(5)]
+        hits += [_c(f"h{i}", f"Harivaṃśa — ch. {i} (M. N. Dutt, 1897)", "x", f"hv{i}", 1.5 - i * 0.01) for i in range(5)]
+        hits += [_c("ra", "The Ramayan of Valmiki — English verse", "x", score=0.4), _c("gi", "Bhagavad-Gita", "x", score=0.3)]
+        for h in hits:
+            h["_entity_mentions"] = 1 if h["chunk_id"] == "gi" else 2
+        out = diversify_by_work(hits, top_k=5, titled=frozenset({"narada smrti"}))
+        works = [work_key(h["title"]) for h in out]
+        self.assertEqual(works.count("narada smrti"), 1)
+        self.assertEqual(works.count("harivamsa"), 3)
+        self.assertIn("ramayan of valmiki", works)  # vaga garantida: cita o nome 2 vezes
+        self.assertNotIn("bhagavad gita", works)  # citação única não ganha vaga na rodada 0
+
+    def test_titled_work_is_not_penalised_without_the_name_in_the_body(self):
+        nbs = _c("nbs", "Nārada Bhakti Sūtra — sūtras 34–42 (E. T. Sturdy, 1896)", "Love is immortal.", score=1.0)
+        other = _c("x", "Vishnu Purana — Book I", "The muni sat in meditation.", score=1.0)
+        apply_entity_mention_boost(parse_entity_query("Narada Muni"), [nbs, other])
+        self.assertEqual(nbs["_entity_mentions"], 1)
+        self.assertGreater(nbs["score"], 1.0)
+        self.assertLess(other["score"], 1.0)
+
 
 class EntityRetrievalTests(unittest.TestCase):
     def setUp(self):
@@ -133,6 +161,9 @@ class EntityRetrievalTests(unittest.TestCase):
         ramayan = next(i for i, c in enumerate(chunks) if c["chunk_id"] == "ra")
         self.assertGreater(scan[ramayan], 0)
         self.assertEqual(_lexical_scores_scan("narada", chunks)[ramayan], 0)
+        # a grafia alternativa (rara) não pontua acima da canônica
+        one_mention = [i for i, c in enumerate(chunks) if c["chunk_id"] in {"m1", "m3", "m4"}]
+        self.assertLessEqual(scan[ramayan], max(scan[i] for i in one_mention) * 1.05)
         with tempfile.TemporaryDirectory() as tmp:
             lexical_index.save_lexical_index(Path(tmp), chunks)
             fast = lexical_scores("narada", chunks, alternates=alts)

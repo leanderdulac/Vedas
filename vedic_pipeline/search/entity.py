@@ -247,14 +247,18 @@ def chunk_work(chunk: dict[str, Any]) -> str:
 
 
 def mention_count(chunk: dict[str, Any], forms: set[str]) -> int:
-    """Quantas vezes o nome (em qualquer grafia dada) aparece no chunk."""
+    """Quantas vezes o nome (em qualquer grafia dada) aparece no corpo do chunk.
+
+    Só o corpo conta: na Nārada Smṛti ou no Nārada Bhakti Sūtra o nome está
+    no título de todo trecho, inclusive nos que tratam de dívidas ou ordálios.
+    """
     if not forms:
         return 0
     from vedic_pipeline.common.sanskrit import devanagari_to_iast, has_devanagari
-    from vedic_pipeline.search.hybrid import get_chunk_tokens
+    from vedic_pipeline.search.hybrid import tokenize
 
     count = 0
-    for t in get_chunk_tokens(chunk):
+    for t in tokenize(str(chunk.get("text") or "")):
         if t in forms or (has_devanagari(t) and fold_ascii(devanagari_to_iast(t)) in forms):
             count += 1
     return count
@@ -268,11 +272,16 @@ def apply_entity_mention_boost(entity: EntityQuery, pool: list[dict[str, Any]]) 
     """Trecho que não cita o nome raramente serve a uma pergunta sobre ele.
 
     Quem cita o nome sobe; sobe um pouco mais quando o nome se repete (o
-    episódio é sobre ele, não uma lista de sábios). Quem não cita desce.
+    episódio é sobre ele, não uma lista de sábios). Quem não cita desce,
+    menos na obra que leva o nome no título (Nārada Bhakti Sūtra): ali o
+    trecho é dele mesmo sem repetir o nome, e conta como uma menção.
     """
     forms = entity.all_forms()
+    titled = entity_titled_works(entity, pool)
     for chunk in pool:
         n = mention_count(chunk, forms)
+        if not n and titled and chunk_work(chunk) in titled:
+            n = 1
         if n:
             delta = ENTITY_MENTION_BOOST + ENTITY_MENTION_STEP * (min(n, ENTITY_MENTION_CAP) - 1)
         else:
@@ -322,8 +331,14 @@ def entity_work_injections(
 
 
 def work_cap(top_k: int, max_per_work: int = ENTITY_MAX_PER_WORK) -> int:
-    """Teto por obra: 3, ou um terço do top-k quando ele é grande."""
-    return max(1, max_per_work, top_k // 3)
+    """Teto por obra: 3, ou um quarto do top-k quando ele é grande."""
+    return max(1, max_per_work, top_k // 4)
+
+
+def entity_titled_works(entity: EntityQuery, hits: list[dict[str, Any]]) -> frozenset[str]:
+    """Obras do pool cujo título traz o nome (Nārada Smṛti, Nārada Bhakti Sūtra)."""
+    names = set(entity.names)
+    return frozenset(w for w in {chunk_work(h) for h in hits} if names & set(w.split()))
 
 
 def diversify_by_work(
@@ -332,18 +347,45 @@ def diversify_by_work(
     *,
     max_per_doc: int = 2,
     max_per_work: int = ENTITY_MAX_PER_WORK,
+    titled: frozenset[str] = frozenset(),
+    seed_min_mentions: int = 2,
 ) -> list[dict[str, Any]]:
     """Top-k em ordem de score com teto por obra (e por documento).
 
-    Os quatro volumes do Mahābhārata contam como uma obra. Se faltar
-    candidato de outras obras, completa com o que sobrou (ainda em ordem de
-    score), em vez de deixar o top-k curto. O top-1 é sempre o melhor score.
+    Os volumes e capítulos de uma obra (Mahābhārata, Bhāgavata, Harivaṃśa)
+    contam como uma obra. Obra com o nome no título (``titled``: a Nārada
+    Smṛti numa pergunta sobre Nārada) entra com um trecho só na primeira
+    passada: ela é atribuída a ele, não conta a história dele, e suas páginas
+    repetem "Nārada diz" o bastante para lotar o top-k. Se faltar candidato
+    de outras obras, completa com o que sobrou (ainda em ordem de score), em
+    vez de deixar o top-k curto. O top-1 é sempre o melhor score.
+
+    Antes disso, uma rodada dá uma vaga a cada obra cujo melhor trecho cita
+    o nome ao menos ``seed_min_mentions`` vezes (``_entity_mentions``, posto
+    por ``apply_entity_mention_boost``); sem essa marca, ninguém é semeado.
     """
     cap = work_cap(top_k, max_per_work)
     chosen: list[dict[str, Any]] = []
     chosen_pos: set[int] = set()
     per_doc: Counter[str] = Counter()
     per_work: Counter[str] = Counter()
+    # rodada 0: o melhor trecho de cada obra que fala dele de fato (nome 2+
+    # vezes no trecho, ou obra que leva o nome) — o Rāmāyaṇa I (Nārada conta
+    # a história a Vālmīki) não pode perder a vaga para o 4º capítulo do
+    # Harivaṃśa; lista de sábios com o nome uma vez não ganha vaga aqui.
+    for pos, h in enumerate(hits):
+        if len(chosen) >= top_k:
+            break
+        work = chunk_work(h)
+        if per_work[work]:
+            continue
+        if int(h.get("_entity_mentions") or 0) < seed_min_mentions and work not in titled:
+            continue
+        did = str(h.get("doc_id") or h.get("title") or h.get("chunk_id") or "")
+        per_work[work] += 1
+        per_doc[did] += 1
+        chosen_pos.add(pos)
+        chosen.append(h)
     for enforce_work in (True, False):
         for pos, h in enumerate(hits):
             if len(chosen) >= top_k:
@@ -354,7 +396,7 @@ def diversify_by_work(
             work = chunk_work(h)
             if per_doc[did] >= max_per_doc:
                 continue
-            if enforce_work and per_work[work] >= cap:
+            if enforce_work and per_work[work] >= (1 if work in titled else cap):
                 continue
             per_work[work] += 1
             per_doc[did] += 1
@@ -409,32 +451,49 @@ def missing_reference_works(all_chunks: list[dict[str, Any]]) -> list[str]:
     return [label for label, pattern in REFERENCE_WORKS if not re.search(pattern, blob)]
 
 
+def titled_works(entity: EntityQuery, all_chunks: list[dict[str, Any]]) -> list[str]:
+    """Obras com o nome no título ("Nārada Smṛti", "Nārada Bhakti Sūtra")."""
+    names = set(entity.names)
+    works = {chunk_work(c) for c in all_chunks}
+    return sorted(w for w in works if names & set(w.split()))
+
+
 def corpus_coverage(
     entity: EntityQuery,
     all_chunks: list[dict[str, Any]],
     scores: list[float] | None = None,
 ) -> list[tuple[str, int]]:
-    """[(obra, nº de trechos que citam o nome)] em ordem decrescente."""
+    """[(obra, nº de trechos que citam o nome)] em ordem decrescente.
+
+    Obra com o nome no título fica de fora: ali todo trecho "cita" o nome
+    pelo título, e a contagem não diria nada (ver ``titled_works``).
+    """
     if scores is None:
         from vedic_pipeline.search.hybrid import lexical_scores
 
         scores = lexical_scores(entity.lexical_query(), all_chunks, alternates=entity.alternates())
+    titled = set(titled_works(entity, all_chunks))
     counts: Counter[str] = Counter()
     for i, score in enumerate(scores):
         if score > 0:
-            counts[chunk_work(all_chunks[i])] += 1
+            work = chunk_work(all_chunks[i])
+            if work not in titled:
+                counts[work] += 1
     return counts.most_common()
 
 
 def coverage_note(entity: EntityQuery, all_chunks: list[dict[str, Any]], *, limit: int = 12) -> str:
     """Nota curta para o prompt: onde o nome aparece e o que falta no acervo."""
     cov = corpus_coverage(entity, all_chunks)
+    titled = titled_works(entity, all_chunks)
     missing = missing_reference_works(all_chunks)
     parts: list[str] = []
+    if titled:
+        parts.append("Obras do acervo com o nome no título: " + "; ".join(w.title() for w in titled) + ".")
     if cov:
         listed = "; ".join(f"{work.title()} ({n})" for work, n in cov[:limit])
         parts.append(f"Trechos do acervo que citam “{entity.display}”, por obra: {listed}.")
-    else:
+    elif not titled:
         parts.append(f"Nenhum trecho do acervo cita “{entity.display}” pelo nome.")
     if missing:
         parts.append("Obras de referência ausentes do acervo: " + ", ".join(missing) + ".")

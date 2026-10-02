@@ -172,6 +172,7 @@ def _lexical_scores_scan(
         dl = len(d) or 1
         s = 0.0
         for t in q_tokens:
+            raw = t
             if t not in tf:
                 # tenta expansões do termo
                 alts = [*QUERY_EXPANSIONS.get(t, []), *alternates.get(t, [])]
@@ -184,6 +185,9 @@ def _lexical_scores_scan(
                 if not found:
                     continue
             idf = math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5))
+            if t != raw and t in alternates.get(raw, ()) and df[raw]:
+                # grafia alternativa não vale mais que a canônica (ver lexical_index)
+                idf = min(idf, math.log(1 + (n - df[raw] + 0.5) / (df[raw] + 0.5)))
             freq = tf[t]
             s += idf * (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * dl / avgdl))
         scores.append(s)
@@ -981,6 +985,7 @@ def hybrid_rerank(
         ENTITY_MAX_PER_WORK,
         apply_entity_mention_boost,
         diversify_by_work,
+        entity_titled_works,
         entity_work_injections,
         parse_entity_query,
     )
@@ -1081,7 +1086,11 @@ def hybrid_rerank(
     # pool maior antes de diversificar
     if entity:
         return diversify_by_work(
-            pool, top_k=top_k, max_per_doc=max_per_doc, max_per_work=ENTITY_MAX_PER_WORK
+            pool,
+            top_k=top_k,
+            max_per_doc=max_per_doc,
+            max_per_work=ENTITY_MAX_PER_WORK,
+            titled=entity_titled_works(entity, pool),
         )
     return diversify_by_doc(pool, top_k=top_k, max_per_doc=max_per_doc)
 

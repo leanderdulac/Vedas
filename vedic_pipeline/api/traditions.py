@@ -39,8 +39,8 @@ TRADITIONS: list[dict[str, Any]] = [
         "name_sa": "इतिहास",
         "name_en": "Itihasa",
         "name_pt": "Itihāsa",
-        "description_pt": "Mahābhārata e Rāmāyaṇa — épicos e dharma em narrativa.",
-        "description_en": "Mahabharata and Ramayana — epic narratives of dharma.",
+        "description_pt": "Mahābhārata (com o Harivaṃśa) e Rāmāyaṇa — épicos e dharma em narrativa.",
+        "description_en": "Mahabharata (with the Harivamsha) and Ramayana — epic narratives of dharma.",
         "icon": "⚔",
         "color": "#8b3a2a",
         "order": 3,
@@ -112,6 +112,17 @@ TRADITIONS: list[dict[str, Any]] = [
         "icon": "अ",
         "color": "#457b9d",
         "order": 9,
+    },
+    {
+        "id": "dharmashastra",
+        "name_sa": "धर्मशास्त्र",
+        "name_en": "Dharmashastra",
+        "name_pt": "Dharmaśāstra",
+        "description_pt": "Smṛtis de lei e conduta — processo, contratos, herança (Nārada Smṛti).",
+        "description_en": "Smriti texts on law and conduct — procedure, contracts, inheritance.",
+        "icon": "⚖",
+        "color": "#6b705c",
+        "order": 10,
     },
 ]
 

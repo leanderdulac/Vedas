@@ -81,6 +81,10 @@ class LexicalIndex:
         k1, b = 1.5, 0.75
         for raw in q_tokens:
             claimed = np.zeros(n, dtype=bool)
+            # grafia alternativa de nome (OCR "Narad", "Nárad") não vale mais
+            # que a forma canônica: rara por ser erro, teria idf inflado
+            alt_terms = set(alternates.get(raw, [])) - {raw}
+            raw_idf: float | None = None
             for term in (raw, *QUERY_EXPANSIONS.get(raw, []), *alternates.get(raw, [])):
                 tid = self.vocab.get(term)
                 if tid is None:
@@ -108,7 +112,11 @@ class LexicalIndex:
                 docs = docs[free]
                 tfs = tfs[free].astype(np.float64)
                 claimed[pos] = True
-                idf = np.log(1.0 + (n - df_t + 0.5) / (df_t + 0.5))
+                idf = float(np.log(1.0 + (n - df_t + 0.5) / (df_t + 0.5)))
+                if term == raw:
+                    raw_idf = idf
+                elif term in alt_terms and raw_idf is not None:
+                    idf = min(idf, raw_idf)
                 dl = np.maximum(self.dl[docs].astype(np.float64), 1.0)
                 contrib = idf * (tfs * (k1 + 1.0)) / (tfs + k1 * (1.0 - b + b * dl / avgdl))
                 scores[pos] += contrib
