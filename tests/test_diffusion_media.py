@@ -6,12 +6,17 @@ import base64
 import os
 import tempfile
 import unittest
+from importlib.util import find_spec
 from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 
 from vedic_pipeline.llm import diffusion, imagine
+
+# Extra `[media]` (diffusers + torchsde): o CI instala só a API, então estes pulam lá.
+_MEDIA_EXTRA = find_spec("diffusers") is not None and find_spec("torchsde") is not None
+needs_media_extra = unittest.skipUnless(_MEDIA_EXTRA, 'requer o extra "media" (diffusers + torchsde)')
 
 
 class BackendTests(unittest.TestCase):
@@ -135,6 +140,7 @@ class BackendTests(unittest.TestCase):
         self.assertNotIn("variant", calls[0])
         self.assertEqual(calls[0].get("torch_dtype"), torch.float32)
 
+    @needs_media_extra
     def test_brownian_tree_is_built_on_cpu(self):
         import torch
         from diffusers.schedulers.scheduling_dpmsolver_sde import BatchedBrownianTree
@@ -147,6 +153,7 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(noise.device.type, "cpu")
         self.assertEqual(tuple(noise.shape), (2, 4))
 
+    @needs_media_extra
     def test_audio_scheduler_does_not_end_at_zero(self):
         from diffusers import CosineDPMSolverMultistepScheduler
 
@@ -159,6 +166,7 @@ class BackendTests(unittest.TestCase):
         fixed.set_timesteps(8)
         self.assertGreater(float(fixed.sigmas[-1]), 0.0)
 
+    @needs_media_extra
     def test_zero_length_brownian_step_is_finite(self):
         import torch
         from diffusers.schedulers.scheduling_dpmsolver_sde import BrownianTreeNoiseSampler
