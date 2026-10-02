@@ -11,6 +11,8 @@
   falha. Com um still já em disco e `force=True`, img2img refina a cena do
   verso em vez de recomeçar.
 - Vídeo: Stable Video Diffusion, a partir desse still, com pouco movimento.
+  `VEDIC_VIDEO_BACKEND=xai|runway` troca por image-to-video na API
+  (`video_providers.py`), com o SVD como fallback.
 - Áudio: Stable Audio Open gera só um drone de tanpura. O Stable Diffusion
   não recita sânscrito; a fala continua no TTS e o drone entra por baixo.
 
@@ -80,6 +82,26 @@ def image_backend() -> str:
     if choice not in {"", "auto"}:
         logger.warning("VEDIC_IMAGE_BACKEND=%r desconhecido; usando VEDIC_MEDIA_BACKEND", choice)
     return media_backend()
+
+
+VIDEO_BACKENDS = ("svd", "xai", "runway")
+
+
+def video_backend() -> str:
+    """Backend só dos vídeos: `VEDIC_VIDEO_BACKEND` = `svd` | `xai` | `runway`.
+
+    `svd` é o Stable Video Diffusion local; `xai` (Grok Imagine) e `runway`
+    são image-to-video por API e caem no SVD se a chamada falhar. Vazio (ou
+    `auto`) segue o `VEDIC_MEDIA_BACKEND`: `diffusion` -> `svd`, `xai` -> `xai`.
+    """
+    choice = (os.environ.get("VEDIC_VIDEO_BACKEND") or "").strip().lower()
+    if choice == "diffusion":
+        choice = "svd"
+    if choice in VIDEO_BACKENDS:
+        return choice
+    if choice not in {"", "auto"}:
+        logger.warning("VEDIC_VIDEO_BACKEND=%r desconhecido; usando VEDIC_MEDIA_BACKEND", choice)
+    return "svd" if media_backend() == "diffusion" else "xai"
 
 
 def audio_bed_enabled() -> bool:

@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,6 @@ MEDIA_DIR = Path("data/media")
 # cabeças do Agni, carneiro, concha) que nenhum SDXL local acertou, em ~6 s e
 # US$ 0,05 por imagem. `XAI_IMAGE_MODEL=grok-imagine-image-2.0` custa US$ 0,04.
 IMAGE_MODEL = "grok-imagine-image-quality"
-VIDEO_MODEL = os.environ.get("XAI_VIDEO_MODEL", "grok-imagine-video-1.5")
 DEFAULT_BASE = "https://api.x.ai/v1"
 
 SCENE_STYLE = (
@@ -294,78 +294,92 @@ def generate_figure_image(
     return _save_image_bytes(dest, raw)
 
 
-def _diffusion_video_worker(verse_id: str) -> None:
-    from vedic_pipeline.llm.diffusion import render_video
+VIDEO_STALE_SECONDS = 20 * 60
 
+
+def api_motion_prompt(bundle: dict[str, Any]) -> str:
+    """Prompt das APIs de vídeo (xAI, Runway): o sentido do verso e movimento
+    lento, sem mudar rostos nem estilo do still."""
+    locator = bundle.get("locator") or bundle.get("verse_id") or ""
+    meaning = ""
+    for w in bundle.get("witnesses") or []:
+        if w.get("role") == "en" and (w.get("text") or "").strip():
+            meaning = re.sub(r"\s+", " ", re.sub(r"\[[^\]]*\]", " ", w["text"])).strip()
+            break
+    about = f" The verse evokes: {_short(meaning, 30)}." if meaning else ""
+    return (
+        f"Animate this classical Indian miniature painting of Vedic verse {locator}.{about} "
+        "Slow, reverent motion: the sacred flames flicker and rise gently, thin smoke and incense "
+        "drift upward, a very slow camera push-in. Keep every figure, face and the painted style "
+        "unchanged; no new characters, no text, no sudden cuts."
+    )
+
+
+def _video_worker(verse_id: str, backend: str) -> None:
+    """Thread de fundo do vídeo: API (xAI/Runway) com fallback no SVD, ou SVD."""
+    from vedic_pipeline.llm.diffusion import diffusion_installed, render_video
+    from vedic_pipeline.llm.video_providers import RENDERERS, VideoProviderError
+
+    started = time.monotonic()
+    job: dict[str, Any] = {"verse_id": verse_id, "status": "done", "backend": backend}
     try:
         bundle = get_verse(verse_id) or {}
-        render_video(image_path(verse_id), video_path(verse_id), motion_prompt(bundle))
-        _write_job(verse_id, {"verse_id": verse_id, "status": "done", "backend": "diffusion"})
+        still, dest = image_path(verse_id), video_path(verse_id)
+        renderer = RENDERERS.get(backend)
+        if renderer is None:
+            render_video(still, dest, motion_prompt(bundle))
+        else:
+            try:
+                job.update(renderer(still, dest, api_motion_prompt(bundle)))
+            except (VideoProviderError, ValueError, OSError, httpx.HTTPError) as exc:
+                if not diffusion_installed():
+                    raise
+                logger.warning("Vídeo %s falhou para %s (%s); usando o SVD local", backend, verse_id, exc)
+                job.update({"backend": "svd", "fallback_from": backend, "fallback_reason": str(exc)[:300]})
+                render_video(still, dest, motion_prompt(bundle))
+        job["render_seconds"] = round(time.monotonic() - started, 1)
+        _write_job(verse_id, job)
     except Exception as exc:  # noqa: BLE001
-        logger.exception("Stable Video Diffusion falhou para %s", verse_id)
+        logger.exception("Vídeo (%s) falhou para %s", job["backend"], verse_id)
         _write_job(
             verse_id,
-            {
-                "verse_id": verse_id,
-                "status": "failed",
-                "backend": "diffusion",
-                "detail": str(exc),
-            },
+            {"verse_id": verse_id, "status": "failed", "backend": job["backend"], "detail": str(exc)},
         )
 
 
-def _start_diffusion_video(verse_id: str) -> dict[str, Any]:
+def _diffusion_video_worker(verse_id: str) -> None:
+    _video_worker(verse_id, "svd")
+
+
+def _is_live(job: dict[str, Any] | None) -> bool:
+    """Job pendente desta execução (sem `request_id` legado e não abandonado)."""
+    if not job or job.get("status") != "pending" or job.get("request_id"):
+        return False
+    started = job.get("started_at")
+    return not isinstance(started, (int, float)) or time.time() - started < VIDEO_STALE_SECONDS
+
+
+def start_verse_video(verse_id: str) -> dict[str, Any]:
+    """Gera o still (se faltar) e renderiza o vídeo numa thread de fundo.
+
+    `VEDIC_VIDEO_BACKEND` escolhe svd | xai | runway (`diffusion.video_backend`).
+    O status sai em `poll_verse_video`.
+    """
+    from vedic_pipeline.llm.diffusion import video_backend
+
+    backend = video_backend()
     generate_verse_image(verse_id)
     current = _read_job(verse_id)
-    if current and current.get("backend") == "diffusion" and current.get("status") == "pending":
-        return current
-    job = {"verse_id": verse_id, "status": "pending", "backend": "diffusion"}
+    if _is_live(current):
+        return current  # type: ignore[return-value]
+    job = {"verse_id": verse_id, "status": "pending", "backend": backend, "started_at": time.time()}
     _write_job(verse_id, job)
     threading.Thread(
-        target=_diffusion_video_worker,
-        args=(verse_id,),
-        name=f"svd-{_safe_id(verse_id)}",
+        target=_video_worker,
+        args=(verse_id, backend),
+        name=f"video-{backend}-{_safe_id(verse_id)}",
         daemon=True,
     ).start()
-    return job
-
-
-def start_verse_video(verse_id: str, *, duration: int = 6) -> dict[str, Any]:
-    from vedic_pipeline.llm.diffusion import media_backend
-
-    if media_backend() == "diffusion":
-        return _start_diffusion_video(verse_id)
-    still = generate_verse_image(verse_id)
-    bundle = get_verse(verse_id) or {}
-    b64 = base64.b64encode(still.read_bytes()).decode("ascii")
-    data_url = f"data:image/jpeg;base64,{b64}"
-    with _client() as client:
-        resp = client.post(
-            "/videos/generations",
-            json={
-                "model": VIDEO_MODEL,
-                "prompt": motion_prompt(bundle),
-                "image": {"url": data_url},
-                "duration": duration,
-            },
-        )
-        if resp.status_code >= 400:
-            detail = resp.text
-            try:
-                err = resp.json()
-                detail = err.get("error") or err.get("message") or detail
-            except Exception:
-                pass
-            raise RuntimeError(
-                f"Imagine recusou o vídeo ({resp.status_code}): {detail}. "
-                "Ative Image/Video nesta chave em console.x.ai."
-            )
-        payload = resp.json()
-    request_id = payload.get("request_id") or payload.get("id")
-    if not request_id:
-        raise RuntimeError(f"Imagine vídeo sem request_id: {payload}")
-    job = {"verse_id": verse_id, "request_id": request_id, "status": "pending", "backend": "xai"}
-    _write_job(verse_id, job)
     return job
 
 
@@ -376,18 +390,15 @@ def poll_verse_video(verse_id: str) -> dict[str, Any]:
     job = _read_job(verse_id)
     if not job:
         return {"verse_id": verse_id, "status": "missing", "ready": False}
-    if job.get("backend") == "diffusion":
+    if not job.get("request_id"):
         status = str(job.get("status") or "pending")
+        out = {"verse_id": verse_id, "status": status, "ready": status == "done", "backend": job.get("backend")}
         if status in {"failed", "error"}:
-            return {
-                "verse_id": verse_id,
-                "status": status,
-                "ready": False,
-                "detail": job.get("detail"),
-            }
-        return {"verse_id": verse_id, "status": status, "ready": status == "done"}
+            out["detail"] = job.get("detail")
+        return out
+    # Job legado (xAI assíncrono gravado antes da thread de fundo).
     request_id = job.get("request_id")
-    if not request_id or not isinstance(request_id, str) or len(request_id) > 128:
+    if not isinstance(request_id, str) or len(request_id) > 128:
         return {"verse_id": verse_id, "status": "missing", "ready": False}
     with _client() as client:
         resp = client.get(f"/videos/{request_id}")
@@ -400,7 +411,9 @@ def poll_verse_video(verse_id: str) -> dict[str, Any]:
         url = (payload.get("video") or {}).get("url") or payload.get("url")
         if not url:
             raise RuntimeError("Vídeo pronto sem URL")
-        _save_image_bytes(dest, _download_media_bytes(url, timeout=120.0))
+        from vedic_pipeline.llm.video_providers import VIDEO_LIMIT_BYTES, _save
+
+        _save(dest, _download_media_bytes(url, timeout=120.0, limit=VIDEO_LIMIT_BYTES))
         return {"verse_id": verse_id, "status": "done", "ready": True}
     if status in {"failed", "expired", "error"}:
         return {"verse_id": verse_id, "status": status, "ready": False, "detail": payload}

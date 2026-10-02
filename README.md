@@ -339,6 +339,34 @@ alto das chamas não é mais cortado.
 | `VEDIC_VIDEO_OUT_WIDTH` | 1024 | Largura do MP4 final |
 | `VEDIC_SVD_FRAMING` | `pad` | `pad` (still inteiro) ou `cover` (recorte 16:9) |
 
+#### Motor de vídeo configurável (`VEDIC_VIDEO_BACKEND`)
+
+O `POST /api/v1/verses/{id}/video` grava um job pendente em
+`data/media/jobs/` e renderiza numa thread de fundo; o `GET` só lê esse job.
+O motor sai de `VEDIC_VIDEO_BACKEND`, no mesmo padrão do `VEDIC_IMAGE_BACKEND`:
+
+| Valor | Motor | Observações |
+| --- | --- | --- |
+| `svd` | Stable Video Diffusion local | Padrão com o extra media (vazio segue `VEDIC_MEDIA_BACKEND`) |
+| `xai` | Grok Imagine image-to-video (`XAI_VIDEO_MODEL`, padrão `grok-imagine-video-1.5`) | Usa `XAI_API_KEY`; 720p 16:9 |
+| `runway` | Runway API image-to-video (`RUNWAY_VIDEO_MODEL`, padrão `gen4.5`; `gen4_turbo` é mais barato) | Usa `RUNWAYML_API_SECRET`; 1280:720 |
+
+Nas APIs, o still quadrado vai inteiro num quadro 16:9 (laterais com o próprio
+still desfocado), como no SVD, e o MP4 é baixado com a validação SSRF das
+imagens (teto de 50 MB). Se a API falhar (sem chave, sem crédito, recusa,
+tempo esgotado) e o extra media existir, o mesmo job cai no SVD e registra
+`fallback_from` e `fallback_reason`; o job de sucesso guarda modelo e custo
+(`cost_usd`, e `credits` na Runway). `VEDIC_VIDEO_SECONDS` (5, de 2 a 10)
+define a duração pedida e `VEDIC_VIDEO_TIMEOUT` (600 s) a espera máxima.
+
+Comparação no RV 1.1.5 (mesmo still do Grok Imagine, outubro de 2026):
+
+| Motor | Render | Saída | Custo | Resultado |
+| --- | --- | --- | --- | --- |
+| SVD img2vid-xt (local, MPS) | ~90–160 s | 5 s, 1024×576, 24 fps | grátis (~21 GB de memória) | Fiel ao still, mas movimento quase nulo e rostos borrados |
+| `grok-imagine-video-1.5` (xAI) | ~36 s | 5 s, 1280×720, 24 fps, com áudio ambiente | US$ 0,71 (cobrado no `usage`) | Nítido, chamas e fumaça sobem, push-in lento; o Agni ganha uma segunda cabeça no meio do vídeo |
+| Runway `gen4.5` / `gen4_turbo` | — | — | 12 / 5 créditos por s (US$ 0,60 / 0,25 em 5 s) | Não testado: a conta estava sem créditos |
+
 ## SLM local (continued-pretraining LoRA) + migração de embeddings
 
 **SLM** — adaptar um modelo pequeno ao corpus védico (base recomendada

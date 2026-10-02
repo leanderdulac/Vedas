@@ -473,14 +473,14 @@ class ImagineRoutingTests(unittest.TestCase):
     def test_diffusion_video_is_local_and_polls_without_xai(self):
         bundle = {"locator": "RV 1.1.1", "verse_id": "RV.1.1.1", "witnesses": []}
         with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
-            "vedic_pipeline.llm.diffusion.media_backend", return_value="diffusion"
+            "vedic_pipeline.llm.diffusion.video_backend", return_value="svd"
         ), patch.object(imagine, "generate_verse_image", return_value=Path(tmp) / "RV.1.1.1.jpg"), patch.object(
             imagine, "threading"
         ) as threads, patch.object(imagine, "_client", side_effect=AssertionError("xAI não deve ser chamado")):
             threads.Thread.return_value.start.return_value = None
             job = imagine.start_verse_video("RV.1.1.1")
             self.assertEqual(job["status"], "pending")
-            self.assertEqual(job["backend"], "diffusion")
+            self.assertEqual(job["backend"], "svd")
             threads.Thread.assert_called_once()
             pending = imagine.poll_verse_video("RV.1.1.1")
             self.assertEqual(pending["status"], "pending")
