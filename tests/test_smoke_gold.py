@@ -126,10 +126,13 @@ class SmokeGoldSchemaTests(unittest.TestCase):
         self.assertIn("37/37", gate)
         self.assertIn("PROMOTE", gate)
         self.assertIn("VEDIC_ENABLE_RERANKER=true", gate)
-        self.assertIn("VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4", gate)
+        self.assertIn("VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v5", gate)
+        self.assertIn("reranker_domain_v4", gate)
         self.assertNotIn("re-rodar o gate", gate)
         self.assertIn("37/37", decision)
         self.assertIn("PROMOTE", decision)
+        self.assertIn("reranker_domain_v5", decision)
+        self.assertIn("reranker_domain_v4", decision)
         self.assertNotIn("re-rodar o gate", decision)
 
 

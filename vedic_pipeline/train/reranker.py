@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +18,34 @@ EVAL_SPLITS = frozenset({"holdout", "eval", "test", "valid", "validation", "dev"
 
 
 def detect_device() -> str:
-    from vedic_pipeline.train.device import detect_device as _detect
+    """Prefer CUDA, then Apple MPS, then CPU. Never silently skip MPS on Mac.
 
-    return _detect()
+    O fine-tune do CE roda em processo dedicado (`scripts/train_reranker.py`),
+    então usa MPS quando disponível, ao contrário do default conservador de
+    `vedic_pipeline.train.device` (API/embeddings em processo compartilhado).
+    `VEDIC_DEVICE=cuda|mps|cpu` explícito continua tendo precedência.
+    """
+    explicit = (os.environ.get("VEDIC_DEVICE") or "").strip().lower()
+    if explicit in {"cuda", "mps", "cpu"}:
+        return explicit
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda"
+        mps = getattr(getattr(torch, "backends", None), "mps", None)
+        if mps is not None and mps.is_available():
+            return "mps"
+        return "cpu"
+    except ImportError:
+        return "cpu"
+
+
+def resolve_device(device: str | None = None) -> str:
+    """`auto` / None → detect_device(); otherwise honor an explicit backend."""
+    if device in (None, "", "auto"):
+        return detect_device()
+    return str(device).strip().lower()
 
 
 def coerce_label(value: Any) -> float:
@@ -123,7 +149,7 @@ def build_train_meta(
         "trained_at": utc_now_iso(),
         "dry_run": bool(dry_run),
         "trained": False,
-        "device": device or detect_device(),
+        "device": resolve_device(device),
         "n_pairs_total": summary["pairs"],
         "n_train": len(train_rows),
         "n_skipped_eval_split": len(skipped),
@@ -243,8 +269,9 @@ def fit_cross_encoder(
         from sentence_transformers import CrossEncoder
 
         kwargs: dict[str, Any] = {"max_length": max_length}
-        if device:
-            kwargs["device"] = device
+        resolved = resolve_device(device)
+        if resolved:
+            kwargs["device"] = resolved
         model = CrossEncoder(base_model, **kwargs)
 
     try:
@@ -279,13 +306,14 @@ def train_reranker(
     max_length: int = 256,
     learning_rate: float = 2e-5,
     dry_run: bool = False,
+    device: str | None = None,
 ) -> tuple[int, dict[str, Any]]:
     """CLI-friendly: 0 ok, 1 falha de treino, 2 pares ausentes."""
     pairs_path = Path(pairs_path)
     out_dir = Path(out_dir)
     pairs = load_pairs(pairs_path)
     train_rows, skipped, used_fallback = select_train_pairs(pairs)
-    device = detect_device()
+    device = resolve_device(device)
     meta = build_train_meta(
         base_model=base_model,
         pairs_path=pairs_path,

@@ -144,10 +144,18 @@ python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 
 ### Contagens canônicas (índice local, 2026-09-17)
 
-> Snapshot desta máquina (`artifacts/embeddings/index_meta.json`). Deploys
-> novos partem de `fixtures/` e crescem conforme o manifesto — os números
-> abaixo não são automáticos nem garantidos. O README de agosto citava
-> 1.054 documentos e 23.702 chunks; o índice numpy atual é o da tabela.
+> Snapshot de **um** ambiente: esta máquina, bulk ingest completo
+> (`artifacts/embeddings/index_meta.json`). **Não** é o default de um clone:
+> isso começa em `bootstrap` (`fixtures/sources_vedic_corpus.json`) e cresce
+> conforme o manifesto — os números abaixo não são automáticos nem garantidos.
+> O perfil `canonical-snapshot` em `fixtures/corpus_profiles.json` ainda
+> registra o snapshot de agosto (1.054 documentos, 23.702 chunks); o índice
+> numpy atual é o da tabela. Depois do ingest, grave um lock e verifique:
+>
+> ```bash
+> vedic-pipeline corpus-status --profile bootstrap
+> vedic-pipeline corpus-status --write-lock data/corpus.lock.json
+> ```
 
 | Métrica | Valor |
 |---------|-------|
@@ -371,12 +379,12 @@ python -m vedic_pipeline train-model --base-model gpt2 --block-size 128 --max-st
 
 ## Reranker (Cross-Encoder)
 
-**Desligado por padrão.** Domínio v4 passou o gate no gold de **37** (híbrido 37/37, CE 37/37, Nasadiya incl. variantes ok) mas continua **opt-in**. Genérico e v1–v3 não promover (9/10 no gold antigo). Ver [`docs/reranker_decision.md`](docs/reranker_decision.md).
+**Desligado por padrão.** Domínio **v5** (e v4) passaram o gate no gold de **37** (híbrido 37/37, CE 37/37, Nasadiya incl. variantes ok) mas continua **opt-in**. Prefira v5 quando `artifacts/reranker_domain_v5` existir localmente. Genérico e v1–v3 não promover (9/10 no gold antigo). Ver [`docs/reranker_decision.md`](docs/reranker_decision.md).
 
 ```bash
 # Opt-in explícito (só depois de um CE de domínio validado)
 export VEDIC_ENABLE_RERANKER=true
-export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v4
+export VEDIC_RERANKER_MODEL=artifacts/reranker_domain_v5
 
 # Pares fracos a partir do gold (fixture minúscula, sem embeddings)
 python scripts/build_rerank_pairs.py --dry-run --out data/rerank/pairs.jsonl
@@ -386,7 +394,7 @@ python scripts/train_reranker.py --help
 python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 
 # Gate A/B (híbrido vs CE de domínio). Exit 0 = apto a opt-in.
-python scripts/eval_reranker_smoke.py --model artifacts/reranker_domain_v4 --json-out data/rerank_eval.json
+python scripts/eval_reranker_smoke.py --model artifacts/reranker_domain_v5 --json-out data/rerank_eval.json
 ```
 
 ## Jurídico
@@ -405,7 +413,7 @@ python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_re
 Gold set: `fixtures/smoke_queries.json` (37 queries: 19 anteriores + 18 beyond-stress após locator PRs #5–#9).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json` (recorte rápido de 4 queries). O gate de promote do CE usa o gold expandido, não o CI.
 
-O smoke A/B (v1–v3 HOLD no gold de 10; **v4 PROMOTE** no gold de 37, default ainda off) está em [`docs/reranker_decision.md`](docs/reranker_decision.md); critérios do gate em [`docs/ce_promote_gate.md`](docs/ce_promote_gate.md).
+O smoke A/B (v1–v3 HOLD no gold de 10; **v5 PROMOTE** no gold de 37 — v4 também PROMOTE, default ainda off) está em [`docs/reranker_decision.md`](docs/reranker_decision.md); critérios do gate em [`docs/ce_promote_gate.md`](docs/ce_promote_gate.md).
 
 ## Docker
 
@@ -432,11 +440,20 @@ Eventos SSE: `meta` → `token*` → `done` (ou `error`). UI: página **Pergunta
 - ~~Deploy multi-container (crawler / etl / train / api)~~ ✅ parcial (API slim + `train` isolado; fila de jobs em-processo)
 - ~~Dimensão de embedding configurável no schema~~ ✅ (`VEDIC_EMBEDDING_DIM` / `--dim`)  
 - ~~Rerank cross-encoder opcional~~ ✅ (`VEDIC_ENABLE_RERANKER` default **off**; `VEDIC_RERANKER_MODEL`) — [decisão A/B](docs/reranker_decision.md)
-- ~~Fila de jobs para ops pesadas~~ ✅ (`POST .../async` + `GET /jobs`)  
+- ~~Fila de jobs para ops pesadas~~ ✅ (`POST .../async` + `GET /jobs`)
+- ~~Corpus reproduzível vs snapshot~~ ✅ (`vedic-pipeline corpus-status` + lock)
+- ~~Checklist de deploy / geração fail-closed~~ ✅ (`deploy-check`, `VEDIC_REQUIRE_GENERATION_TOKEN`)
+- ~~CE pós-PROMOTE sem default on~~ ✅ (`reranker-status`, `fixtures/reranker_promote.json`)  
 
 ## Desenvolvimento local revisado
 
-Veja `docs/DEVELOPMENT_REVIEW.md` para correções, prioridades, execução local e validação.
+Veja `docs/DEVELOPMENT_REVIEW.md` para o estado atual (corpus, deploy, CE). Comandos:
+
+```bash
+vedic-pipeline corpus-status --profile bootstrap
+vedic-pipeline deploy-check --mode local   # ou --mode prod
+vedic-pipeline reranker-status
+```
 
 As operações HTTP `/ingest`, `/tokenize`, `/train`, `/build-index`, `/db/init` e `/db/sync` (e suas variantes `/async`, mais `GET /jobs`) exigem `VEDIC_PIPELINE_API_TOKEN` e o cabeçalho `Authorization: Bearer <token>`. Sem token configurado, ficam desabilitadas (503). Os comandos da CLI continuam disponíveis sem esse token.
 

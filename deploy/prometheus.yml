@@ -1,0 +1,10 @@
+# Scrape interno — o serviço prometheus só sobe no perfil `metrics`
+# e fica na rede vedas_internal (sem porta pública).
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: vedas-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]

@@ -140,7 +140,7 @@ def annotate_search(query: str, hits: list[dict[str, Any]]) -> dict[str, Any]:
         in_query = bool(query_norm) and _mentioned(query_norm, gloss.id)
         locators = [
             _locator(hit, i)
-            for i, (hit, normed) in enumerate(zip(hits, hit_norms))
+            for i, (hit, normed) in enumerate(zip(hits, hit_norms, strict=True))
             if _mentioned(normed, gloss.id)
         ]
         if in_query or locators:

@@ -34,7 +34,7 @@ def create_app():
     from fastapi.staticfiles import StaticFiles
 
     from vedic_pipeline.api.metrics import METRICS
-    from vedic_pipeline.api.request_policy import authorize_generation, public_api
+    from vedic_pipeline.api.request_policy import authorize_generation, generation_token_required
     from vedic_pipeline.api.schemas import (
         AskRequest,
         BuildIndexRequest,
@@ -61,9 +61,9 @@ def create_app():
     clean_origins = [o.strip() for o in origins if o.strip() and o.strip() != "*"]
     if "*" in [o.strip() for o in origins if o.strip()]:
         logger.warning("CORS_ORIGINS contém '*': ignorado por segurança com allow_credentials")
-    if public_api() and not os.environ.get("VEDIC_GENERATION_API_TOKEN"):
+    if generation_token_required() and not os.environ.get("VEDIC_GENERATION_API_TOKEN"):
         logger.warning(
-            "VEDIC_PUBLIC_API ativo sem VEDIC_GENERATION_API_TOKEN: "
+            "VEDIC_PUBLIC_API/VEDIC_REQUIRE_GENERATION_TOKEN ativo sem VEDIC_GENERATION_API_TOKEN: "
             "/ask (xAI ou local) e a geração de mídia respondem 503"
         )
     elif os.environ.get("XAI_API_KEY") and not os.environ.get("VEDIC_GENERATION_API_TOKEN"):
@@ -170,7 +170,10 @@ def create_app():
     @app.get("/api/v1/health")
     def health() -> dict[str, Any]:
         from vedic_pipeline.api.catalog_service import corpus_stats
+        from vedic_pipeline.api.request_policy import public_generation_policy
+        from vedic_pipeline.common.corpus_status import public_corpus_profile
         from vedic_pipeline.llm.generate import list_providers
+        from vedic_pipeline.search.reranker_status import public_reranker_status
         from vedic_pipeline.storage.db import check_db, get_database_url
 
         stats = corpus_stats()
@@ -209,6 +212,9 @@ def create_app():
             },
             "allowed_licenses": sorted(ALLOWED_LICENSES),
             "default_base_model": DEFAULT_BASE_MODEL,
+            "reranker": public_reranker_status(),
+            "generation": public_generation_policy(),
+            "corpus_profile": public_corpus_profile(),
         }
 
     # ------------------------------------------------------------------ app v1

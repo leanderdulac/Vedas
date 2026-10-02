@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -208,6 +209,8 @@ class ScriptDryRunTests(unittest.TestCase):
         )
         self.assertEqual(help_proc.returncode, 0, help_proc.stderr)
         self.assertIn("CrossEncoder", help_proc.stdout)
+        self.assertIn("--device", help_proc.stdout)
+        self.assertIn("mps", help_proc.stdout)
 
         with tempfile.TemporaryDirectory() as tmp:
             pairs = Path(tmp) / "pairs.jsonl"
@@ -273,6 +276,81 @@ class ScriptDryRunTests(unittest.TestCase):
         )
         self.assertEqual(missing.returncode, 2, missing.stderr + missing.stdout)
         self.assertIn("não encontrado", missing.stderr)
+
+
+class DetectDeviceTests(unittest.TestCase):
+    def test_detect_device_prefers_mps_when_cuda_unavailable(self):
+        from vedic_pipeline.train.reranker import detect_device
+
+        fake_torch = MagicMock()
+        fake_torch.cuda.is_available.return_value = False
+        fake_torch.backends.mps.is_available.return_value = True
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": ""}):
+            self.assertEqual(detect_device(), "mps")
+
+    def test_detect_device_cpu_when_neither_cuda_nor_mps(self):
+        from vedic_pipeline.train.reranker import detect_device
+
+        fake_torch = MagicMock()
+        fake_torch.cuda.is_available.return_value = False
+        fake_torch.backends.mps.is_available.return_value = False
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": ""}):
+            self.assertEqual(detect_device(), "cpu")
+
+    def test_detect_device_prefers_cuda_over_mps(self):
+        from vedic_pipeline.train.reranker import detect_device
+
+        fake_torch = MagicMock()
+        fake_torch.cuda.is_available.return_value = True
+        fake_torch.backends.mps.is_available.return_value = True
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": ""}):
+            self.assertEqual(detect_device(), "cuda")
+
+    def test_detect_device_honors_vedic_device_env(self):
+        from vedic_pipeline.train.reranker import detect_device
+
+        fake_torch = MagicMock()
+        fake_torch.cuda.is_available.return_value = False
+        fake_torch.backends.mps.is_available.return_value = True
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": "cpu"}):
+            self.assertEqual(detect_device(), "cpu")
+
+    def test_resolve_device_auto_and_explicit(self):
+        from vedic_pipeline.train.reranker import resolve_device
+
+        with patch("vedic_pipeline.train.reranker.detect_device", return_value="mps"):
+            self.assertEqual(resolve_device(None), "mps")
+            self.assertEqual(resolve_device("auto"), "mps")
+            self.assertEqual(resolve_device(""), "mps")
+        self.assertEqual(resolve_device("cpu"), "cpu")
+        self.assertEqual(resolve_device("CUDA"), "cuda")
+
+    def test_train_reranker_honors_explicit_device(self):
+        from vedic_pipeline.train.reranker import train_reranker
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pairs.jsonl"
+            path.write_text(
+                json.dumps(
+                    {
+                        "query": "ātman",
+                        "text": "The Self",
+                        "label": 1,
+                        "split": "train",
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            code, meta = train_reranker(
+                pairs_path=path,
+                out_dir=Path(tmp) / "out",
+                dry_run=True,
+                device="mps",
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(meta["device"], "mps")
 
 
 class TrainPairsShapeTests(unittest.TestCase):

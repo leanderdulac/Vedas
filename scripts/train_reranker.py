@@ -5,6 +5,7 @@ Uso:
   python scripts/train_reranker.py --help
   python scripts/train_reranker.py --dry-run --pairs data/rerank/pairs.jsonl
   python scripts/train_reranker.py --pairs data/rerank/pairs.jsonl --out artifacts/reranker
+  python scripts/train_reranker.py --device auto --pairs data/rerank/pairs.jsonl --out artifacts/reranker
 
 Não promove o modelo. Só ligue em prod após
 `scripts/eval_reranker_smoke.py` passar o gate — ver docs/reranker_decision.md.
@@ -37,6 +38,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-length", type=int, default=256)
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument(
+        "--device",
+        choices=("auto", "cuda", "mps", "cpu"),
+        default="auto",
+        help="Device do fine-tune (auto: cuda → mps se disponível → cpu)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Não baixa modelo nem treina; só valida pares e grava train_meta.json",
@@ -55,6 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         max_length=args.max_length,
         learning_rate=args.lr,
         dry_run=bool(args.dry_run),
+        device=args.device,
     )
     stream = sys.stdout if code == 0 else sys.stderr
     print(json.dumps(meta, ensure_ascii=False, indent=2), file=stream)

@@ -7,7 +7,13 @@ from pathlib import Path
 from fastapi import HTTPException
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR, PROJECT_ROOT
+from vedic_pipeline.common.env import env_flag
 from vedic_pipeline.llm.generate import DEFAULT_XAI_MODEL
+
+GENERATION_TOKEN_UNSET = (
+    "Geração paga exige VEDIC_GENERATION_API_TOKEN nesta instância "
+    "(VEDIC_REQUIRE_GENERATION_TOKEN=true ou VEDIC_PUBLIC_API=1)"
+)
 
 _MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-/]{0,127}(?::[A-Za-z0-9._\-]{1,64})?$")
 
@@ -75,16 +81,22 @@ def validate_index_dir(value: str) -> str:
     return resolved
 
 
-_TRUE = {'1', 'true', 'on', 'yes'}
-
-
 def public_api() -> bool:
-    """Instância publicada. Sem token, geração e mídia respondem 503.
+    """Instância publicada (`VEDIC_PUBLIC_API=1`, ligada em docker-compose.prod.yml).
 
     O default é privado: token vazio deixa a chave do servidor autorizar,
-    para a UI local funcionar. `docker-compose.prod.yml` liga esta flag.
+    para a UI local funcionar.
     """
-    return (os.environ.get('VEDIC_PUBLIC_API') or '').strip().lower() in _TRUE
+    return env_flag('VEDIC_PUBLIC_API')
+
+
+def generation_token_required() -> bool:
+    """Fail-closed se `VEDIC_REQUIRE_GENERATION_TOKEN` ou `VEDIC_PUBLIC_API` estiver ligado.
+
+    Prod/compose.prod liga as duas. Dev local continua aberto se o token
+    estiver vazio e nenhuma das flags estiver ligada.
+    """
+    return env_flag("VEDIC_REQUIRE_GENERATION_TOKEN") or public_api()
 
 
 def _generation_token() -> str:
@@ -92,18 +104,29 @@ def _generation_token() -> str:
 
 
 def _require_generation_token(authorization: str | None) -> None:
-    """503 se a instância é pública e o token não foi configurado; 401 se não confere."""
+    """503 se o token é obrigatório e não foi configurado; 401 se não confere."""
     expected = _generation_token()
     if not expected:
-        if public_api():
-            raise HTTPException(
-                503,
-                'Geração HTTP desabilitada nesta instância pública; configure VEDIC_GENERATION_API_TOKEN',
-            )
+        if generation_token_required():
+            raise HTTPException(503, GENERATION_TOKEN_UNSET)
+        # Instância local/privada: a chave do servidor já autoriza a geração.
         return
     supplied = authorization.removeprefix('Bearer ') if authorization and authorization.startswith('Bearer ') else ''
     if not secrets.compare_digest(supplied.encode(), expected.encode()):
         raise HTTPException(401, 'Token de geração inválido', headers={'WWW-Authenticate': 'Bearer'})
+
+
+def public_generation_policy() -> dict[str, bool]:
+    xai = bool((os.environ.get("XAI_API_KEY") or "").strip())
+    token = bool(_generation_token())
+    require = generation_token_required()
+    return {
+        "require_token": require,
+        "public_api": public_api(),
+        "token_configured": token,
+        "xai_configured": xai,
+        "open_paid": bool(xai and not token and not require),
+    }
 
 
 def authorize_generation(provider: str, model: str | None, authorization: str | None) -> tuple[str, str | None]:
