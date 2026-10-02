@@ -100,7 +100,16 @@ class SmokeGoldSchemaTests(unittest.TestCase):
 
     def test_locator_and_devanagari_queries(self):
         by_id = {q["id"]: q for q in load_gold_queries(GOLD_PATH)}
-        self.assertIn("2.47", extract_query_hymn_ids(by_id["gita-2-47"]["query"]))
+        self.assertNotIn("2.47", extract_query_hymn_ids(by_id["gita-2-47"]["query"]))
+        self.assertEqual(extract_query_hymn_ids(by_id["gita-2-47"]["query"]), [])
+        self.assertNotIn("1.2", extract_query_hymn_ids(by_id["yoga-1-2"]["query"]))
+        for query in by_id.values():
+            for rejected in query.get("reject_hymn_ids") or []:
+                self.assertNotIn(
+                    rejected,
+                    extract_query_hymn_ids(query["query"]),
+                    f"{query['id']} must not extract hymn {rejected}",
+                )
         isha = by_id["ishavasya-sa"]["query"]
         self.assertTrue(any("\u0900" <= ch <= "\u097f" for ch in isha))
         self.assertIn("Isha", isha)

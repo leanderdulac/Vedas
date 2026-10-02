@@ -65,13 +65,19 @@ def limit_for_group(group: str) -> int:
     return min(base, cap)
 
 
+def trust_proxy_headers() -> bool:
+    """XFF só conta atrás de proxy confiável. Default false (anti-spoof)."""
+    val = os.environ.get("VEDIC_TRUST_PROXY_HEADERS", "false").strip().lower()
+    return val in {"1", "true", "on", "yes"}
+
+
 def _client_ip(request_or_ip: str | None, forwarded_for: str | None = None) -> str:
-    """Resolve IP do cliente respeitando proxy confiável (Caddy/uvicorn --proxy-headers)."""
-    if forwarded_for and os.environ.get("VEDIC_TRUST_PROXY_HEADERS", "true").strip().lower() not in {"0", "false", "off", "no"}:
-        # X-Forwarded-For: client, proxy1, proxy2 — primeiro é o cliente.
-        first = forwarded_for.split(",")[0].strip()
-        if first:
-            return first[:64]
+    """Resolve IP do cliente. Com proxy confiável, usa o hop mais à direita."""
+    if forwarded_for and trust_proxy_headers():
+        hops = [h.strip() for h in forwarded_for.split(",") if h.strip()]
+        if hops:
+            # Right-most hop: o que o proxy imediato (Caddy) acrescentou.
+            return hops[-1][:64]
     return (request_or_ip or "unknown")[:64]
 
 

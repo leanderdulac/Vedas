@@ -102,40 +102,21 @@ def _save_image_bytes(dest: Path, raw: bytes) -> Path:
 
 
 def _download_media_bytes(url: str, *, timeout: float = 60.0, limit: int = 25 * 1024 * 1024) -> bytes:
-    """Baixa mídia retornada pelo Imagine com validação SSRF + teto de tamanho."""
+    """Baixa mídia retornada pelo Imagine com pin SSRF + stream + teto de tamanho."""
     from urllib.parse import urlparse
 
-    from vedic_pipeline.crawler.download import is_safe_url
+    from vedic_pipeline.crawler.download import fetch_url_bytes
 
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise ValueError("URL de mídia inválida")
-    safe, reason = is_safe_url(url)
-    if not safe:
-        raise ValueError(f"URL de mídia rejeitada: {reason}")
-    with httpx.Client(timeout=timeout, follow_redirects=False) as dl:
-        current = url
-        for _ in range(6):
-            s, r = is_safe_url(current)
-            if not s:
-                raise ValueError(f"Redirect de mídia rejeitado: {r}")
-            resp = dl.get(current)
-            if resp.status_code in (301, 302, 303, 307, 308):
-                loc = resp.headers.get("location")
-                if not loc:
-                    raise ValueError("Redirect de mídia sem Location")
-                from urllib.parse import urljoin
-
-                current = urljoin(current, loc)
-                continue
-            resp.raise_for_status()
-            data = resp.content
-            if len(data) > limit:
-                raise ValueError(f"Mídia excede limite de {limit} bytes")
-            if len(data) < 100:
-                raise ValueError("Mídia vazia retornada pelo provedor")
-            return data
-    raise ValueError("Muitos redirects ao baixar mídia")
+    try:
+        data, _content_type, _final = fetch_url_bytes(url, timeout=timeout, limit=limit)
+    except ValueError as exc:
+        raise ValueError(f"URL de mídia rejeitada: {exc}") from exc
+    if len(data) < 100:
+        raise ValueError("Mídia vazia retornada pelo provedor")
+    return data
 
 
 def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:

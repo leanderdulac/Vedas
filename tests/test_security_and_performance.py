@@ -15,8 +15,11 @@ from vedic_pipeline.api.catalog_service import (
 from vedic_pipeline.crawler.download import (
     canonicalize_source_url,
     download_source,
+    fetch_url_bytes,
     is_safe_local_path,
     is_safe_url,
+    prepare_pinned_request,
+    resolve_public_targets,
 )
 from vedic_pipeline.search.embeddings import build_embedding_index
 from vedic_pipeline.search.rag import get_index, invalidate_index_cache
@@ -65,6 +68,173 @@ class SecurityTests(unittest.TestCase):
             finally:
                 if secret_file.exists():
                     secret_file.unlink()
+
+    def test_mixed_public_and_loopback_dns_is_rejected(self):
+        import socket
+
+        def mixed(_host, _port, *args, **kwargs):
+            return [
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0)),
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 0)),
+            ]
+
+        with patch("socket.getaddrinfo", mixed):
+            ok, reason, ips = resolve_public_targets("http://evil.example/file")
+        self.assertFalse(ok)
+        self.assertIn("restrito", reason)
+        self.assertEqual(ips, [])
+
+    def test_prepare_pinned_request_uses_validated_ip(self):
+        import socket
+
+        def public(_host, _port, *args, **kwargs):
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
+
+        with patch("socket.getaddrinfo", public):
+            pinned, host, headers, extensions = prepare_pinned_request(
+                "https://evil.example/path"
+            )
+        self.assertEqual(host, "evil.example")
+        self.assertIn("93.184.216.34", pinned)
+        self.assertNotIn("evil.example", pinned.split("/")[2])
+        self.assertEqual(headers.get("Host"), "evil.example")
+        self.assertEqual(extensions.get("sni_hostname"), "evil.example")
+
+    def test_dns_rebinding_pins_first_ip_and_rejects_later_loopback(self):
+        import socket
+
+        calls = {"n": 0}
+
+        def rebinding(_host, _port, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 0))]
+
+        class FakeStream:
+            def __init__(self, status=200, content=b"hello-world", headers=None, location=None):
+                self.status_code = status
+                self.headers = dict(headers or {"content-type": "text/plain"})
+                if location:
+                    self.headers["location"] = location
+                self._content = content
+
+            def raise_for_status(self):
+                return None
+
+            def iter_bytes(self, chunk_size=65536):
+                yield self._content
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        class FakeClient:
+            urls: list[str] = []
+            headers: list[dict] = []
+            used_stream = False
+            used_get = False
+            responses: list[FakeStream] = []
+
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def stream(self, method, url, headers=None, extensions=None):
+                FakeClient.used_stream = True
+                FakeClient.urls.append(url)
+                FakeClient.headers.append(dict(headers or {}))
+                if FakeClient.responses:
+                    return FakeClient.responses.pop(0)
+                return FakeStream()
+
+            def get(self, *args, **kwargs):
+                FakeClient.used_get = True
+                raise AssertionError("client.get não deve ser usado (M6: stream)")
+
+        FakeClient.urls = []
+        FakeClient.headers = []
+        FakeClient.used_stream = False
+        FakeClient.used_get = False
+        FakeClient.responses = []
+
+        with patch("socket.getaddrinfo", rebinding), patch("httpx.Client", FakeClient):
+            data, _ct, _final = fetch_url_bytes("http://evil.example/file")
+        self.assertEqual(data, b"hello-world")
+        self.assertTrue(FakeClient.used_stream)
+        self.assertFalse(FakeClient.used_get)
+        self.assertEqual(len(FakeClient.urls), 1)
+        self.assertIn("93.184.216.34", FakeClient.urls[0])
+        self.assertNotIn("127.0.0.1", FakeClient.urls[0])
+        self.assertEqual(FakeClient.headers[0].get("Host"), "evil.example")
+
+        FakeClient.urls = []
+        FakeClient.headers = []
+        FakeClient.responses = [
+            FakeStream(status=302, location="http://evil.example/next"),
+        ]
+        calls["n"] = 0
+        with (
+            patch("socket.getaddrinfo", rebinding),
+            patch("httpx.Client", FakeClient),
+            self.assertRaises(ValueError) as ctx,
+        ):
+            fetch_url_bytes("http://evil.example/file")
+        self.assertIn("SSRF", str(ctx.exception))
+        self.assertIn("restrito", str(ctx.exception).lower() + str(ctx.exception))
+        self.assertEqual(len(FakeClient.urls), 1)
+        self.assertIn("93.184.216.34", FakeClient.urls[0])
+
+    def test_stream_enforces_size_cap_while_reading(self):
+        import socket
+
+        def public(_host, _port, *args, **kwargs):
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
+
+        class FakeStream:
+            status_code = 200
+            headers = {"content-type": "text/plain"}
+
+            def raise_for_status(self):
+                return None
+
+            def iter_bytes(self, chunk_size=65536):
+                yield b"x" * 80
+                yield b"y" * 80
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        class FakeClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def stream(self, method, url, headers=None, extensions=None):
+                return FakeStream()
+
+        with (
+            patch("socket.getaddrinfo", public),
+            patch("httpx.Client", FakeClient),
+            self.assertRaises(ValueError) as ctx,
+        ):
+            fetch_url_bytes("http://evil.example/big", limit=100)
+        self.assertIn("excede limite", str(ctx.exception))
 
     def test_download_source_rejects_ssrf_and_lfi(self):
         with tempfile.TemporaryDirectory() as temp_dir:

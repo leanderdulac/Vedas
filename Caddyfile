@@ -10,6 +10,12 @@
     }
 
     # /metrics não exposto publicamente — scrape interno via rede vedas_internal.
+    # O handle catch-all abaixo também proxia a API; sem este bloco, GET /metrics
+    # no hostname público chegaria em api:8000 (docs/DEPLOYMENT.md §4.1).
+    handle /metrics {
+        respond 404
+    }
+
     handle /api/* {
         reverse_proxy api:8000
     }

@@ -1,3 +1,4 @@
+import { generationAuthHeaders } from './generationToken';
 import { createSseParser } from './sse';
 import { getStoredToken, storeToken } from './pipelineToken';
 
@@ -9,13 +10,15 @@ async function request<T>(path: string, init?: RequestInit, timeoutMs = 30000): 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
+    const { headers: initHeaders, ...rest } = init || {};
     const res = await fetch(`${API_BASE}${path}`, {
+      ...rest,
       headers: {
         "Content-Type": "application/json",
-        ...(init?.headers || {}),
+        ...generationAuthHeaders(),
+        ...(initHeaders || {}),
       },
       signal: ctrl.signal,
-      ...init,
     });
     if (!res.ok) {
       let detail = res.statusText;
@@ -325,7 +328,11 @@ export const api = {
   ): Promise<void> => {
     const res = await fetch(`${API_BASE}/api/v1/ask/stream`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        ...generationAuthHeaders(),
+      },
       body: JSON.stringify(body),
     });
     if (!res.ok || !res.body) {

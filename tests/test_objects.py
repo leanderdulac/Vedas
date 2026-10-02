@@ -118,6 +118,12 @@ class ObjectStoreTests(unittest.TestCase):
         with TemporaryDirectory() as tmp, self.assertRaises(ValueError):
             obj.pull_dir("p", Path(tmp) / "dst", client=fake, bucket="b")
 
+    def test_pull_rejects_prefix_sibling_escape(self):
+        fake = FakeS3Client()
+        fake.store["artifacts/../artifacts_backup/evil.txt"] = b"x"
+        with TemporaryDirectory() as tmp, self.assertRaises(ValueError):
+            obj.pull_dir("artifacts", Path(tmp) / "artifacts", client=fake, bucket="b")
+
     def test_push_without_backend_raises_helpful_error(self):
         with TemporaryDirectory() as tmp:
             src = Path(tmp)

@@ -251,8 +251,9 @@ def pull_dir(
         rel = key[len(norm) + 1 :] if norm and key.startswith(f"{norm}/") else key
         if not rel:
             continue
+        base = dest.resolve()
         target = (dest / rel).resolve()
-        if not str(target).startswith(str(dest.resolve())):
+        if not target.is_relative_to(base):
             raise ValueError(f"chave S3 fora da base: {key!r}")
         if not dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)

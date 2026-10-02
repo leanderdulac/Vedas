@@ -11,7 +11,9 @@ FROM python:3.12-slim-bookworm AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PORT=8000
+    PORT=8000 \
+    VEDIC_BIND_HOST=0.0.0.0 \
+    VEDIC_FORWARDED_ALLOW_IPS=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1,::1
 
 WORKDIR /app
 
@@ -45,4 +47,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS "http://127.0.0.1:${PORT}/api/v1/health" || exit 1
 
-CMD ["sh", "-c", "python -m uvicorn vedic_knowledge_pipeline:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"]
+CMD ["sh", "-c", "python -m uvicorn vedic_knowledge_pipeline:app --host ${VEDIC_BIND_HOST:-0.0.0.0} --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips \"${VEDIC_FORWARDED_ALLOW_IPS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1,::1}\""]

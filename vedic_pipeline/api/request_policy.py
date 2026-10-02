@@ -12,8 +12,10 @@ from vedic_pipeline.llm.generate import DEFAULT_XAI_MODEL
 
 GENERATION_TOKEN_UNSET = (
     "Geração paga exige VEDIC_GENERATION_API_TOKEN nesta instância "
-    "(VEDIC_REQUIRE_GENERATION_TOKEN=true)"
+    "(host não-local com XAI_API_KEY, ou VEDIC_REQUIRE_GENERATION_TOKEN=true)"
 )
+
+_LOOPBACK_BIND = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 
 _MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-/]{0,127}(?::[A-Za-z0-9._\-]{1,64})?$")
 
@@ -81,9 +83,28 @@ def validate_index_dir(value: str) -> str:
     return resolved
 
 
+def bind_host() -> str:
+    return (os.environ.get("VEDIC_BIND_HOST") or "").strip().lower()
+
+
+def bind_host_is_loopback() -> bool:
+    """True só quando o servidor declara bind localhost-only (run_dev.sh)."""
+    return bind_host() in _LOOPBACK_BIND
+
+
 def generation_token_required() -> bool:
-    """Prod/compose.prod: fail-closed. Dev local continua aberto se o token estiver vazio."""
-    return env_flag("VEDIC_REQUIRE_GENERATION_TOKEN")
+    """Fail-closed fora de 127.0.0.1 quando há XAI_API_KEY.
+
+    ``VEDIC_REQUIRE_GENERATION_TOKEN`` explícito sempre vence. Sem a flag,
+    bind em 127.0.0.1/localhost/::1 continua aberto para dev local; Docker,
+    0.0.0.0 ou bind ausente exigem token se a chave xAI estiver setada.
+    """
+    raw = os.environ.get("VEDIC_REQUIRE_GENERATION_TOKEN")
+    if raw is not None and raw.strip() != "":
+        return env_flag("VEDIC_REQUIRE_GENERATION_TOKEN")
+    if not (os.environ.get("XAI_API_KEY") or "").strip():
+        return False
+    return not bind_host_is_loopback()
 
 
 def public_generation_policy() -> dict[str, bool]:
@@ -111,9 +132,8 @@ def authorize_generation(provider: str, model: str | None, authorization: str | 
     if not expected:
         if generation_token_required():
             raise HTTPException(503, GENERATION_TOKEN_UNSET)
-        # Instância local/privada: a chave xAI no servidor já autoriza a geração.
-        # Em API pública, defina VEDIC_GENERATION_API_TOKEN ou
-        # VEDIC_REQUIRE_GENERATION_TOKEN=true.
+        # Só 127.0.0.1/localhost: a chave xAI no servidor autoriza a geração.
+        # Em host compartilhado / Docker / 0.0.0.0 o token é obrigatório.
         configured = (os.environ.get('XAI_MODEL') or DEFAULT_XAI_MODEL) if selected == 'xai' else (os.environ.get('VEDIC_LOCAL_LM') or 'gpt2')
         if model is not None and model != configured:
             raise HTTPException(422, 'Modelo não autorizado pelo servidor')
