@@ -48,13 +48,126 @@ class BackendTests(unittest.TestCase):
         except ImportError:
             self.skipTest("torch ausente")
 
-        with patch("vedic_pipeline.train.device.torch_device", return_value=torch.device("mps")):
+        with patch.dict(os.environ, {"VEDIC_SD_DTYPE": ""}), patch(
+            "vedic_pipeline.train.device.torch_device", return_value=torch.device("mps")
+        ):
             device, dtype = diffusion._device_and_dtype()
             self.assertEqual(device.type, "mps")
             self.assertEqual(dtype, torch.float16)
-        with patch("vedic_pipeline.train.device.torch_device", return_value=torch.device("cpu")):
+        with patch.dict(os.environ, {"VEDIC_SD_DTYPE": ""}), patch(
+            "vedic_pipeline.train.device.torch_device", return_value=torch.device("cpu")
+        ):
             _device, dtype = diffusion._device_and_dtype()
             self.assertEqual(dtype, torch.float32)
+
+    def test_place_keeps_the_vae_in_fp16(self):
+        import torch
+
+        class Vae(torch.nn.Linear):
+            pass
+
+        class Pipe:
+            def __init__(self) -> None:
+                self.vae = Vae(1, 1, dtype=torch.float16)
+
+            def to(self, device):
+                self.vae.to(device)
+                return self
+
+        pipe = Pipe()
+        with patch("vedic_pipeline.train.device.torch_device", return_value=torch.device("cpu")):
+            placed = diffusion._place(pipe)
+        self.assertEqual(placed.vae.weight.dtype, torch.float16)
+
+    def test_cached_snapshot_uses_the_local_model_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            snap = Path(tmp) / "hub" / "models--org--audio" / "snapshots" / "abc"
+            snap.mkdir(parents=True)
+            (snap / "model_index.json").write_text("{}")
+            refs = snap.parents[1] / "refs"
+            refs.mkdir()
+            (refs / "main").write_text("abc\n")
+            with patch.dict(os.environ, {"HF_HOME": tmp}):
+                found = diffusion._cached_snapshot("org/audio")
+                missing = diffusion._cached_snapshot("org/missing")
+            self.assertEqual(Path(found or ""), snap)
+            self.assertIsNone(missing)
+
+    def test_fp16_load_prefers_the_fp16_variant(self):
+        import torch
+
+        calls: list[dict] = []
+
+        class Pipe:
+            def set_progress_bar_config(self, **_kwargs):
+                return None
+
+        class Fake:
+            @classmethod
+            def from_pretrained(cls, _model_id, **kwargs):
+                calls.append(kwargs)
+                if kwargs.get("variant") != "fp16":
+                    raise OSError("sem variante")
+                return Pipe()
+
+        with patch("vedic_pipeline.train.device.torch_device", return_value=torch.device("mps")):
+            diffusion._from_pretrained(Fake, "stabilityai/sd-turbo", torch_dtype=torch.float16)
+        self.assertEqual(calls[0].get("variant"), "fp16")
+
+    def test_float32_load_skips_the_fp16_variant(self):
+        import torch
+
+        calls: list[dict] = []
+
+        class Pipe:
+            def set_progress_bar_config(self, **_kwargs):
+                return None
+
+        class Fake:
+            @classmethod
+            def from_pretrained(cls, _model_id, **kwargs):
+                calls.append(kwargs)
+                return Pipe()
+
+        with patch("vedic_pipeline.train.device.torch_device", return_value=torch.device("mps")):
+            diffusion._from_pretrained(Fake, "org/audio-ausente", torch_dtype=torch.float32)
+        self.assertEqual(len(calls), 1)
+        self.assertNotIn("variant", calls[0])
+        self.assertEqual(calls[0].get("torch_dtype"), torch.float32)
+
+    def test_brownian_tree_is_built_on_cpu(self):
+        import torch
+        from diffusers.schedulers.scheduling_dpmsolver_sde import BatchedBrownianTree
+
+        diffusion._use_cpu_brownian()
+        device = "mps" if torch.backends.mps.is_available() else "cpu"
+        tree = BatchedBrownianTree(torch.zeros(2, 4, device=device), 0.3, 500.0, seed=1)
+        noise = tree(1.0, 2.0)
+        self.assertEqual(tree.trees[0]._device.type, "cpu")
+        self.assertEqual(noise.device.type, "cpu")
+        self.assertEqual(tuple(noise.shape), (2, 4))
+
+    def test_audio_scheduler_does_not_end_at_zero(self):
+        from diffusers import CosineDPMSolverMultistepScheduler
+
+        sched = CosineDPMSolverMultistepScheduler(
+            final_sigmas_type="zero",
+            sigma_min=0.3,
+            sigma_max=500.0,
+        )
+        fixed = diffusion._audio_scheduler(sched)
+        fixed.set_timesteps(8)
+        self.assertGreater(float(fixed.sigmas[-1]), 0.0)
+
+    def test_zero_length_brownian_step_is_finite(self):
+        import torch
+        from diffusers.schedulers.scheduling_dpmsolver_sde import BrownianTreeNoiseSampler
+
+        diffusion._use_cpu_brownian()
+        sampler = BrownianTreeNoiseSampler(torch.zeros(2, 4), sigma_min=0.3, sigma_max=500.0, seed=1)
+        noise = sampler(0.3, 0.3)
+        self.assertFalse(torch.isnan(noise).any().item())
+        self.assertEqual(float(noise.abs().sum()), 0.0)
 
     def test_audio_bed_stays_off_without_the_extra(self):
         with patch.dict(os.environ, {"VEDIC_AUDIO_BED": "diffusion"}), patch.object(

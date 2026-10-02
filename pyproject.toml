@@ -48,6 +48,7 @@ media = [
     "torch>=2.1.0",
     "torchvision>=0.16.0",
     "diffusers>=0.31.0",
+    "torchsde>=0.2.6",
     "transformers>=4.38.0",
     "accelerate>=0.27.0",
     "safetensors>=0.4.0",

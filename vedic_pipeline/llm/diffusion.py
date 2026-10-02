@@ -174,25 +174,73 @@ def _device_and_dtype() -> tuple[Any, Any]:
 
 
 def _place(pipe: Any) -> Any:
-    """Move o pipeline e deixa o VAE em fp32 para o still não sair preto."""
-    import torch
+    """Move o pipeline e preserva o dtype de cada módulo.
 
-    device, dtype = _device_and_dtype()
-    pipe = pipe.to(device)
-    vae = getattr(pipe, "vae", None)
-    if dtype == torch.float16 and vae is not None:
-        pipe.vae.to(dtype=torch.float32)
-    return pipe
+    SDXL e o SVD sobem o VAE para fp32 só na decodificação, quando
+    ``force_upcast`` está ligado, e devolvem o dtype original. Forçar fp32
+    aqui deixa o latent em fp16 e o bias do VAE em float: o sd-turbo quebra
+    no MPS com ``Input type (c10::Half) and bias type (float)``.
+    """
+    device, _dtype = _device_and_dtype()
+    return pipe.to(device)
+
+
+def _cached_snapshot(model_id: str) -> str | None:
+    """Pasta local do snapshot quando `model_index.json` já está no cache.
+
+    Um snapshot parcial (sem o `model.safetensors` monolítico) faz o Hub
+    recusar o id em modo offline. A pasta local carrega só os módulos do índice.
+    """
+    direct = Path(model_id)
+    if direct.is_dir() and (direct / "model_index.json").is_file():
+        return str(direct)
+    if model_id.count("/") != 1:
+        return None
+    home = (os.environ.get("HF_HOME") or "").strip()
+    if home:
+        root = Path(home) / "hub"
+    else:
+        try:
+            from huggingface_hub.constants import HF_HUB_CACHE
+        except ImportError:
+            return None
+        root = Path(HF_HUB_CACHE)
+    repo = root / f"models--{model_id.replace('/', '--')}"
+    try:
+        revision = (repo / "refs" / "main").read_text().strip()
+    except OSError:
+        return None
+    snapshot = repo / "snapshots" / revision
+    if (snapshot / "model_index.json").is_file():
+        return str(snapshot)
+    return None
 
 
 def _from_pretrained(cls: Any, model_id: str, **kwargs: Any) -> Any:
-    try:
-        pipe = cls.from_pretrained(model_id, **kwargs)
-    except OSError as exc:
+    """Carrega o pipeline. Em fp16 prefere os arquivos `*.fp16.safetensors`."""
+    import torch
+
+    source = _cached_snapshot(model_id) or model_id
+    _, dtype = _device_and_dtype()
+    requested = kwargs.get("torch_dtype", dtype)
+    attempts: list[dict[str, Any]] = []
+    if requested == torch.float16 and "variant" not in kwargs:
+        attempts.append({"variant": "fp16"})
+    attempts.append({})
+    last: Exception | None = None
+    pipe = None
+    for extra in attempts:
+        try:
+            pipe = cls.from_pretrained(source, **kwargs, **extra)
+            break
+        except (OSError, ValueError) as exc:
+            last = exc
+            logger.info("Carga de %s %s falhou (%s); tentando o próximo conjunto de pesos", model_id, extra or "padrão", exc)
+    if pipe is None:
         raise RuntimeError(
             f"Não foi possível carregar {model_id}. Na primeira vez deixe "
             "HF_HUB_OFFLINE desligado para baixar os pesos."
-        ) from exc
+        ) from last
     if hasattr(pipe, "set_progress_bar_config"):
         pipe.set_progress_bar_config(disable=True)
     if hasattr(pipe, "enable_attention_slicing"):
@@ -300,13 +348,62 @@ def _audio_sample_rate(pipe: Any) -> int:
     return 44100
 
 
+def _use_cpu_brownian() -> None:
+    """O ruído SDE do Stable Audio quebra no MPS e no sigma final.
+
+    A árvore browniana recursa sem fim no MPS, e também quando o último sigma
+    sai do intervalo (0). Com o sigma final igual ao mínimo, o passo tem
+    duração zero e a divisão por ``sqrt(dt)`` vira NaN.
+    """
+    import torch
+    from diffusers.schedulers import scheduling_dpmsolver_sde as sde
+
+    if not getattr(sde.BatchedBrownianTree, "_vedic_cpu", False):
+        original_init = sde.BatchedBrownianTree.__init__
+
+        def _init(self, x, t0, t1, seed=None, **kwargs):
+            original_init(self, x.detach().to("cpu"), t0, t1, seed, **kwargs)
+
+        sde.BatchedBrownianTree.__init__ = _init  # type: ignore[method-assign]
+        sde.BatchedBrownianTree._vedic_cpu = True
+
+    if getattr(sde.BrownianTreeNoiseSampler, "_vedic_zero_step", False):
+        return
+    original_call = sde.BrownianTreeNoiseSampler.__call__
+
+    def _call(self, sigma, sigma_next):
+        t0 = self.transform(torch.as_tensor(sigma))
+        t1 = self.transform(torch.as_tensor(sigma_next))
+        if float((t1 - t0).abs()) == 0.0:
+            return self.tree(t0, t0)
+        return original_call(self, sigma, sigma_next)
+
+    sde.BrownianTreeNoiseSampler.__call__ = _call  # type: ignore[method-assign]
+    sde.BrownianTreeNoiseSampler._vedic_zero_step = True
+
+
+def _audio_scheduler(scheduler: Any) -> Any:
+    """O último sigma 0 fica fora da árvore browniana e a recursão não termina."""
+    if type(scheduler).__name__ != "CosineDPMSolverMultistepScheduler":
+        return scheduler
+    from diffusers import CosineDPMSolverMultistepScheduler
+
+    return CosineDPMSolverMultistepScheduler.from_config(
+        scheduler.config,
+        final_sigmas_type="sigma_min",
+    )
+
+
 def _audio_pipe() -> Any:
     def load() -> Any:
+        import torch
         from diffusers import StableAudioPipeline
 
         model = os.environ.get("VEDIC_AUDIO_MODEL", DEFAULT_AUDIO_MODEL)
-        _device, dtype = _device_and_dtype()
-        return _place(_from_pretrained(StableAudioPipeline, model, torch_dtype=dtype))
+        # fp16 no MPS faz o BrownianInterval do scheduler recursar sem parar.
+        pipe = _place(_from_pretrained(StableAudioPipeline, model, torch_dtype=torch.float32))
+        pipe.scheduler = _audio_scheduler(pipe.scheduler)
+        return pipe
 
     return _cached_pipe("audio", load)
 
@@ -314,6 +411,7 @@ def _audio_pipe() -> Any:
 def render_audio_bed(prompt: str, seconds: float = 12.0) -> tuple[np.ndarray, int]:
     """Drone sem voz. Devolve mono float32 e a taxa de amostragem."""
     ensure_diffusion()
+    _use_cpu_brownian()
     length = max(1.0, min(float(seconds), 47.0))
     steps = int(os.environ.get("VEDIC_AUDIO_STEPS", "80"))
     with _PIPE_LOCK:

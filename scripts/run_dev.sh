@@ -15,7 +15,10 @@ echo "→ Backend: http://127.0.0.1:8000"
 echo "→ Frontend dev: http://127.0.0.1:5173"
 echo
 
-uvicorn vedic_knowledge_pipeline:app --host 127.0.0.1 --port 8000 --reload &
+# Só o código Python: gravar data/media ou artifacts reiniciaria a geração no meio.
+uvicorn vedic_knowledge_pipeline:app --host 127.0.0.1 --port 8000 --reload \
+  --reload-dir vedic_pipeline \
+  --reload-dir vedic_knowledge_pipeline.py &
 BACK_PID=$!
 
 cleanup() {
