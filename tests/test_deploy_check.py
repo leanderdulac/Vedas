@@ -89,3 +89,14 @@ class DeployCheckTests(unittest.TestCase):
             result = run_deploy_check(mode="local")
         self.assertFalse(result["ok"])
         self.assertIn("ssrf_dns_check_disabled", {i["code"] for i in result["issues"]})
+
+    def test_caddyfile_denies_public_metrics(self):
+        """Controle documentado: Caddy não deve proxiar /metrics no hostname público."""
+        text = (Path(__file__).resolve().parents[1] / "Caddyfile").read_text(encoding="utf-8")
+        start = text.find("handle /metrics")
+        self.assertGreaterEqual(start, 0, "Caddyfile precisa de handle /metrics")
+        catch_all = text.find("\n    handle {", start)
+        self.assertGreater(catch_all, start, "handle /metrics deve preceder o catch-all")
+        block = text[start : text.find("}", start) + 1]
+        self.assertRegex(block, r"respond\s+404")
+        self.assertNotIn("reverse_proxy", block)
