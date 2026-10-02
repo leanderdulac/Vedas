@@ -9,6 +9,7 @@ nomear ninguém, o personagem mais presente nos trechos.
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -34,10 +35,10 @@ class Gloss:
 
 # aliases são nomes, não palavras genéricas ("fire", "self", "lord").
 _GLOSSES: tuple[Gloss, ...] = (
-    Gloss("agni", "Agni", _KIND_PERSON, "o fogo do sacrifício", "Sacerdote escolhido, que leva a oblação aos deuses.", ("agni", "agnim", "agne", "अग्नि", "अग्निम्"), ("soma", "indra"), "Agni, Hindu fire god, fiery red skin, two bearded heads crowned with flames, seven flaming tongues, riding a ram, holding a flaming ladle and spoon, blazing sacred fire all around.", "blue skin, grey skin, single head, peaceful blue god"),
+    Gloss("agni", "Agni", _KIND_PERSON, "o fogo do sacrifício", "Sacerdote escolhido, que leva a oblação aos deuses.", ("agni", "agnim", "agne", "अग्नि", "अग्निम्"), ("soma", "indra"), "Agni, Vedic fire god, fiery red-bronze skin, exactly two bearded heads, crowns of living flame with seven tongues of fire rising above them, a white ram at his side, holding a flaming ladle, sacred fire all around.", "blue skin, grey skin, single head, peaceful blue god"),
     Gloss("indra", "Indra", _KIND_PERSON, "o que empunha o vajra", "Rei dos deuses no R̥gveda, matador de Vṛtra.", ("indra", "indram", "इन्द्र"), ("agni", "soma", "vritra"), "Indra, king of the gods, golden-skinned warrior holding the vajra thunderbolt, chariot of two tawny horses, storm clouds and lightning."),
     Gloss("soma", "Soma", _KIND_PERSON, "a bebida e o deus", "O suco prensado e a divindade que ele é.", ("soma", "somam", "सोम"), ("indra", "agni"), "Soma, moon god with pale silver skin, crescent moon crown, holding a cup of golden soma juice beside pressing stones, night sky, white flowers."),
-    Gloss("varuna", "Varuṇa", _KIND_PERSON, "o guardião do ṛta", "Soberano das águas e do juramento.", ("varuna", "varuṇa", "वरुण"), ("mitra", "rita"), "Varuna, god of the waters, dark blue skin, holding a noose of light, riding a makara sea creature over ocean waves, starry night."),
+    Gloss("varuna", "Varuṇa", _KIND_PERSON, "o guardião do ṛta", "Soberano das águas e do juramento.", ("varuna", "varuṇa", "वरुण"), ("mitra", "rita"), "Varuna, god of the cosmic waters, dark blue skin, holding a pasha, a coiled lasso of glowing light, a makara sea creature behind him, ocean waves and night stars."),
     Gloss("mitra", "Mitra", _KIND_PERSON, "o aliado", "Divindade do pacto, quase sempre junto de Varuṇa.", ("mitra", "मित्र"), ("varuna",), "Mitra, god of friendship and oaths, dawn-colored golden skin, open hands in blessing, seated beside a darker companion, morning light."),
     Gloss("ushas", "Uṣas", _KIND_PERSON, "a aurora", "A deusa que abre o caminho do dia.", ("ushas", "usas", "uṣas", "उषस्"), ("surya", "savitr"), "Ushas, goddess of dawn, young woman in rose and saffron veils, chariot drawn by red cows, opening the gates of the sky, pink sunrise."),
     Gloss("surya", "Sūrya", _KIND_PERSON, "o sol", "O olho dos deuses, que percorre o céu.", ("surya", "sūrya", "सूर्य"), ("savitr", "ushas"), "Surya, sun god with golden skin, holding two lotuses, chariot drawn by seven horses, radiant sun disc halo."),
@@ -50,7 +51,7 @@ _GLOSSES: tuple[Gloss, ...] = (
     Gloss("ashvins", "Aśvins", _KIND_PERSON, "os gêmeos médicos", "Chegam com a aurora e curam.", ("ashvins", "asvins", "aśvins", "अश्विन्"), ("ushas",), "The Ashvins, divine twin horsemen, two identical young gods on one golden chariot at dawn, honey-colored light, healing herbs."),
     Gloss("sarasvati", "Sarasvatī", _KIND_PERSON, "o rio e a fala", "A corrente que inspira o hino.", ("sarasvati", "sarasvatī", "सरस्वती"), ("vac",), "Sarasvati, goddess of speech, woman in a white sari playing the veena, seated on a white lotus by a flowing river, swan beside her."),
     Gloss("aditi", "Aditi", _KIND_PERSON, "a sem amarras", "Mãe dos Ādityas, a liberdade.", ("aditi", "अदिति"), ("surya", "varuna"), "Aditi, mother of the gods, serene woman with a sky-blue cloak full of stars, radiant children of light around her, boundless sky."),
-    Gloss("yama", "Yama", _KIND_PERSON, "o primeiro que morreu", "Rei dos pais, no caminho dos que partiram.", ("yama", "यम"), ("varuna",), "Yama, king of the departed, dark green skin, crown, holding a staff and noose, riding a black buffalo, two dogs behind, dusk.", "skeleton, skull, gore, horror"),
+    Gloss("yama", "Yama", _KIND_PERSON, "o primeiro que morreu", "Rei dos pais, no caminho dos que partiram.", ("yama", "यम"), ("varuna",), "Yama, king of the departed, dark green skin, crown, holding a staff and a coiled pasha lasso, black buffalo behind him, two dogs, dusk.", "skeleton, skull, gore, horror"),
     Gloss("hiranyagarbha", "Hiraṇyagarbha", _KIND_PERSON, "o germe de ouro", "Aquele que surgiu no princípio.", ("hiranyagarbha", "hiraṇyagarbha", "हिरण्यगर्भ"), ("prajapati", "purusha"), "Hiranyagarbha, a glowing golden cosmic egg floating on dark primordial waters, light radiating outward, the beginning of creation."),
     Gloss("purusha", "Puruṣa", _KIND_PERSON, "a pessoa cósmica", "O ser cujo sacrifício é o mundo.", ("purusha", "puruṣa", "purusa", "पुरुष"), ("prajapati", "hiranyagarbha"), "Purusha, the cosmic man, vast serene giant with many heads and eyes, stars and worlds within his body, cosmic sky."),
     Gloss("prajapati", "Prajāpati", _KIND_PERSON, "o senhor das criaturas", "Quem gera e se esvazia na criação.", ("prajapati", "prajāpati", "प्रजापति"), ("purusha", "hiranyagarbha"), "Prajapati, lord of creatures, bearded progenitor seated on a lotus, animals and beings emerging around him, dawn light."),
@@ -122,23 +123,61 @@ def get_figure(figure_id: str) -> Gloss | None:
     return gloss
 
 
-# CLIP lê só 77 tokens. A iconografia vem primeiro, o estilo fecha, e o que
-# não deve aparecer vai para o prompt negativo (o "no X" no positivo atrai X).
-FIGURE_STYLE = "Indian devotional painting, Rajput miniature, vivid colors, gold detail, ornate border."
+# Estilo dos retratos (ver docs/IMAGE_STYLE.md). `VEDIC_FIGURE_STYLE`:
+# - sculpted (padrão): busto escuro de bronze e obsidiana com filigrana gravada,
+#   chiaroscuro e fundo quase preto, como a série de devas que o Leandro escolheu;
+# - cinematic: pintura devocional cinematográfica, halo dourado e raios de luz;
+# - miniature: a miniatura Rajput antiga.
+# A iconografia vem primeiro; o que não deve aparecer vai para o negativo
+# (o "no X" no positivo atrai X).
+FIGURE_STYLES: dict[str, str] = {
+    "sculpted": (
+        "Dark cinematic fantasy portrait, ultra-detailed digital art: the deity rendered like a living "
+        "bronze-and-obsidian sculpture, skin and garments covered in intricate engraved filigree, paisley and "
+        "tribal ornament, heavy ornate crown, earrings and layered necklaces, intense piercing gaze, dramatic "
+        "chiaroscuro rim light, near-black smoky background, muted palette of bronze, charcoal and one glowing "
+        "accent color, head-and-shoulders bust, centered, razor-sharp detail."
+    ),
+    "cinematic": (
+        "Epic cinematic Hindu devotional digital painting, hyper-detailed semi-realistic rendering, volumetric "
+        "god rays and a glowing golden halo, dramatic sky, rich gold, saffron and deep blue palette, ornate gold "
+        "jewelry and crown, serene majestic expression, centered heroic composition, film still."
+    ),
+    "miniature": "Indian devotional painting, Rajput miniature, vivid colors, gold detail, ornate border.",
+}
+# CLIP (fallback local) lê só 77 tokens: versão curta do mesmo estilo.
+FIGURE_COMPACT_STYLES: dict[str, str] = {
+    "sculpted": "Dark ornate bronze bust, engraved filigree, chiaroscuro, black background.",
+    "cinematic": "Epic devotional painting, golden halo, god rays.",
+    "miniature": FIGURE_STYLES["miniature"],
+}
+DEFAULT_FIGURE_STYLE = "sculpted"
+FIGURE_STYLE = FIGURE_STYLES[DEFAULT_FIGURE_STYLE]
 
 FIGURE_NEGATIVE = (
-    "text, letters, caption, watermark, logo, signature, photo, photorealistic, "
-    "3d render, modern clothing, deformed face, extra fingers, blurry, lowres, cropped"
+    "text, letters, caption, watermark, logo, signature, modern clothing, deformed face, "
+    "extra heads, extra fingers, blurry, lowres, cropped"
 )
+# Só a miniatura foge do render; os estilos novos têm cara de render de propósito.
+_MINIATURE_NEGATIVE = "photo, photorealistic, 3d render"
 
 
-def figure_prompt(gloss: Gloss) -> str:
+def figure_style() -> str:
+    choice = (os.environ.get("VEDIC_FIGURE_STYLE") or "").strip().lower()
+    return choice if choice in FIGURE_STYLES else DEFAULT_FIGURE_STYLE
+
+
+def figure_prompt(gloss: Gloss, *, compact: bool = False) -> str:
     visual = gloss.visual.strip() or f"{gloss.name}, {gloss.epithet}."
-    return f"{visual} {FIGURE_STYLE}"
+    styles = FIGURE_COMPACT_STYLES if compact else FIGURE_STYLES
+    return f"{visual} {styles[figure_style()]}"
 
 
 def figure_negative(gloss: Gloss) -> str:
-    return f"{gloss.avoid}, {FIGURE_NEGATIVE}" if gloss.avoid else FIGURE_NEGATIVE
+    base = FIGURE_NEGATIVE
+    if figure_style() == "miniature":
+        base = f"{base}, {_MINIATURE_NEGATIVE}"
+    return f"{gloss.avoid}, {base}" if gloss.avoid else base
 
 
 def annotate_search(query: str, hits: list[dict[str, Any]]) -> dict[str, Any]:

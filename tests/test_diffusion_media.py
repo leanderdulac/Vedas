@@ -452,7 +452,7 @@ class ImagineRoutingTests(unittest.TestCase):
         meaning = " ".join(["word"] * 200)
         bundle = {"locator": "RV 1.1.1", "witnesses": [{"role": "en", "text": meaning}]}
         compact = imagine.visual_prompt(bundle, compact=True)
-        self.assertTrue(compact.startswith(imagine.COMPACT_STYLE))
+        self.assertTrue(compact.startswith(imagine.compact_style()))
         self.assertLessEqual(len(compact.split()), 50)
         self.assertNotIn("no Latin", compact)
         self.assertIn("no Latin", imagine.visual_prompt(bundle))
@@ -577,6 +577,63 @@ class QualityModeTests(unittest.TestCase):
         already = imagine.xai_image_prompt("Scene, no Latin or Devanagari lettering in the frame.")
         self.assertEqual(already.count("lettering"), 1)
 
+    def test_scene_style_defaults_to_cinematic(self):
+        bundle = {"locator": "RV 1.1.1", "witnesses": [{"role": "en", "text": "I Laud Agni"}]}
+        with patch.dict(os.environ, {"VEDIC_SCENE_STYLE": ""}):
+            full = imagine.visual_prompt(bundle)
+            self.assertIn("golden halo", full)
+            self.assertNotIn("Pahari", full)
+            self.assertTrue(imagine.visual_prompt(bundle, compact=True).startswith("Epic cinematic"))
+        with patch.dict(os.environ, {"VEDIC_SCENE_STYLE": "miniature"}):
+            self.assertIn("Pahari", imagine.visual_prompt(bundle))
+            self.assertTrue(imagine.visual_prompt(bundle, compact=True).startswith("Pahari"))
+        self.assertNotIn("miniature", imagine.api_motion_prompt(bundle))
+
+    def test_style_refs_read_the_env_dir_and_skip_the_own_figure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for name in ("agni.jpeg", "brahma.jpeg", "indra.jpg", "notes.txt", "vishnu.png"):
+                (Path(tmp) / name).write_bytes(b"x")
+            with patch.dict(os.environ, {"VEDIC_IMAGE_STYLE_REF": "", "VEDIC_SCENE_STYLE_REF": ""}):
+                self.assertEqual(imagine.style_refs("figure"), [])
+            with patch.dict(os.environ, {"VEDIC_IMAGE_STYLE_REF": tmp}):
+                refs = imagine.style_refs("figure", exclude="agni")
+                self.assertEqual([p.name for p in refs], ["brahma.jpeg", "indra.jpg"])
+                self.assertEqual(imagine.style_refs("scene"), [])
+            single = str(Path(tmp) / "vishnu.png")
+            with patch.dict(os.environ, {"VEDIC_SCENE_STYLE_REF": single}):
+                self.assertEqual([p.name for p in imagine.style_refs("scene")], ["vishnu.png"])
+
+    def test_style_refs_use_the_edits_endpoint(self):
+        client = _FakeClient()
+        with tempfile.TemporaryDirectory() as tmp:
+            ref = Path(tmp) / "refs"
+            ref.mkdir()
+            (ref / "brahma.jpg").write_bytes(b"\xff\xd8not-really-a-jpeg")
+            with patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
+                "vedic_pipeline.llm.diffusion.image_backend", return_value="xai"
+            ), patch.object(imagine, "_client", return_value=client), patch.object(
+                imagine, "_ref_data_uri", return_value="data:image/jpeg;base64,AAAA"
+            ), patch.dict(os.environ, {"VEDIC_IMAGE_STYLE_REF": str(ref)}):
+                imagine.generate_figure_image("agni", "Agni, two heads", negative="blue skin")
+            url, body = client.posts[0]
+            self.assertEqual(url, "/images/edits")
+            self.assertEqual(body["images"], [{"url": "data:image/jpeg;base64,AAAA", "type": "image_url"}])
+            self.assertTrue(body["prompt"].startswith(imagine.STYLE_REF_PREFIX))
+            self.assertIn("Agni, two heads", body["prompt"])
+
+    def test_style_ref_failure_falls_back_to_text_only(self):
+        client = _FakeClient()
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "brahma.jpg").write_bytes(b"x")
+            with patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
+                "vedic_pipeline.llm.diffusion.image_backend", return_value="xai"
+            ), patch.object(imagine, "_client", return_value=client), patch.object(
+                imagine, "_ref_data_uri", side_effect=OSError("ilegível")
+            ), patch.dict(os.environ, {"VEDIC_IMAGE_STYLE_REF": tmp}):
+                path = imagine.generate_figure_image("agni", "Agni, two heads")
+            self.assertTrue(path.exists())
+            self.assertEqual([u for u, _ in client.posts], ["/images/generations"])
+
     def test_xai_figure_uses_the_quality_model(self):
         client = _FakeClient()
         with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
@@ -601,7 +658,7 @@ class QualityModeTests(unittest.TestCase):
             path = imagine.generate_verse_image("RV.1.1.1")
             self.assertTrue(path.exists())
             self.assertTrue(render.call_args.kwargs.get("fast"))
-            self.assertTrue(render.call_args.args[0].startswith(imagine.COMPACT_STYLE))
+            self.assertTrue(render.call_args.args[0].startswith(imagine.compact_style()))
 
     def test_xai_failure_without_media_extra_raises(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(

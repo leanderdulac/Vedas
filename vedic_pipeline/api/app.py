@@ -488,6 +488,7 @@ def create_app():
                 figure_prompt(gloss),
                 negative=figure_negative(gloss),
                 force=refresh,
+                fallback_prompt=figure_prompt(gloss, compact=True),
             )
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc

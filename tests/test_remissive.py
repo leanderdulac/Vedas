@@ -68,8 +68,10 @@ class RemissiveTests(unittest.TestCase):
         self.assertIsNotNone(gloss)
         prompt = figure_prompt(gloss)
         self.assertTrue(prompt.startswith("Agni"))
-        for icon in ("two bearded heads", "seven flaming tongues", "red skin", "riding a ram", "ladle"):
+        for icon in ("two bearded heads", "seven tongues of fire", "red-bronze skin", "white ram", "ladle"):
             self.assertIn(icon, prompt)
+        # "seven flaming tongues" virava bigode de fogo no Imagine.
+        self.assertNotIn("flaming tongues", prompt)
         # "no X" no positivo atrai X: o que não deve aparecer vai no negativo.
         self.assertNotIn("no Latin", prompt)
         negative = figure_negative(gloss)
@@ -82,10 +84,34 @@ class RemissiveTests(unittest.TestCase):
         for gloss in _GLOSSES:
             if get_figure(gloss.id) is None:
                 continue
-            prompt = figure_prompt(gloss)
+            prompt = figure_prompt(gloss, compact=True)
             # CLIP corta em 77 tokens; ~1,4 token por palavra deixa folga com 50.
             self.assertLessEqual(len(prompt.split()), 50, gloss.id)
             self.assertTrue(prompt.startswith(gloss.visual.split(",")[0]), gloss.id)
+            self.assertTrue(figure_prompt(gloss).startswith(gloss.visual.split(",")[0]), gloss.id)
+
+    def test_figure_style_follows_the_env(self):
+        from vedic_pipeline.search import remissive
+
+        gloss = get_figure("agni")
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": ""}):
+            self.assertIn("bronze-and-obsidian", figure_prompt(gloss))
+            self.assertNotIn("Rajput", figure_prompt(gloss))
+            # O render escultural não pode ir para o "Avoid".
+            self.assertNotIn("3d render", figure_negative(gloss))
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": "cinematic"}):
+            self.assertIn("golden halo", figure_prompt(gloss))
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": "miniature"}):
+            self.assertIn("Rajput miniature", figure_prompt(gloss))
+            self.assertIn("3d render", figure_negative(gloss))
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": "bogus"}):
+            self.assertEqual(remissive.figure_style(), "sculpted")
+
+    def test_pasha_is_not_a_noose(self):
+        for fid in ("varuna", "yama"):
+            visual = get_figure(fid).visual
+            self.assertIn("pasha", visual)
+            self.assertNotIn("noose", visual)
 
 
 class SearchAsideApiTests(unittest.TestCase):
@@ -104,9 +130,17 @@ class SearchAsideApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {"VEDIC_GENERATION_API_TOKEN": ""}):
             dest = Path(tmp) / "agni.jpg"
 
-            def _write(figure_id: str, prompt: str, *, negative: str | None = None, force: bool = False) -> Path:
+            def _write(
+                figure_id: str,
+                prompt: str,
+                *,
+                negative: str | None = None,
+                force: bool = False,
+                fallback_prompt: str | None = None,
+            ) -> Path:
                 self.assertEqual(figure_id, "agni")
                 self.assertIn("Agni", prompt)
+                self.assertLessEqual(len((fallback_prompt or "").split()), 50)
                 self.assertIn("letters", negative or "")
                 dest.write_bytes(b"j" * 2000)
                 return dest

@@ -310,6 +310,12 @@ letras. Se o xAI falhar e o extra media existir, a imagem sai do turbo local
 passos e CFG 7 por padrão, com `VEDIC_SD_REFINER` e `VEDIC_SD_UPSCALE`
 opcionais.
 
+O estilo segue o acervo de referência do Leandro (ver `docs/IMAGE_STYLE.md`): os retratos usam o
+busto escultural escuro (`VEDIC_FIGURE_STYLE=sculpted`) e os versos usam a pintura devocional
+cinematográfica (`VEDIC_SCENE_STYLE=cinematic`); `miniature` volta ao estilo antigo. As
+referências opcionais (`VEDIC_IMAGE_STYLE_REF`, `VEDIC_SCENE_STYLE_REF`) apontam para imagens
+locais que nunca entram no git.
+
 Sem `ffmpeg` no `PATH`, a recitação é gravada sem o drone. `VEDIC_AUDIO_BED=0`
 desliga a cama e mantém a voz sozinha.
 

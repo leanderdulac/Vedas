@@ -25,11 +25,30 @@ MEDIA_DIR = Path("data/media")
 IMAGE_MODEL = "grok-imagine-image-quality"
 DEFAULT_BASE = "https://api.x.ai/v1"
 
-SCENE_STYLE = (
-    "Classical Indian mural and Pahari miniature sensibility, sacred and restrained, "
-    "soft mineral pigments, no photorealistic modern faces, no Latin or Devanagari "
-    "lettering in the frame, no logos, no cameras, no contemporary clothing."
+# Estilo dos stills de verso (ver docs/IMAGE_STYLE.md). `VEDIC_SCENE_STYLE`:
+# cinematic (padrão, o grupo maior das referências) ou miniature (o antigo).
+SCENE_STYLES: dict[str, str] = {
+    "cinematic": (
+        "Epic cinematic Hindu devotional digital painting, hyper-detailed semi-realistic rendering, "
+        "volumetric god rays and a glowing golden halo, dramatic sky, rich gold, saffron and deep blue "
+        "palette, ornate gold jewelry, majestic reverent mood, centered heroic composition."
+    ),
+    "miniature": (
+        "Classical Indian mural and Pahari miniature sensibility, sacred and restrained, "
+        "soft mineral pigments, no photorealistic modern faces."
+    ),
+}
+DEFAULT_SCENE_STYLE = "cinematic"
+SCENE_STYLE = SCENE_STYLES[DEFAULT_SCENE_STYLE]
+SCENE_GUARD = (
+    "Keep the frame clean: no Latin or Devanagari lettering, no logos, no cameras, "
+    "no contemporary clothing."
 )
+
+
+def scene_style() -> str:
+    choice = (os.environ.get("VEDIC_SCENE_STYLE") or "").strip().lower()
+    return choice if choice in SCENE_STYLES else DEFAULT_SCENE_STYLE
 
 
 def _safe_id(verse_id: str) -> str:
@@ -80,7 +99,65 @@ def list_cached_media() -> dict[str, list[str]]:
 
 # Stable Diffusion lê só 77 tokens do CLIP: estilo primeiro, sentido curto depois.
 # As proibições ficam no prompt negativo (`diffusion.negative_prompt`).
-COMPACT_STYLE = "Pahari miniature painting, Indian devotional art, soft mineral pigments, gold detail"
+COMPACT_STYLES: dict[str, str] = {
+    "cinematic": "Epic cinematic Hindu devotional painting, golden halo, god rays, rich gold and deep blue",
+    "miniature": "Pahari miniature painting, Indian devotional art, soft mineral pigments, gold detail",
+}
+COMPACT_STYLE = COMPACT_STYLES[DEFAULT_SCENE_STYLE]
+
+
+def compact_style() -> str:
+    return COMPACT_STYLES[scene_style()]
+
+
+# Referências de estilo opcionais (imagens locais, fora do git). Com elas o
+# Imagine usa /images/edits; ele copia também a composição (Agni saiu com três
+# cabeças), por isso fica desligado por padrão. Caminhos separados por ":".
+STYLE_REF_ENV = {"figure": "VEDIC_IMAGE_STYLE_REF", "scene": "VEDIC_SCENE_STYLE_REF"}
+STYLE_REF_MAX = 2
+_REF_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
+STYLE_REF_PREFIX = (
+    "Create a brand-new image in exactly the same artistic style, rendering, lighting, palette and "
+    "ornament as the reference images. Do not copy their faces, heads, subjects or composition. "
+)
+
+
+def style_refs(kind: str, exclude: str = "") -> list[Path]:
+    """Até `STYLE_REF_MAX` imagens de `VEDIC_IMAGE_STYLE_REF` (figuras) ou
+    `VEDIC_SCENE_STYLE_REF` (versos). `exclude` tira a referência do próprio
+    personagem, para o Imagine não copiar uma imagem de terceiros."""
+    raw = (os.environ.get(STYLE_REF_ENV.get(kind, "")) or "").strip()
+    if not raw:
+        return []
+    found: list[Path] = []
+    for part in raw.split(os.pathsep):
+        path = Path(part.strip()).expanduser()
+        if path.is_dir():
+            found.extend(sorted(x for x in path.iterdir() if x.suffix.lower() in _REF_SUFFIXES))
+        elif path.is_file() and path.suffix.lower() in _REF_SUFFIXES:
+            found.append(path)
+    skip = exclude.strip().lower()
+    return [p for p in found if not skip or p.stem.lower() != skip][:STYLE_REF_MAX]
+
+
+def _ref_data_uri(path: Path) -> str:
+    raw = path.read_bytes()
+    mime = "image/png" if path.suffix.lower() == ".png" else "image/jpeg"
+    try:
+        import io
+
+        from PIL import Image
+
+        with Image.open(io.BytesIO(raw)) as im:
+            im = im.convert("RGB")
+            im.thumbnail((768, 768))
+            buf = io.BytesIO()
+            im.save(buf, "JPEG", quality=88)
+        raw, mime = buf.getvalue(), "image/jpeg"
+    except ImportError:
+        if len(raw) > 4 * 1024 * 1024:
+            raise ValueError(f"Referência de estilo grande demais sem Pillow: {path.name}") from None
+    return f"data:{mime};base64," + base64.b64encode(raw).decode("ascii")
 
 
 def xai_image_model() -> str:
@@ -121,10 +198,10 @@ def visual_prompt(bundle: dict[str, Any], *, compact: bool = False) -> str:
     if compact:
         # Sem os localizadores "[RV 1.1.3]" que a tradução intercala.
         plain = re.sub(r"\s+", " ", re.sub(r"\[[^\]]*\]", " ", meaning)).strip()
-        return f"{COMPACT_STYLE}. One sacred scene: {_short(plain, 24)}"
+        return f"{compact_style()}. One sacred scene: {_short(plain, 24)}"
     return (
         f"A single sacred scene illustrating Vedic verse {locator}. "
-        f"The verse evokes: {meaning}. {SCENE_STYLE} "
+        f"The verse evokes: {meaning}. {SCENE_STYLES[scene_style()]} {SCENE_GUARD} "
         "One clear subject, cinematic still suitable as the first frame of a short film."
     )
 
@@ -203,11 +280,13 @@ def _provider_image(
     negative: str | None = None,
     *,
     fallback_prompt: str | None = None,
+    refs: list[Path] | None = None,
 ) -> bytes:
     """Bytes da imagem pelo backend de imagem.
 
     Com o xAI, uma falha (sem chave, recusa, rede) cai no turbo local quando o
     extra media existe; `fallback_prompt` é a versão curta para os 77 tokens.
+    `refs` (referências de estilo) só valem no xAI.
     """
     from vedic_pipeline.llm.diffusion import diffusion_installed, image_backend, render_image
 
@@ -215,6 +294,11 @@ def _provider_image(
         # Still já gerado: img2img preserva a cena e refina o pigmento.
         return render_image(prompt, negative=negative, init_image=init)
     try:
+        if refs:
+            try:
+                return _xai_image(prompt, negative, refs=refs)
+            except (RuntimeError, ValueError, OSError, httpx.HTTPError) as exc:
+                logger.warning("Imagine com referência falhou (%s); gerando só pelo texto", exc)
         return _xai_image(prompt, negative)
     except (RuntimeError, ValueError, httpx.HTTPError) as exc:
         if not diffusion_installed():
@@ -223,18 +307,21 @@ def _provider_image(
         return render_image(fallback_prompt or prompt, negative=negative, fast=True)
 
 
-def _xai_image(prompt: str, negative: str | None = None) -> bytes:
+def _xai_image(prompt: str, negative: str | None = None, *, refs: list[Path] | None = None) -> bytes:
+    body: dict[str, Any] = {
+        "model": xai_image_model(),
+        "prompt": xai_image_prompt(prompt, negative),
+        "n": 1,
+        "aspect_ratio": "1:1",
+        "response_format": "b64_json",
+    }
+    endpoint = "/images/generations"
+    if refs:
+        endpoint = "/images/edits"
+        body["prompt"] = STYLE_REF_PREFIX + body["prompt"]
+        body["images"] = [{"url": _ref_data_uri(p), "type": "image_url"} for p in refs[:STYLE_REF_MAX]]
     with _client() as client:
-        resp = client.post(
-            "/images/generations",
-            json={
-                "model": xai_image_model(),
-                "prompt": xai_image_prompt(prompt, negative),
-                "n": 1,
-                "aspect_ratio": "1:1",
-                "response_format": "b64_json",
-            },
-        )
+        resp = client.post(endpoint, json=body)
         if resp.status_code >= 400:
             detail = resp.text
             try:
@@ -270,7 +357,9 @@ def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
     if image_backend() == "diffusion":
         raw = _provider_image(compact, dest if cached else None)
     else:
-        raw = _provider_image(visual_prompt(bundle), None, fallback_prompt=compact)
+        raw = _provider_image(
+            visual_prompt(bundle), None, fallback_prompt=compact, refs=style_refs("scene")
+        )
     return _save_image_bytes(dest, raw)
 
 
@@ -280,6 +369,7 @@ def generate_figure_image(
     *,
     negative: str | None = None,
     force: bool = False,
+    fallback_prompt: str | None = None,
 ) -> Path:
     """Retrato do personagem. `force` gera de novo do zero.
 
@@ -290,7 +380,13 @@ def generate_figure_image(
     cached = dest.exists() and dest.stat().st_size > 1000
     if cached and not force:
         return dest
-    raw = _provider_image(prompt, None, negative)
+    raw = _provider_image(
+        prompt,
+        None,
+        negative,
+        fallback_prompt=fallback_prompt,
+        refs=style_refs("figure", exclude=figure_id),
+    )
     return _save_image_bytes(dest, raw)
 
 
@@ -308,7 +404,7 @@ def api_motion_prompt(bundle: dict[str, Any]) -> str:
             break
     about = f" The verse evokes: {_short(meaning, 30)}." if meaning else ""
     return (
-        f"Animate this classical Indian miniature painting of Vedic verse {locator}.{about} "
+        f"Animate this devotional painting of Vedic verse {locator}.{about} "
         "Slow, reverent motion: the sacred flames flicker and rise gently, thin smoke and incense "
         "drift upward, a very slow camera push-in. Keep every figure, face and the painted style "
         "unchanged; no new characters, no text, no sudden cuts."
