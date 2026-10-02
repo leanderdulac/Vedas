@@ -181,9 +181,12 @@ class SecurityTests(unittest.TestCase):
             FakeStream(status=302, location="http://evil.example/next"),
         ]
         calls["n"] = 0
-        with patch("socket.getaddrinfo", rebinding), patch("httpx.Client", FakeClient):
-            with self.assertRaises(ValueError) as ctx:
-                fetch_url_bytes("http://evil.example/file")
+        with (
+            patch("socket.getaddrinfo", rebinding),
+            patch("httpx.Client", FakeClient),
+            self.assertRaises(ValueError) as ctx,
+        ):
+            fetch_url_bytes("http://evil.example/file")
         self.assertIn("SSRF", str(ctx.exception))
         self.assertIn("restrito", str(ctx.exception).lower() + str(ctx.exception))
         self.assertEqual(len(FakeClient.urls), 1)
@@ -228,10 +231,9 @@ class SecurityTests(unittest.TestCase):
         with (
             patch("socket.getaddrinfo", public),
             patch("httpx.Client", FakeClient),
-            patch.dict("os.environ", {"VEDIC_MAX_DOWNLOAD_BYTES": "100"}),
+            self.assertRaises(ValueError) as ctx,
         ):
-            with self.assertRaises(ValueError) as ctx:
-                fetch_url_bytes("http://evil.example/big")
+            fetch_url_bytes("http://evil.example/big", limit=100)
         self.assertIn("excede limite", str(ctx.exception))
 
     def test_download_source_rejects_ssrf_and_lfi(self):

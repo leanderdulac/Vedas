@@ -93,6 +93,8 @@ Coverage por caminho crítico (do relatório pytest):
 
 `VEDIC_ENABLE_RERANKER` default `"false"` verificado em `search/reranker.py:29–36`, `.env.example:95`, `docker-compose.prod.yml:51`, `tests/test_rate_limit.py::ConsistencyTests` (`health["reranker"]["enabled"]` / `default_enabled` false).
 
+**Revalidação após as correções (mesma VM):** ruff all passed; pytest **263 passed**, 1 skipped, 32 subtests, **69.32%** (gate 60%); frontend lint OK, **20/20** testes, build OK. `VEDIC_ENABLE_RERANKER` continua default false.
+
 ---
 
 ## 3. Achados
