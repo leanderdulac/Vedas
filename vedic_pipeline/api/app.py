@@ -473,7 +473,7 @@ def create_app():
 
         from vedic_pipeline.api.request_policy import authorize_media
         from vedic_pipeline.llm.imagine import figure_image_path, generate_figure_image
-        from vedic_pipeline.search.remissive import figure_prompt, get_figure
+        from vedic_pipeline.search.remissive import figure_negative, figure_prompt, get_figure
 
         gloss = get_figure(figure_id)
         if gloss is None:
@@ -483,7 +483,12 @@ def create_app():
             return FileResponse(dest, media_type="image/jpeg")
         authorize_media(authorization)
         try:
-            path = generate_figure_image(figure_id, figure_prompt(gloss), force=refresh)
+            path = generate_figure_image(
+                figure_id,
+                figure_prompt(gloss),
+                negative=figure_negative(gloss),
+                force=refresh,
+            )
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except Exception:  # noqa: BLE001

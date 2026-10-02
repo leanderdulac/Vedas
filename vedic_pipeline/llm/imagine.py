@@ -75,7 +75,17 @@ def list_cached_media() -> dict[str, list[str]]:
     return {"images": images, "videos": videos}
 
 
-def visual_prompt(bundle: dict[str, Any]) -> str:
+# Stable Diffusion lê só 77 tokens do CLIP: estilo primeiro, sentido curto depois.
+# As proibições ficam no prompt negativo (`diffusion.negative_prompt`).
+COMPACT_STYLE = "Pahari miniature painting, Indian devotional art, soft mineral pigments, gold detail"
+
+
+def _short(text: str, words: int) -> str:
+    parts = text.split()
+    return " ".join(parts[:words]).rstrip(",;:")
+
+
+def visual_prompt(bundle: dict[str, Any], *, compact: bool = False) -> str:
     locator = bundle.get("locator") or bundle.get("verse_id") or ""
     witnesses = bundle.get("witnesses") or []
     meaning = ""
@@ -87,6 +97,10 @@ def visual_prompt(bundle: dict[str, Any]) -> str:
         if meaning:
             break
     meaning = re.sub(r"\s+", " ", meaning)[:700]
+    if compact:
+        # Sem os localizadores "[RV 1.1.3]" que a tradução intercala.
+        plain = re.sub(r"\s+", " ", re.sub(r"\[[^\]]*\]", " ", meaning)).strip()
+        return f"{COMPACT_STYLE}. One sacred scene: {_short(plain, 24)}"
     return (
         f"A single sacred scene illustrating Vedic verse {locator}. "
         f"The verse evokes: {meaning}. {SCENE_STYLE} "
@@ -162,12 +176,12 @@ def _download_media_bytes(url: str, *, timeout: float = 60.0, limit: int = 25 * 
     raise ValueError("Muitos redirects ao baixar mídia")
 
 
-def _provider_image(prompt: str, init: Path | None) -> bytes:
+def _provider_image(prompt: str, init: Path | None, negative: str | None = None) -> bytes:
     from vedic_pipeline.llm.diffusion import media_backend, render_image
 
     if media_backend() == "diffusion":
         # Still já gerado: img2img preserva a cena e refina o pigmento.
-        return render_image(prompt, init_image=init)
+        return render_image(prompt, negative=negative, init_image=init)
     with _client() as client:
         resp = client.post(
             "/images/generations",
@@ -206,16 +220,30 @@ def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
     bundle = get_verse(verse_id)
     if not bundle:
         raise FileNotFoundError(f"Verso {verse_id} não encontrado")
-    raw = _provider_image(visual_prompt(bundle), dest if cached else None)
+    from vedic_pipeline.llm.diffusion import media_backend
+
+    prompt = visual_prompt(bundle, compact=media_backend() == "diffusion")
+    raw = _provider_image(prompt, dest if cached else None)
     return _save_image_bytes(dest, raw)
 
 
-def generate_figure_image(figure_id: str, prompt: str, *, force: bool = False) -> Path:
+def generate_figure_image(
+    figure_id: str,
+    prompt: str,
+    *,
+    negative: str | None = None,
+    force: bool = False,
+) -> Path:
+    """Retrato do personagem. `force` gera de novo do zero.
+
+    O retrato é definido pela iconografia do prompt: refinar (img2img) um
+    retrato errado só preservaria a composição errada.
+    """
     dest = figure_image_path(figure_id)
     cached = dest.exists() and dest.stat().st_size > 1000
     if cached and not force:
         return dest
-    raw = _provider_image(prompt, dest if cached else None)
+    raw = _provider_image(prompt, None, negative)
     return _save_image_bytes(dest, raw)
 
 

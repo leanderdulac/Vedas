@@ -276,9 +276,17 @@ export VEDIC_MEDIA_BACKEND=diffusion VEDIC_DEVICE=mps HF_HUB_OFFLINE=0
 
 | Mídia | Modelo | O que faz |
 | --- | --- | --- |
-| Imagem | `stabilityai/sd-turbo` | Still do verso. Um refresh (`?refresh=1`) refina o JPEG que já existe, em vez de inventar outra cena. |
+| Imagem | `stabilityai/sdxl-turbo` (fallback `sd-turbo`) | Still do verso e retrato das figuras. No verso, um refresh (`?refresh=1`) refina o JPEG que já existe; na figura, gera de novo do zero. |
 | Vídeo | `stable-video-diffusion-img2vid-xt` | Alguns segundos a partir do still, com movimento lento. |
 | Áudio | TTS + `stable-audio-open-1.0` | A fala continua no TTS. O Stable Audio só acrescenta um drone de tanpura por baixo — ele não pronuncia sânscrito. |
+
+O retrato das figuras cabe nos 77 tokens do CLIP: a iconografia vem primeiro
+(no Agni: pele vermelha, duas cabeças, sete línguas de fogo, carneiro, concha),
+depois o estilo de pintura devocional. O que não deve aparecer (letras, pele
+azul) vai no prompt negativo, que só pesa com CFG: por isso o turbo roda com
+`VEDIC_SD_TURBO_GUIDANCE=1.5`. Sem `VEDIC_SD_MODEL`, o SDXL-Turbo é usado se
+estiver no cache; offline e sem os pesos, cai para o sd-turbo. Num M5 Max, uma
+figura de 512 px leva ~0,8 s; o vídeo SVD (14 quadros, 1024x576) ~1,5 min.
 
 Sem `ffmpeg` no `PATH`, a recitação é gravada sem o drone. `VEDIC_AUDIO_BED=0`
 desliga a cama e mantém a voz sozinha.

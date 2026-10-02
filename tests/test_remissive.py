@@ -11,7 +11,12 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from vedic_pipeline.api.app import create_app
-from vedic_pipeline.search.remissive import annotate_search, figure_prompt, get_figure
+from vedic_pipeline.search.remissive import (
+    annotate_search,
+    figure_negative,
+    figure_prompt,
+    get_figure,
+)
 
 
 def _hit(text: str, locator: str = "RV 1.1.1") -> dict:
@@ -62,8 +67,25 @@ class RemissiveTests(unittest.TestCase):
         gloss = get_figure("agni")
         self.assertIsNotNone(gloss)
         prompt = figure_prompt(gloss)
-        self.assertIn("Agni", prompt)
-        self.assertIn("no Latin", prompt)
+        self.assertTrue(prompt.startswith("Agni"))
+        for icon in ("two bearded heads", "seven flaming tongues", "red skin", "riding a ram", "ladle"):
+            self.assertIn(icon, prompt)
+        # "no X" no positivo atrai X: o que não deve aparecer vai no negativo.
+        self.assertNotIn("no Latin", prompt)
+        negative = figure_negative(gloss)
+        self.assertIn("letters", negative)
+        self.assertIn("blue skin", negative)
+
+    def test_portrait_prompts_fit_the_clip_window(self):
+        from vedic_pipeline.search.remissive import _GLOSSES
+
+        for gloss in _GLOSSES:
+            if get_figure(gloss.id) is None:
+                continue
+            prompt = figure_prompt(gloss)
+            # CLIP corta em 77 tokens; ~1,4 token por palavra deixa folga com 50.
+            self.assertLessEqual(len(prompt.split()), 50, gloss.id)
+            self.assertTrue(prompt.startswith(gloss.visual.split(",")[0]), gloss.id)
 
 
 class SearchAsideApiTests(unittest.TestCase):

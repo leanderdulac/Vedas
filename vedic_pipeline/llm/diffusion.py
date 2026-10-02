@@ -1,7 +1,9 @@
 """Mídia local com a família Stable Diffusion.
 
-- Imagem: Stable Diffusion (default `stabilityai/sd-turbo`). Com um still
-  já em disco e `force=True`, img2img refina a cena em vez de recomeçar.
+- Imagem: Stable Diffusion. `VEDIC_SD_MODEL` escolhe o modelo; sem ele, o
+  `stabilityai/sdxl-turbo` se estiver no cache, senão o `stabilityai/sd-turbo`
+  (também o fallback offline quando o modelo pedido não tem pesos locais). Com um still já em disco e `force=True`,
+  img2img refina a cena do verso em vez de recomeçar.
 - Vídeo: Stable Video Diffusion, a partir desse still, com pouco movimento.
 - Áudio: Stable Audio Open gera só um drone de tanpura. O Stable Diffusion
   não recita sânscrito; a fala continua no TTS e o drone entra por baixo.
@@ -26,6 +28,9 @@ import numpy as np
 logger = logging.getLogger("vedic_pipeline.llm.diffusion")
 
 DEFAULT_SD_MODEL = "stabilityai/sd-turbo"
+# Preferido quando já está no cache: desenha a iconografia (montaria, chamas,
+# concha) muito melhor que o sd-turbo, no mesmo tempo no MPS (~0,7 s a 512 px).
+PREFERRED_SD_MODEL = "stabilityai/sdxl-turbo"
 DEFAULT_SVD_MODEL = "stabilityai/stable-video-diffusion-img2vid-xt"
 DEFAULT_AUDIO_MODEL = "stabilityai/stable-audio-open-1.0"
 
@@ -79,14 +84,50 @@ def negative_prompt() -> str:
     )
 
 
+def image_model() -> str:
+    """Modelo de imagem: `VEDIC_SD_MODEL`, senão o SDXL-Turbo se já estiver no
+    cache, senão o sd-turbo.
+
+    Offline (`HF_HUB_OFFLINE=1`) um id sem snapshot local só falharia na carga;
+    o fallback mantém as figuras funcionando até o download.
+    """
+    model = (os.environ.get("VEDIC_SD_MODEL") or "").strip()
+    if not model:
+        return PREFERRED_SD_MODEL if _cached_snapshot(PREFERRED_SD_MODEL) else DEFAULT_SD_MODEL
+    if model == DEFAULT_SD_MODEL:
+        return model
+    offline = (os.environ.get("HF_HUB_OFFLINE") or "").strip().lower() in {"1", "true", "yes", "on"}
+    if offline and _cached_snapshot(model) is None:
+        logger.warning("VEDIC_SD_MODEL=%s não está no cache offline; usando %s", model, DEFAULT_SD_MODEL)
+        return DEFAULT_SD_MODEL
+    return model
+
+
 def sampling_for(model_name: str) -> tuple[int, float]:
-    """SD-Turbo exige guidance 0 e poucos passos. Os outros modelos usam CFG."""
+    """Turbo: poucos passos e um CFG leve (1,5) para o prompt negativo pesar.
+
+    Com guidance 0 o turbo ignora o negativo e o Agni saía de pele azul.
+    `VEDIC_SD_TURBO_GUIDANCE=0` volta ao modo sem CFG (metade do custo).
+    Os outros modelos usam CFG cheio (`VEDIC_SD_GUIDANCE`).
+    """
     steps = int(os.environ.get("VEDIC_SD_STEPS", "4"))
     steps = max(1, steps)
     if "turbo" in (model_name or "").lower():
+        raw = (os.environ.get("VEDIC_SD_TURBO_GUIDANCE") or "").strip()
+        guidance = float(raw) if raw else 1.5
+        if guidance > 1.0:
+            return min(steps, 8), min(guidance, 3.0)
         return min(steps, 4), 0.0
     guidance = float(os.environ.get("VEDIC_SD_GUIDANCE", "7.0"))
     return steps, guidance
+
+
+def img2img_steps(steps: int, strength: float) -> int:
+    """img2img roda `steps * strength` passos; abaixo de 1 o diffusers quebra."""
+    import math
+
+    strength = max(0.05, min(strength, 1.0))
+    return max(steps, math.ceil(1.0 / strength))
 
 
 def motion_bucket(prompt: str) -> int:
@@ -129,6 +170,18 @@ def mix_waveforms(
     if peak > 0.98:
         mixed = mixed * (0.98 / peak)
     return mixed.astype(np.float32)
+
+
+def normalize_peak(samples: np.ndarray, peak: float = 1.0) -> np.ndarray:
+    """O Stable Audio devolve o drone com pico ~0,02 (-34 dBFS).
+
+    Sem normalizar, o ganho de 0,18 da mistura o deixa inaudível sob a voz.
+    """
+    arr = np.asarray(samples, dtype=np.float32).reshape(-1)
+    top = float(np.max(np.abs(arr))) if arr.size else 0.0
+    if top < 1e-6:
+        return arr
+    return (arr * (peak / top)).astype(np.float32)
 
 
 def _resample(samples: np.ndarray, src_sr: int, dst_sr: int) -> np.ndarray:
@@ -263,13 +316,37 @@ def _image_pipes() -> tuple[Any, Any]:
     def load() -> tuple[Any, Any]:
         from diffusers import AutoPipelineForImage2Image, AutoPipelineForText2Image
 
-        model = os.environ.get("VEDIC_SD_MODEL", DEFAULT_SD_MODEL)
+        model = image_model()
         _device, dtype = _device_and_dtype()
+        logger.info("Carregando modelo de imagem %s", model)
         txt = _place(_from_pretrained(AutoPipelineForText2Image, model, torch_dtype=dtype))
         img = AutoPipelineForImage2Image.from_pipe(txt)
         return txt, img
 
-    return _cached_pipe("image", load)
+    return _cached_pipe(f"image:{image_model()}", load)
+
+
+def _warn_if_truncated(pipe: Any, prompt: str) -> None:
+    tokenizer = getattr(pipe, "tokenizer", None)
+    if tokenizer is None:
+        return
+    try:
+        count = len(tokenizer(prompt).input_ids)
+    except Exception:  # noqa: BLE001
+        return
+    limit = getattr(tokenizer, "model_max_length", 77) or 77
+    if count > limit:
+        logger.warning("Prompt com %d tokens; o CLIP lê só %d e corta o final", count, limit)
+
+
+def _generator() -> Any:
+    raw = (os.environ.get("VEDIC_SD_SEED") or "").strip()
+    if not raw.lstrip("-").isdigit():
+        return None
+    import torch
+
+    # MPS não tem gerador próprio estável; o ruído sai da CPU.
+    return torch.Generator("cpu").manual_seed(int(raw))
 
 
 def render_image(
@@ -282,21 +359,26 @@ def render_image(
     ensure_diffusion()
     from PIL import Image
 
-    model = os.environ.get("VEDIC_SD_MODEL", DEFAULT_SD_MODEL)
+    model = image_model()
     steps, guidance = sampling_for(model)
     size = int(os.environ.get("VEDIC_SD_SIZE", "512"))
-    size = max(256, min(size, 1024))
+    size = max(256, min(size, 1024)) // 8 * 8
     kwargs: dict[str, Any] = {
         "prompt": prompt,
         "num_inference_steps": steps,
         "guidance_scale": guidance,
     }
-    if guidance > 0:
+    if guidance > 1.0:
         kwargs["negative_prompt"] = negative or negative_prompt()
     with _PIPE_LOCK:
         txt, img = _image_pipes()
+        _warn_if_truncated(txt, prompt)
+        generator = _generator()
+        if generator is not None:
+            kwargs["generator"] = generator
         if init_image is not None:
             strength = float(os.environ.get("VEDIC_SD_STRENGTH", "0.35"))
+            kwargs["num_inference_steps"] = img2img_steps(steps, strength)
             init = Image.open(init_image).convert("RGB").resize((size, size))
             frame = img(image=init, strength=strength, **kwargs).images[0]
         else:
@@ -317,18 +399,46 @@ def _video_pipe() -> Any:
     return _cached_pipe("video", load)
 
 
+def video_size() -> tuple[int, int]:
+    """SVD foi treinado em 1024x576. `VEDIC_SVD_WIDTH` menor (ex.: 768) poupa memória."""
+    raw = (os.environ.get("VEDIC_SVD_WIDTH") or "").strip()
+    width = int(raw) if raw.isdigit() else 1024
+    width = max(512, min(width, 1024)) // 64 * 64
+    height = (width * 9 // 16) // 8 * 8
+    return width, height
+
+
+def _cover(image: Any, width: int, height: int) -> Any:
+    """Recorta ao centro para 16:9 e redimensiona, sem esticar o still quadrado."""
+    src_w, src_h = image.size
+    target = width / height
+    if src_w / src_h > target:
+        crop_w = int(src_h * target)
+        left = (src_w - crop_w) // 2
+        box = (left, 0, left + crop_w, src_h)
+    else:
+        crop_h = int(src_w / target)
+        # Retrato: mantém mais o alto do quadro, onde costumam estar rosto e chamas.
+        top = max(0, (src_h - crop_h) // 3)
+        box = (0, top, src_w, top + crop_h)
+    return image.crop(box).resize((width, height))
+
+
 def render_video(still: Path, dest: Path, motion: str) -> None:
     """MP4 curto a partir do still. Movimento sai do texto de `motion`."""
     ensure_diffusion()
     from diffusers.utils import export_to_video
     from PIL import Image
 
-    image = Image.open(still).convert("RGB").resize((1024, 576))
+    width, height = video_size()
+    image = _cover(Image.open(still).convert("RGB"), width, height)
     frames_n = int(os.environ.get("VEDIC_SVD_FRAMES", "14"))
     fps = int(os.environ.get("VEDIC_SVD_FPS", "7"))
     with _PIPE_LOCK:
         result = _video_pipe()(
             image,
+            width=width,
+            height=height,
             num_frames=max(8, frames_n),
             decode_chunk_size=4,
             motion_bucket_id=motion_bucket(motion),
@@ -476,5 +586,5 @@ def underlay_speech(speech: bytes, prompt: str) -> bytes:
     voice, voice_sr = _decode_mp3(speech)
     seconds = max(4.0, min(47.0, (len(voice) / voice_sr) + 0.5)) if voice_sr else 12.0
     bed, bed_sr = render_audio_bed(prompt, seconds)
-    bed = _resample(bed, bed_sr, voice_sr)
+    bed = normalize_peak(_resample(bed, bed_sr, voice_sr))
     return _encode_mp3(mix_waveforms(voice, bed), voice_sr)

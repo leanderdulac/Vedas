@@ -37,10 +37,57 @@ class BackendTests(unittest.TestCase):
             self.assertEqual(diffusion.media_backend(), "diffusion")
 
     def test_turbo_sampling_disables_guidance(self):
-        with patch.dict(os.environ, {"VEDIC_SD_STEPS": "4"}):
+        with patch.dict(os.environ, {"VEDIC_SD_STEPS": "4", "VEDIC_SD_TURBO_GUIDANCE": "0"}):
             self.assertEqual(diffusion.sampling_for("stabilityai/sd-turbo"), (4, 0.0))
+        with patch.dict(os.environ, {"VEDIC_SD_STEPS": "12", "VEDIC_SD_TURBO_GUIDANCE": "0"}):
+            self.assertEqual(diffusion.sampling_for("stabilityai/sdxl-turbo"), (4, 0.0))
+
+    def test_turbo_defaults_to_a_light_cfg(self):
+        with patch.dict(os.environ, {"VEDIC_SD_STEPS": "4", "VEDIC_SD_TURBO_GUIDANCE": ""}):
+            self.assertEqual(diffusion.sampling_for("stabilityai/sdxl-turbo"), (4, 1.5))
         with patch.dict(os.environ, {"VEDIC_SD_STEPS": "20", "VEDIC_SD_GUIDANCE": "6.5"}):
             self.assertEqual(diffusion.sampling_for("stabilityai/stable-diffusion-xl-base-1.0"), (20, 6.5))
+
+    def test_turbo_light_cfg_turns_on_the_negative(self):
+        with patch.dict(os.environ, {"VEDIC_SD_STEPS": "6", "VEDIC_SD_TURBO_GUIDANCE": "2"}):
+            self.assertEqual(diffusion.sampling_for("stabilityai/sd-turbo"), (6, 2.0))
+        with patch.dict(os.environ, {"VEDIC_SD_STEPS": "30", "VEDIC_SD_TURBO_GUIDANCE": "9"}):
+            self.assertEqual(diffusion.sampling_for("stabilityai/sdxl-turbo"), (8, 3.0))
+
+    def test_img2img_keeps_at_least_one_step(self):
+        self.assertEqual(diffusion.img2img_steps(1, 0.35), 3)
+        self.assertEqual(diffusion.img2img_steps(4, 0.35), 4)
+
+    def test_image_model_falls_back_when_offline_and_missing(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(
+            os.environ, {"HF_HOME": tmp, "HF_HUB_OFFLINE": "1", "VEDIC_SD_MODEL": "stabilityai/sdxl-turbo"}
+        ):
+            self.assertEqual(diffusion.image_model(), diffusion.DEFAULT_SD_MODEL)
+            snap = Path(tmp) / "hub" / "models--stabilityai--sdxl-turbo" / "snapshots" / "abc"
+            snap.mkdir(parents=True)
+            (snap / "model_index.json").write_text("{}")
+            (snap.parents[1] / "refs").mkdir()
+            (snap.parents[1] / "refs" / "main").write_text("abc")
+            self.assertEqual(diffusion.image_model(), "stabilityai/sdxl-turbo")
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {"HF_HOME": tmp, "VEDIC_SD_MODEL": ""}):
+            self.assertEqual(diffusion.image_model(), diffusion.DEFAULT_SD_MODEL)
+            snap = Path(tmp) / "hub" / "models--stabilityai--sdxl-turbo" / "snapshots" / "abc"
+            snap.mkdir(parents=True)
+            (snap / "model_index.json").write_text("{}")
+            (snap.parents[1] / "refs").mkdir()
+            (snap.parents[1] / "refs" / "main").write_text("abc")
+            self.assertEqual(diffusion.image_model(), diffusion.PREFERRED_SD_MODEL)
+
+    def test_video_still_is_cropped_not_stretched(self):
+        from PIL import Image
+
+        square = Image.new("RGB", (512, 512))
+        out = diffusion._cover(square, 1024, 576)
+        self.assertEqual(out.size, (1024, 576))
+        with patch.dict(os.environ, {"VEDIC_SVD_WIDTH": "768"}):
+            self.assertEqual(diffusion.video_size(), (768, 432))
+        with patch.dict(os.environ, {"VEDIC_SVD_WIDTH": ""}):
+            self.assertEqual(diffusion.video_size(), (1024, 576))
 
     def test_gentle_motion_uses_a_low_bucket(self):
         with patch.dict(os.environ, {"VEDIC_SVD_MOTION": ""}):
@@ -194,6 +241,13 @@ class MixTests(unittest.TestCase):
         self.assertEqual(mixed.shape, (10,))
         self.assertLessEqual(float(mixed.max()), 0.98)
 
+    def test_quiet_bed_is_normalized_before_the_mix(self):
+        quiet = np.array([0.0, 0.02, -0.01], dtype=np.float32)
+        loud = diffusion.normalize_peak(quiet)
+        self.assertAlmostEqual(float(np.max(np.abs(loud))), 1.0, places=5)
+        silent = np.zeros(3, dtype=np.float32)
+        self.assertEqual(diffusion.normalize_peak(silent).tolist(), [0.0, 0.0, 0.0])
+
     def test_empty_bed_returns_speech(self):
         speech = np.array([0.2, -0.2], dtype=np.float32)
         out = diffusion.mix_waveforms(speech, np.array([], dtype=np.float32))
@@ -244,6 +298,26 @@ class ImagineRoutingTests(unittest.TestCase):
             second = imagine.generate_verse_image("RV.1.1.1", force=True)
             self.assertEqual(second, first)
             self.assertEqual(render.call_args.kwargs.get("init_image"), first)
+
+    def test_figure_refresh_starts_over_with_the_negative(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
+            "vedic_pipeline.llm.diffusion.media_backend", return_value="diffusion"
+        ), patch("vedic_pipeline.llm.diffusion.render_image", return_value=b"j" * 2000) as render:
+            first = imagine.generate_figure_image("agni", "Agni, two heads", negative="blue skin")
+            self.assertTrue(first.exists())
+            imagine.generate_figure_image("agni", "Agni, two heads", negative="blue skin", force=True)
+            self.assertEqual(render.call_count, 2)
+            self.assertIsNone(render.call_args.kwargs.get("init_image"))
+            self.assertEqual(render.call_args.kwargs.get("negative"), "blue skin")
+
+    def test_compact_verse_prompt_puts_the_style_first(self):
+        meaning = " ".join(["word"] * 200)
+        bundle = {"locator": "RV 1.1.1", "witnesses": [{"role": "en", "text": meaning}]}
+        compact = imagine.visual_prompt(bundle, compact=True)
+        self.assertTrue(compact.startswith(imagine.COMPACT_STYLE))
+        self.assertLessEqual(len(compact.split()), 50)
+        self.assertNotIn("no Latin", compact)
+        self.assertIn("no Latin", imagine.visual_prompt(bundle))
 
     def test_xai_image_path_still_posts(self):
         bundle = {"locator": "RV 1.1.1", "witnesses": [{"role": "en", "text": "Agni"}]}
