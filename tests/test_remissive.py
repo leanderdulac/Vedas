@@ -113,6 +113,41 @@ class RemissiveTests(unittest.TestCase):
             self.assertIn("pasha", visual)
             self.assertNotIn("noose", visual)
 
+    def test_narada_has_a_sage_portrait(self):
+        aside = annotate_search("Narada Muni", [_hit("Vishnu and Indra", "VP 1.15"), _hit("Vishnu again", "VP 1.16")])
+        self.assertEqual(aside["figure"]["id"], "narada")
+        gloss = get_figure("narada")
+        prompt = figure_prompt(gloss)
+        for icon in ("veena", "tilaka", "topknot", "cymbals"):
+            self.assertIn(icon, prompt)
+        # Sábio não herda a coroa do estilo escultural.
+        self.assertNotIn("heavy ornate crown", prompt)
+        self.assertIn("crown", figure_negative(gloss))
+        self.assertIsNotNone(get_figure("brahma"))
+
+    def test_named_figure_without_gloss_gets_a_dynamic_portrait(self):
+        from vedic_pipeline.search import remissive
+
+        hits = [_hit("Vasishtha spoke to the king. Vasishtha blessed him."), _hit("And Vasishtha went home.")]
+        aside = annotate_search("Quem foi Vasishtha?", hits)
+        self.assertEqual(aside["figure"]["id"], "nome-vasishtha")
+        self.assertEqual(aside["figure"]["name"], "Vasishtha")
+        with patch.object(remissive, "_attested", return_value=True):
+            gloss = get_figure("nome-vasishtha")
+        self.assertIsNotNone(gloss)
+        self.assertTrue(figure_prompt(gloss).startswith("Vasishtha"))
+        self.assertNotIn("heavy ornate crown", figure_prompt(gloss))
+        with patch.object(remissive, "_attested", return_value=False):
+            self.assertIsNone(get_figure("nome-vasishtha"))
+        # Curado vence; slug inválido não vira prompt.
+        self.assertIsNone(get_figure("nome-agni"))
+        self.assertIsNone(get_figure("nome-<script>"))
+
+    def test_lowercase_terms_do_not_become_a_dynamic_portrait(self):
+        hits = [_hit("tapas burns; by tapas he rose; tapas again")]
+        aside = annotate_search("tapas", hits)
+        self.assertIsNone(aside["figure"])
+
 
 class SearchAsideApiTests(unittest.TestCase):
     def test_search_payload_carries_the_index(self):

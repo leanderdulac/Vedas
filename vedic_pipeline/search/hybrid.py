@@ -129,19 +129,32 @@ def clear_chunk_token_cache() -> None:
         _CHUNK_TOKEN_CACHE.clear()
 
 
-def lexical_scores(query: str, chunks: list[dict[str, Any]]) -> list[float]:
-    """BM25-light. Usa o índice invertido em disco quando os chunks são dele."""
+def lexical_scores(
+    query: str,
+    chunks: list[dict[str, Any]],
+    alternates: dict[str, list[str]] | None = None,
+) -> list[float]:
+    """BM25-light. Usa o índice invertido em disco quando os chunks são dele.
+
+    ``alternates`` dá grafias extras por token da query (Nárad para narada),
+    tratadas como as expansões: a primeira forma presente no chunk pontua.
+    """
     if chunks:
         from vedic_pipeline.search.lexical_index import scores_for_chunks
 
-        fast = scores_for_chunks(query, chunks)
+        fast = scores_for_chunks(query, chunks, alternates=alternates)
         if fast is not None:
             return fast
-    return _lexical_scores_scan(query, chunks)
+    return _lexical_scores_scan(query, chunks, alternates=alternates)
 
 
-def _lexical_scores_scan(query: str, chunks: list[dict[str, Any]]) -> list[float]:
+def _lexical_scores_scan(
+    query: str,
+    chunks: list[dict[str, Any]],
+    alternates: dict[str, list[str]] | None = None,
+) -> list[float]:
     """BM25 varrendo os chunks. O índice persistente reproduz esta conta."""
+    alternates = alternates or {}
     q_tokens = tokenize(query)
     if not q_tokens or not chunks:
         return [0.0] * len(chunks)
@@ -161,7 +174,7 @@ def _lexical_scores_scan(query: str, chunks: list[dict[str, Any]]) -> list[float
         for t in q_tokens:
             if t not in tf:
                 # tenta expansões do termo
-                alts = QUERY_EXPANSIONS.get(t, [])
+                alts = [*QUERY_EXPANSIONS.get(t, []), *alternates.get(t, [])]
                 found = False
                 for a in alts:
                     if a in tf:
@@ -910,10 +923,19 @@ def diversify_by_doc(
     return out
 
 
-def apply_title_and_size_boost(query: str, pool: list[dict[str, Any]]) -> None:
-    """Ajusta scores in-place: título, hinos curtos e penalidade leve de épicos."""
+def apply_title_and_size_boost(
+    query: str,
+    pool: list[dict[str, Any]],
+    *,
+    entity_mode: bool = False,
+) -> None:
+    """Ajusta scores in-place: título, hinos curtos e penalidade leve de épicos.
+
+    Em consulta de entidade o épico não é penalizado: é onde o personagem
+    tem mais episódios (Nārada aparece em centenas de trechos do Mahābhārata).
+    """
     q_tokens = set(tokenize(query))
-    wants_epic = bool(q_tokens & _EPIC_QUERY_HINTS)
+    wants_epic = entity_mode or bool(q_tokens & _EPIC_QUERY_HINTS)
     for c in pool:
         title = c.get("title") or ""
         text = c.get("text") or ""
@@ -955,6 +977,20 @@ def hybrid_rerank(
     pool + Cross-Encoder (locator de novo após o CE) + diversificação por
     doc_id.
     """
+    from vedic_pipeline.search.entity import (
+        ENTITY_MAX_PER_WORK,
+        apply_entity_mention_boost,
+        diversify_by_work,
+        entity_work_injections,
+        parse_entity_query,
+    )
+
+    # Consulta que só nomeia alguém ("Narada Muni"): léxico sem os títulos,
+    # grafias do corpus (Nárad), recall por obra e top-k diversificado por obra.
+    entity = parse_entity_query(query)
+    lex_query = entity.lexical_query() if entity else query
+    lex_alts = entity.alternates() if entity else None
+
     pool: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
 
@@ -970,7 +1006,7 @@ def hybrid_rerank(
 
     if all_chunks:
         # top lexicais do corpus chunkado
-        scores = lexical_scores(query, all_chunks)
+        scores = lexical_scores(lex_query, all_chunks, alternates=lex_alts)
         order = sorted(range(len(all_chunks)), key=lambda i: scores[i], reverse=True)
         for i in order[: max(top_k * 4, 20)]:
             if scores[i] <= 0:
@@ -985,6 +1021,9 @@ def hybrid_rerank(
             add(ch)
         for ch in locator_deity_injections(query, all_chunks, exclude_ids=seen_ids):
             add(ch)
+        if entity:
+            for ch in entity_work_injections(entity, all_chunks, scores, exclude_ids=seen_ids):
+                add(ch)
 
     if not pool:
         return []
@@ -995,7 +1034,7 @@ def hybrid_rerank(
         cid = str(h.get("chunk_id") or "")
         sem_score_map[cid] = float(h.get("score") or max(0.0, 1.0 - i * 0.02))
 
-    lex = lexical_scores(query, pool)
+    lex = lexical_scores(lex_query, pool, alternates=lex_alts)
     # Candidatos trazidos só pela via léxica (não no topo semântico) não podem
     # ser aniquilados por nota semântica 0: usam um piso = menor nota semântica
     # presente. Sem isso, um match forte de título/texto (ex.: query em latim
@@ -1017,10 +1056,12 @@ def hybrid_rerank(
         c.pop("_lex_score", None)
         c.pop("_sem_score", None)
 
-    apply_title_and_size_boost(query, pool)
+    apply_title_and_size_boost(query, pool, entity_mode=entity is not None)
     apply_locator_hymn_boost(query, pool)
     apply_locator_work_boost(query, pool)
     apply_short_rv_deity_boost(query, pool)
+    if entity:
+        apply_entity_mention_boost(entity, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
 
     if use_cross_encoder and is_reranker_enabled() and pool:
@@ -1033,11 +1074,15 @@ def hybrid_rerank(
         apply_locator_work_boost(query, pool)
         apply_short_rv_deity_boost(query, pool)
 
-    apply_phrase_boost(query, pool)
+    apply_phrase_boost(lex_query, pool)
     apply_anthology_demotion(query, pool)
     pool.sort(key=lambda x: float(x.get("score") or 0), reverse=True)
 
     # pool maior antes de diversificar
+    if entity:
+        return diversify_by_work(
+            pool, top_k=top_k, max_per_doc=max_per_doc, max_per_work=ENTITY_MAX_PER_WORK
+        )
     return diversify_by_doc(pool, top_k=top_k, max_per_doc=max_per_doc)
 
 

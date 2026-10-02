@@ -322,6 +322,11 @@ cinematográfica (`VEDIC_SCENE_STYLE=cinematic`); `miniature` volta ao estilo an
 referências opcionais (`VEDIC_IMAGE_STYLE_REF`, `VEDIC_SCENE_STYLE_REF`) apontam para imagens
 locais que nunca entram no git.
 
+Retratos com verbete (devas, Nārada, Brahmā, Śiva, Vyāsa, Vālmīki, Hanumān…) usam a iconografia
+curada; sábios não herdam a coroa do estilo. Uma consulta que só nomeia alguém sem verbete
+("Vasishtha") ganha uma figura `nome-<slug>` se o nome é próprio e atestado no acervo
+(maiúscula nos trechos e ≥3 chunks no índice lexical).
+
 Sem `ffmpeg` no `PATH`, a recitação é gravada sem o drone. `VEDIC_AUDIO_BED=0`
 desliga a cama e mantém a voz sozinha.
 
@@ -505,6 +510,13 @@ python scripts/smoke_rag.py
 python scripts/smoke_rag.py --backend numpy --strict
 python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_report.json
 ```
+
+Consultas de entidade ("Narada Muni", "Nārada", "Quem foi Vyāsa?") passam por
+`vedic_pipeline/search/entity.py`: tira títulos e palavras de pergunta, soma grafias do corpus
+(Griffith escreve "Nárad"), injeta os melhores trechos de cada obra que cita o nome, limita o
+top-k por obra (os quatro volumes do Mahābhārata contam como uma) e, no `/ask`, usa 14 trechos,
+contexto maior e um prompt que percorre cada tradição e diz quais obras de referência faltam.
+Pergunta com hino ou obra nomeados segue o caminho do localizador. `VEDIC_ENTITY_MODE=false` desliga.
 
 Gold set: `fixtures/smoke_queries.json` (37 queries: 19 anteriores + 18 beyond-stress após locator PRs #5–#9).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json` (recorte rápido de 4 queries). O gate de promote do CE usa o gold expandido, não o CI.

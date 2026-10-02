@@ -99,14 +99,35 @@ def format_rag_context(
     return "\n\n---\n\n".join(parts)
 
 
+ENTITY_ANSWER_GUIDE = (
+    "Esta pergunta nomeia um personagem ou tema que aparece em várias obras. {note}\n"
+    "Comece dizendo quem ele é. Depois percorra as tradições presentes nos textos acima, "
+    "um parágrafo para cada uma que tiver fonte (Veda e Upaniṣad; Mahābhārata e Bhagavad-gītā; "
+    "Rāmāyaṇa; Purāṇas), com os episódios e o papel dele em cada obra. Nesta pergunta a extensão "
+    "é maior: de 5 a 9 parágrafos (cerca de 450 a 800 palavras). Feche com uma frase curta dizendo "
+    "quais obras importantes para o tema não estão no acervo, escolhendo entre as ausentes listadas "
+    "(só as que a tradição de fato associa ao tema) e sem resumir o que elas dizem."
+)
+
+
 def build_rag_prompt(
     query: str,
     hits: list[dict[str, Any]],
     system_preamble: str | None = None,
+    *,
+    entity_note: str | None = None,
+    max_context_chars: int | None = None,
 ) -> dict[str, str]:
-    """Prompt orientado a resposta + inferência fundamentada."""
+    """Prompt orientado a resposta + inferência fundamentada.
+
+    ``entity_note`` (consulta de entidade) traz a cobertura do nome no acervo
+    e as obras ausentes; a resposta passa por cada tradição e diz o que falta.
+    """
     preamble = system_preamble or VEDIC_SYSTEM_PROMPT
-    context = format_rag_context(hits)
+    if max_context_chars:
+        context = format_rag_context(hits, max_chars=max_context_chars)
+    else:
+        context = format_rag_context(hits)
     if not hits:
         user = (
             f"Pergunta: {query}\n\n"
@@ -122,4 +143,6 @@ def build_rag_prompt(
             "maṇḍala, hino ou número de śloka. Traduza para o português as passagens em inglês que "
             "citar. Se as fontes divergirem (por exemplo, jñāna e bhakti), mostre a diferença."
         )
+        if entity_note:
+            user = f"{user}\n\n{ENTITY_ANSWER_GUIDE.format(note=entity_note.strip())}"
     return {"system": preamble, "user": user, "context": context}

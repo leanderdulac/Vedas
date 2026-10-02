@@ -10,6 +10,14 @@ from typing import Any
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR, DEFAULT_EMBEDDING_MODEL
 from vedic_pipeline.common.style import clean_prose
 from vedic_pipeline.llm.generate import generate_answer
+from vedic_pipeline.search.entity import (
+    ENTITY_MAX_TOKENS,
+    EntityQuery,
+    coverage_note,
+    entity_context_chars,
+    entity_top_k,
+    parse_entity_query,
+)
 from vedic_pipeline.search.hybrid import expand_query, hybrid_rerank
 from vedic_pipeline.search.rag import build_rag_prompt, get_index, retrieve
 from vedic_pipeline.storage.db import get_database_url
@@ -30,6 +38,38 @@ def _answer_lang(query: str) -> str:
     en = len(_EN_HINT.findall(query or ""))
     pt = len(_PT_HINT.findall(query or ""))
     return "en" if en > pt else "pt"
+
+
+def _entity_plan(
+    query: str, top_k: int, max_tokens: int, hybrid: bool
+) -> tuple[EntityQuery | None, int, int]:
+    """Consulta de entidade pede mais trechos e uma resposta mais longa."""
+    entity = parse_entity_query(query) if hybrid else None
+    if entity is None:
+        return None, top_k, max_tokens
+    return entity, max(top_k, entity_top_k()), max(max_tokens, ENTITY_MAX_TOKENS)
+
+
+def _entity_note(entity: EntityQuery | None, index_dir: Path) -> str | None:
+    if entity is None:
+        return None
+    try:
+        chunks = get_index(Path(index_dir)).get("chunks") or []
+        return coverage_note(entity, chunks) if chunks else None
+    except Exception:  # noqa: BLE001
+        logger.warning("Cobertura da entidade indisponível", exc_info=True)
+        return None
+
+
+def _prompt_for(query: str, hits: list[dict[str, Any]], entity: EntityQuery | None, index_dir: Path):
+    if entity is None:
+        return build_rag_prompt(query, hits)
+    return build_rag_prompt(
+        query,
+        hits,
+        entity_note=_entity_note(entity, index_dir),
+        max_context_chars=entity_context_chars(),
+    )
 
 
 def retrieve_hits(
@@ -75,6 +115,10 @@ def retrieve_hits(
             backend = "numpy"
 
     variants = expand_query(query)
+    entity = parse_entity_query(query) if hybrid else None
+    if entity and entity.display.casefold() not in {v.casefold() for v in variants}:
+        # "Narada Muni" → também "Narada" no denso (o título não identifica).
+        variants.insert(1, entity.display)
     fused: list[dict[str, Any]] = []
     seen: set[str] = set()
 
@@ -151,6 +195,7 @@ def ask(
     max_tokens: int = 1800,
     history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
+    entity, top_k, max_tokens = _entity_plan(query, top_k, max_tokens, hybrid)
     hits, used_backend = retrieve_hits(
         query,
         backend=backend,
@@ -161,7 +206,7 @@ def ask(
         embed_model=embed_model,
         hybrid=hybrid,
     )
-    prompt = build_rag_prompt(query, hits)
+    prompt = _prompt_for(query, hits, entity, index_dir)
     gen = generate_answer(
         prompt["system"],
         prompt["user"],
@@ -212,6 +257,7 @@ def ask_stream_events(
     """
     from vedic_pipeline.llm.generate import stream_answer
 
+    entity, top_k, max_tokens = _entity_plan(query, top_k, max_tokens, hybrid)
     hits, used_backend = retrieve_hits(
         query,
         backend=backend,
@@ -222,7 +268,7 @@ def ask_stream_events(
         embed_model=embed_model,
         hybrid=hybrid,
     )
-    prompt = build_rag_prompt(query, hits)
+    prompt = _prompt_for(query, hits, entity, index_dir)
     yield {
         "event": "meta",
         "data": {

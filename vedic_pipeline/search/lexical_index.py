@@ -46,8 +46,15 @@ class LexicalIndex:
     def n_docs(self) -> int:
         return len(self.chunk_ids)
 
-    def score(self, query: str, rows: list[int]) -> list[float]:
+    def score(
+        self,
+        query: str,
+        rows: list[int],
+        alternates: dict[str, list[str]] | None = None,
+    ) -> list[float]:
         from vedic_pipeline.search.hybrid import QUERY_EXPANSIONS, tokenize
+
+        alternates = alternates or {}
 
         n = len(rows)
         if n == 0:
@@ -74,7 +81,7 @@ class LexicalIndex:
         k1, b = 1.5, 0.75
         for raw in q_tokens:
             claimed = np.zeros(n, dtype=bool)
-            for term in (raw, *QUERY_EXPANSIONS.get(raw, [])):
+            for term in (raw, *QUERY_EXPANSIONS.get(raw, []), *alternates.get(raw, [])):
                 tid = self.vocab.get(term)
                 if tid is None:
                     continue
@@ -126,7 +133,11 @@ def register(index: LexicalIndex) -> None:
             _BY_CHUNK[cid] = index
 
 
-def scores_for_chunks(query: str, chunks: list[dict[str, Any]]) -> list[float] | None:
+def scores_for_chunks(
+    query: str,
+    chunks: list[dict[str, Any]],
+    alternates: dict[str, list[str]] | None = None,
+) -> list[float] | None:
     """None se estes chunks não são os do índice carregado."""
     if not chunks:
         return []
@@ -149,7 +160,16 @@ def scores_for_chunks(query: str, chunks: list[dict[str, Any]]) -> list[float] |
         if row is None:
             return None
         rows.append(row)
-    return index.score(query, rows)
+    return index.score(query, rows, alternates=alternates)
+
+
+def term_df(term: str) -> int | None:
+    """Nº de chunks com o termo no índice carregado (None se nenhum carregado)."""
+    index = next(iter(_BY_CHUNK.values()), None)
+    if index is None:
+        return None
+    tid = index.vocab.get(term)
+    return int(index.df[tid]) if tid is not None else 0
 
 
 def build_lexical_index(chunks: list[dict[str, Any]]) -> LexicalIndex:

@@ -31,6 +31,9 @@ class Gloss:
     see_also: tuple[str, ...]
     visual: str
     avoid: str = ""
+    # "" (traje do estilo), "ascetic" (sábio: coque, contas, sem coroa) ou
+    # "neutral" (figura sem verbete: o traje que a tradição lhe dá).
+    attire: str = ""
 
 
 # aliases são nomes, não palavras genéricas ("fire", "self", "lord").
@@ -56,6 +59,12 @@ _GLOSSES: tuple[Gloss, ...] = (
     Gloss("purusha", "Puruṣa", _KIND_PERSON, "a pessoa cósmica", "O ser cujo sacrifício é o mundo.", ("purusha", "puruṣa", "purusa", "पुरुष"), ("prajapati", "hiranyagarbha"), "Purusha, the cosmic man, vast serene giant with many heads and eyes, stars and worlds within his body, cosmic sky."),
     Gloss("prajapati", "Prajāpati", _KIND_PERSON, "o senhor das criaturas", "Quem gera e se esvazia na criação.", ("prajapati", "prajāpati", "प्रजापति"), ("purusha", "hiranyagarbha"), "Prajapati, lord of creatures, bearded progenitor seated on a lotus, animals and beings emerging around him, dawn light."),
     Gloss("vritra", "Vṛtra", _KIND_PERSON, "o que cobre as águas", "A serpente que Indra enfrenta.", ("vritra", "vṛtra", "vrtra", "वृत्र"), ("indra",), "Vritra, giant serpent dragon coiled over a mountain, holding back the waters, dark scales, storm clouds and lightning."),
+    Gloss("narada", "Nārada", _KIND_PERSON, "o sábio celeste (devarṣi)", "Filho de Brahmā nascido da mente, mensageiro entre os mundos, que canta o nome de Nārāyaṇa ao som da vīṇā.", ("narada", "nārada", "narad", "nārad", "नारद"), ("brahma", "vishnu", "krishna", "vyasa"), "Narada, the wandering celestial sage, serene ageless face with a short dark beard, hair in a topknot, Vaishnava tilaka on the forehead, tulasi bead necklaces, a mahati veena on his shoulder, small cymbals in hand, chanting.", "crown, helmet, armor, weapons, sitar, guitar, extra arms", "ascetic"),
+    Gloss("brahma", "Brahmā", _KIND_PERSON, "o criador", "O de quatro faces, nascido do lótus, que recita os Vedas.", ("brahma", "brahmā", "ब्रह्मा"), ("narada", "prajapati", "sarasvati"), "Brahma, the creator, exactly four bearded faces looking in four directions, golden skin, holding palm-leaf Vedas, a water pot and a rosary, seated on a pink lotus, a white swan beside him.", "single face, weapons"),
+    Gloss("shiva", "Śiva", _KIND_PERSON, "o auspicioso", "O asceta do Kailāsa, que dança e destrói para renovar.", ("shiva", "śiva", "siva", "mahadeva", "mahādeva", "शिव"), ("rudra", "parvati"), "Shiva, the great ascetic, ash-smeared pale-blue skin, blue throat, matted locks with a crescent moon and the river Ganga, third eye, serpent around his neck, trident and small drum, Mount Kailash.", "gore, horror", "ascetic"),
+    Gloss("vyasa", "Vyāsa", _KIND_PERSON, "o compilador dos Vedas", "Kṛṣṇa Dvaipāyana, que dividiu os Vedas e narrou o Mahābhārata.", ("vyasa", "vyāsa", "dvaipayana", "dwaipayana", "व्यास"), ("narada", "krishna", "arjuna"), "Vyasa, dark-skinned ancient sage with a long white beard and matted hair, seated in a forest hermitage, dictating from palm-leaf manuscripts, calm deep eyes.", "crown, armor, weapons", "ascetic"),
+    Gloss("valmiki", "Vālmīki", _KIND_PERSON, "o primeiro poeta", "O sábio que compôs o Rāmāyaṇa, a quem Nārada contou a história de Rāma.", ("valmiki", "vālmīki", "वाल्मीकि"), ("rama", "narada", "sita"), "Valmiki, the first poet, elderly sage with a white beard and matted hair, writing on palm leaves in a forest hermitage, an anthill beside him, a pair of birds overhead.", "crown, armor, weapons", "ascetic"),
+    Gloss("hanuman", "Hanumān", _KIND_PERSON, "o servo de Rāma", "O vānara, filho do Vento, que salta até Laṅkā.", ("hanuman", "hanumān", "hanumat", "हनुमान्"), ("rama", "sita", "vayu"), "Hanuman, mighty vanara devotee with a noble monkey face and golden-red fur, holding a mace, lifting a mountain of healing herbs, Rama's name on his lips, sky over the ocean."),
     Gloss("krishna", "Kṛṣṇa", _KIND_PERSON, "o de pele escura", "O auriga e mestre da Bhagavad-gītā.", ("krishna", "kṛṣṇa", "krsna", "कृष्ण"), ("arjuna",), "Krishna, blue-skinned charioteer in yellow silk, peacock feather crown, driving a war chariot with white horses, Kurukshetra battlefield."),
     Gloss("arjuna", "Arjuna", _KIND_PERSON, "o arqueiro", "O guerreiro que pergunta na Gītā.", ("arjuna", "अर्जुन"), ("krishna",), "Arjuna, archer prince holding the Gandiva bow lowered, standing in a war chariot, questioning, dawn over the Kurukshetra battlefield."),
     Gloss("rama", "Rāma", _KIND_PERSON, "o da linhagem de Raghu", "O príncipe do Rāmāyaṇa.", ("rama", "rāma", "raghava", "राम"), ("sita",), "Rama, blue-skinned prince with a great bow and quiver, bark-cloth garments, forest hermitage, calm face."),
@@ -84,6 +93,8 @@ def _compile(alias: str) -> re.Pattern[str]:
 
 
 _BY_ID: dict[str, Gloss] = {g.id: g for g in _GLOSSES}
+# Nome dobrado → id do verbete (curado vence a figura dinâmica).
+_ALIAS_INDEX: dict[str, str] = {_norm(a): g.id for g in _GLOSSES for a in (g.id, *g.aliases) if _norm(a)}
 _PATTERNS: dict[str, tuple[re.Pattern[str], ...]] = {
     g.id: tuple(_compile(a) for a in g.aliases if _norm(a)) for g in _GLOSSES
 }
@@ -117,7 +128,13 @@ def _ref(gloss_id: str, present_ids: set[str]) -> dict[str, Any] | None:
 
 
 def get_figure(figure_id: str) -> Gloss | None:
-    gloss = _BY_ID.get((figure_id or "").strip().lower())
+    key = (figure_id or "").strip().lower()
+    if key.startswith(DYNAMIC_PREFIX):
+        slug = key[len(DYNAMIC_PREFIX):]
+        if not _DYNAMIC_SLUG.match(slug) or slug.replace("-", " ") in _ALIAS_INDEX:
+            return None
+        return _dynamic_gloss(slug) if _attested(slug) else None
+    gloss = _BY_ID.get(key)
     if gloss is None or gloss.kind != _KIND_PERSON:
         return None
     return gloss
@@ -154,6 +171,21 @@ FIGURE_COMPACT_STYLES: dict[str, str] = {
 DEFAULT_FIGURE_STYLE = "sculpted"
 FIGURE_STYLE = FIGURE_STYLES[DEFAULT_FIGURE_STYLE]
 
+# Retrato de sábio não leva a coroa do estilo; figura sem verbete leva o
+# traje da própria tradição (o modelo conhece Vasiṣṭha, Prahlāda…).
+_ATTIRE_SWAPS: dict[str, tuple[tuple[str, str], ...]] = {
+    "ascetic": (
+        ("the deity rendered", "the sage rendered"),
+        ("heavy ornate crown, earrings and layered necklaces", "hair tied in a matted topknot, simple rudraksha and tulasi bead necklaces"),
+        ("ornate gold jewelry and crown", "simple bead necklaces and an ascetic's upper cloth"),
+    ),
+    "neutral": (
+        ("the deity rendered", "the figure rendered"),
+        ("heavy ornate crown, earrings and layered necklaces", "the attire and ornaments tradition gives this figure"),
+        ("ornate gold jewelry and crown", "the attire and ornaments tradition gives this figure"),
+    ),
+}
+
 FIGURE_NEGATIVE = (
     "text, letters, caption, watermark, logo, signature, modern clothing, deformed face, "
     "extra heads, extra fingers, blurry, lowres, cropped"
@@ -170,7 +202,88 @@ def figure_style() -> str:
 def figure_prompt(gloss: Gloss, *, compact: bool = False) -> str:
     visual = gloss.visual.strip() or f"{gloss.name}, {gloss.epithet}."
     styles = FIGURE_COMPACT_STYLES if compact else FIGURE_STYLES
-    return f"{visual} {styles[figure_style()]}"
+    style = styles[figure_style()]
+    for old, new in _ATTIRE_SWAPS.get(gloss.attire, ()):
+        style = style.replace(old, new)
+    return f"{visual} {style}"
+
+
+# ------------------------------------------------- figura sem verbete
+# Consulta que só nomeia alguém sem verbete ("Vasishtha", "Prahlada"): o
+# retrato sai do nome, se o nome for atestado no acervo como nome próprio.
+DYNAMIC_PREFIX = "nome-"
+_DYNAMIC_SLUG = re.compile(r"^[a-z]{3,24}(?:-[a-z]{3,24})?$")
+DYNAMIC_MIN_CAPITALIZED = 3
+DYNAMIC_MIN_DF = 3
+
+
+def _dynamic_gloss(slug: str, display: str | None = None) -> Gloss:
+    name = display or " ".join(part.capitalize() for part in slug.split("-"))
+    return Gloss(
+        id=f"{DYNAMIC_PREFIX}{slug}",
+        name=name,
+        kind=_KIND_PERSON,
+        epithet="personagem citado no acervo",
+        gloss="Ainda sem verbete próprio no índice; o retrato segue a iconografia tradicional do nome.",
+        aliases=tuple(slug.split("-")),
+        see_also=(),
+        visual=(
+            f"{name}, a figure of the Hindu sacred texts (Vedas, Itihasas and Puranas), shown with "
+            f"the traditional attributes by which devotional art recognizes {name}."
+        ),
+        avoid="extra arms, modern objects",
+        attire="neutral",
+    )
+
+
+def _attested(slug: str) -> bool:
+    """Cada parte do nome aparece em pelo menos DYNAMIC_MIN_DF chunks do acervo."""
+    from vedic_pipeline.search.lexical_index import term_df
+
+    parts = slug.split("-")
+    if term_df(parts[0]) is None:
+        try:
+            from vedic_pipeline.search.rag import get_index
+
+            get_index()  # carrega e registra o índice lexical
+        except Exception:  # noqa: BLE001
+            return False
+    for part in parts:
+        df = term_df(part)
+        if df is None or df < DYNAMIC_MIN_DF:
+            return False
+    return True
+
+
+def dynamic_figure(query: str, hits: list[dict[str, Any]]) -> Gloss | None:
+    """Figura para consulta de entidade sem verbete, se o nome é próprio no acervo.
+
+    Próprio = aparece com inicial maiúscula nos trechos (≥3 vezes e ≥80%);
+    "tapas" ou "yajna" em minúsculas não viram retrato.
+    """
+    from vedic_pipeline.search.entity import fold_ascii, parse_entity_query
+
+    entity = parse_entity_query(query)
+    if entity is None or len(entity.names) > 2:
+        return None
+    if any(n in _ALIAS_INDEX for n in entity.names):
+        return None
+    forms = entity.all_forms()
+    upper = lower = 0
+    for hit in hits:
+        for match in re.finditer(r"[^\W\d_]+", str(hit.get("text") or "")):
+            word = match.group()
+            if fold_ascii(word) in forms:
+                if word[0].isupper():
+                    upper += 1
+                else:
+                    lower += 1
+    if upper < DYNAMIC_MIN_CAPITALIZED or upper < 4 * lower:
+        return None
+    slug = "-".join(entity.names)
+    if not _DYNAMIC_SLUG.match(slug):
+        return None
+    return _dynamic_gloss(slug, display=entity.display.title() if entity.display.isascii() else entity.display)
 
 
 def figure_negative(gloss: Gloss) -> str:
@@ -204,7 +317,17 @@ def annotate_search(query: str, hits: list[dict[str, Any]]) -> dict[str, Any]:
 
     people = [item for item in found if item[0].kind == _KIND_PERSON]
     figure: dict[str, Any] | None = None
-    if people:
+    named_in_query = any(in_query for _gloss, in_query, _locs in found)
+    dynamic = None if named_in_query else dynamic_figure(query, hits)
+    if dynamic is not None:
+        forms = set(dynamic.aliases)
+        locators = [
+            _locator(hit, i)
+            for i, hit in enumerate(hits)
+            if any(re.search(rf"(?<!\w){re.escape(f)}(?!\w)", normed) for f in forms for normed in [hit_norms[i]])
+        ]
+        figure = _public(dynamic, True, locators, present)
+    elif people:
         gloss, in_query, locators = max(people, key=score)
         if in_query or locators:
             figure = _public(gloss, in_query, locators, present)
