@@ -288,6 +288,28 @@ azul) vai no prompt negativo, que só pesa com CFG: por isso o turbo roda com
 estiver no cache; offline e sem os pesos, cai para o sd-turbo. Num M5 Max, uma
 figura de 512 px leva ~0,8 s; o vídeo SVD (14 quadros, 1024x576) ~1,5 min.
 
+### Modo qualidade das imagens
+
+O turbo a 512 px sai tosco. Comparação em outubro de 2026 (Agni e RV 1.1.1,
+M5 Max, mesmo prompt):
+
+| Candidato | Tempo/imagem | Resultado |
+| --- | --- | --- |
+| `grok-imagine-image-quality` (xAI) | ~6 s, US$ 0,05 | Duas cabeças, carneiro, conchas; cena do verso fiel. Escolhido. |
+| `grok-imagine-image-2.0` (xAI) | ~18 s, US$ 0,04 | Mesma qualidade, mas escreveu "अग्नि" na moldura. |
+| SDXL base 1.0 (+ refiner), 1024 px, 30 passos | 14–16 s | Estilo de miniatura autêntico, mas o Agni vira uma deusa de muitos braços. |
+| Playground v2.5, 1024 px | ~13 s | Pintura rica, uma cabeça, sem carneiro; verso confuso. |
+| Turbo 512 → img2img 1024 | ~6 s | Mais nítido, mesma composição tosca. |
+
+Por isso `VEDIC_IMAGE_BACKEND=xai` manda figuras e stills para o Grok Imagine
+e o vídeo e o drone continuam locais. O Imagine não tem prompt negativo: as
+proibições entram como uma frase "Avoid: …" e o prompt pede para não escrever
+letras. Se o xAI falhar e o extra media existir, a imagem sai do turbo local
+(`render_image(fast=True)`). Para ficar 100% local em qualidade, use
+`VEDIC_IMAGE_BACKEND=diffusion` com `VEDIC_SD_MODEL` completo: 1024 px, 30
+passos e CFG 7 por padrão, com `VEDIC_SD_REFINER` e `VEDIC_SD_UPSCALE`
+opcionais.
+
 Sem `ffmpeg` no `PATH`, a recitação é gravada sem o drone. `VEDIC_AUDIO_BED=0`
 desliga a cama e mantém a voz sozinha.
 

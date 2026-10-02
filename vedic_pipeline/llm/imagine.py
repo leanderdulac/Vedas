@@ -18,7 +18,10 @@ from vedic_pipeline.api.verse_service import get_verse
 logger = logging.getLogger("vedic_pipeline.llm.imagine")
 
 MEDIA_DIR = Path("data/media")
-IMAGE_MODEL = os.environ.get("XAI_IMAGE_MODEL", "grok-imagine-image-2.0")
+# Modo qualidade: o grok-imagine-image-quality desenha a iconografia (duas
+# cabeças do Agni, carneiro, concha) que nenhum SDXL local acertou, em ~6 s e
+# US$ 0,05 por imagem. `XAI_IMAGE_MODEL=grok-imagine-image-2.0` custa US$ 0,04.
+IMAGE_MODEL = "grok-imagine-image-quality"
 VIDEO_MODEL = os.environ.get("XAI_VIDEO_MODEL", "grok-imagine-video-1.5")
 DEFAULT_BASE = "https://api.x.ai/v1"
 
@@ -78,6 +81,24 @@ def list_cached_media() -> dict[str, list[str]]:
 # Stable Diffusion lê só 77 tokens do CLIP: estilo primeiro, sentido curto depois.
 # As proibições ficam no prompt negativo (`diffusion.negative_prompt`).
 COMPACT_STYLE = "Pahari miniature painting, Indian devotional art, soft mineral pigments, gold detail"
+
+
+def xai_image_model() -> str:
+    return (os.environ.get("XAI_IMAGE_MODEL") or "").strip() or IMAGE_MODEL
+
+
+def xai_image_prompt(prompt: str, negative: str | None = None) -> str:
+    """O Imagine não tem prompt negativo: as proibições viram uma frase final.
+
+    Sem ela o modelo escreve o nome da figura em devanágari na moldura.
+    """
+    text = prompt.strip()
+    avoid = (negative or "").strip().strip(",")
+    if avoid:
+        text = f"{text} Avoid: {avoid}."
+    if "lettering" not in text.lower():
+        text = f"{text} No text, captions or lettering anywhere in the image."
+    return text
 
 
 def _short(text: str, words: int) -> str:
@@ -176,19 +197,42 @@ def _download_media_bytes(url: str, *, timeout: float = 60.0, limit: int = 25 * 
     raise ValueError("Muitos redirects ao baixar mídia")
 
 
-def _provider_image(prompt: str, init: Path | None, negative: str | None = None) -> bytes:
-    from vedic_pipeline.llm.diffusion import media_backend, render_image
+def _provider_image(
+    prompt: str,
+    init: Path | None,
+    negative: str | None = None,
+    *,
+    fallback_prompt: str | None = None,
+) -> bytes:
+    """Bytes da imagem pelo backend de imagem.
 
-    if media_backend() == "diffusion":
+    Com o xAI, uma falha (sem chave, recusa, rede) cai no turbo local quando o
+    extra media existe; `fallback_prompt` é a versão curta para os 77 tokens.
+    """
+    from vedic_pipeline.llm.diffusion import diffusion_installed, image_backend, render_image
+
+    if image_backend() == "diffusion":
         # Still já gerado: img2img preserva a cena e refina o pigmento.
         return render_image(prompt, negative=negative, init_image=init)
+    try:
+        return _xai_image(prompt, negative)
+    except (RuntimeError, ValueError, httpx.HTTPError) as exc:
+        if not diffusion_installed():
+            raise
+        logger.warning("Imagine falhou (%s); usando o turbo local", exc)
+        return render_image(fallback_prompt or prompt, negative=negative, fast=True)
+
+
+def _xai_image(prompt: str, negative: str | None = None) -> bytes:
     with _client() as client:
         resp = client.post(
             "/images/generations",
             json={
-                "model": IMAGE_MODEL,
-                "prompt": prompt,
+                "model": xai_image_model(),
+                "prompt": xai_image_prompt(prompt, negative),
                 "n": 1,
+                "aspect_ratio": "1:1",
+                "response_format": "b64_json",
             },
         )
         if resp.status_code >= 400:
@@ -220,10 +264,13 @@ def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
     bundle = get_verse(verse_id)
     if not bundle:
         raise FileNotFoundError(f"Verso {verse_id} não encontrado")
-    from vedic_pipeline.llm.diffusion import media_backend
+    from vedic_pipeline.llm.diffusion import image_backend
 
-    prompt = visual_prompt(bundle, compact=media_backend() == "diffusion")
-    raw = _provider_image(prompt, dest if cached else None)
+    compact = visual_prompt(bundle, compact=True)
+    if image_backend() == "diffusion":
+        raw = _provider_image(compact, dest if cached else None)
+    else:
+        raw = _provider_image(visual_prompt(bundle), None, fallback_prompt=compact)
     return _save_image_bytes(dest, raw)
 
 

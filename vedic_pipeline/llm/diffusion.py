@@ -1,9 +1,15 @@
 """Mídia local com a família Stable Diffusion.
 
-- Imagem: Stable Diffusion. `VEDIC_SD_MODEL` escolhe o modelo; sem ele, o
-  `stabilityai/sdxl-turbo` se estiver no cache, senão o `stabilityai/sd-turbo`
-  (também o fallback offline quando o modelo pedido não tem pesos locais). Com um still já em disco e `force=True`,
-  img2img refina a cena do verso em vez de recomeçar.
+- Imagem: `VEDIC_IMAGE_BACKEND=xai` manda as figuras e os stills para o
+  Grok Imagine (modo qualidade); `diffusion` gera local. Local,
+  `VEDIC_SD_MODEL` escolhe o modelo; sem ele, o `stabilityai/sdxl-turbo` se
+  estiver no cache, senão o `stabilityai/sd-turbo` (também o fallback offline
+  quando o modelo pedido não tem pesos locais). Modelos completos (SDXL base,
+  Playground) rodam a 1024 px com CFG cheio e aceitam refiner
+  (`VEDIC_SD_REFINER`) e upscale 2x com img2img (`VEDIC_SD_UPSCALE`). O modo
+  rápido (`fast=True`) é sempre o turbo a 512 px: é o fallback quando o xAI
+  falha. Com um still já em disco e `force=True`, img2img refina a cena do
+  verso em vez de recomeçar.
 - Vídeo: Stable Video Diffusion, a partir desse still, com pouco movimento.
 - Áudio: Stable Audio Open gera só um drone de tanpura. O Stable Diffusion
   não recita sânscrito; a fala continua no TTS e o drone entra por baixo.
@@ -61,6 +67,20 @@ def media_backend() -> str:
     return "diffusion" if diffusion_installed() else "xai"
 
 
+def image_backend() -> str:
+    """Backend só das imagens: `VEDIC_IMAGE_BACKEND`, senão o de mídia.
+
+    Permite stills e figuras no Grok Imagine (melhor iconografia) com o vídeo
+    e o drone ainda locais.
+    """
+    choice = (os.environ.get("VEDIC_IMAGE_BACKEND") or "").strip().lower()
+    if choice in {"xai", "diffusion"}:
+        return choice
+    if choice not in {"", "auto"}:
+        logger.warning("VEDIC_IMAGE_BACKEND=%r desconhecido; usando VEDIC_MEDIA_BACKEND", choice)
+    return media_backend()
+
+
 def audio_bed_enabled() -> bool:
     """Drone de tanpura por baixo do TTS. `auto` liga só com o backend diffusion."""
     flag = (os.environ.get("VEDIC_AUDIO_BED") or "auto").strip().lower()
@@ -103,16 +123,34 @@ def image_model() -> str:
     return model
 
 
+def is_turbo(model_name: str) -> bool:
+    return "turbo" in (model_name or "").lower()
+
+
+def fast_image_model() -> str:
+    """Modelo do modo rápido: SDXL-Turbo se estiver no cache, senão o sd-turbo."""
+    return PREFERRED_SD_MODEL if _cached_snapshot(PREFERRED_SD_MODEL) else DEFAULT_SD_MODEL
+
+
+def image_size(model_name: str) -> int:
+    """`VEDIC_SD_SIZE`; sem ele, 512 no turbo (resolução de treino) e 1024 no resto."""
+    raw = (os.environ.get("VEDIC_SD_SIZE") or "").strip()
+    size = int(raw) if raw.isdigit() else (512 if is_turbo(model_name) else 1024)
+    return max(256, min(size, 1024)) // 8 * 8
+
+
 def sampling_for(model_name: str) -> tuple[int, float]:
     """Turbo: poucos passos e um CFG leve (1,5) para o prompt negativo pesar.
 
     Com guidance 0 o turbo ignora o negativo e o Agni saía de pele azul.
     `VEDIC_SD_TURBO_GUIDANCE=0` volta ao modo sem CFG (metade do custo).
-    Os outros modelos usam CFG cheio (`VEDIC_SD_GUIDANCE`).
+    Os outros modelos usam CFG cheio (`VEDIC_SD_GUIDANCE`, 7) e 30 passos
+    por padrão (`VEDIC_SD_STEPS`).
     """
-    steps = int(os.environ.get("VEDIC_SD_STEPS", "4"))
+    raw_steps = (os.environ.get("VEDIC_SD_STEPS") or "").strip()
+    steps = int(raw_steps) if raw_steps.isdigit() else (4 if is_turbo(model_name) else 30)
     steps = max(1, steps)
-    if "turbo" in (model_name or "").lower():
+    if is_turbo(model_name):
         raw = (os.environ.get("VEDIC_SD_TURBO_GUIDANCE") or "").strip()
         guidance = float(raw) if raw else 1.5
         if guidance > 1.0:
@@ -312,18 +350,77 @@ def _cached_pipe(key: str, factory: Any) -> Any:
     return pipe
 
 
-def _image_pipes() -> tuple[Any, Any]:
+def _image_pipes(model: str | None = None) -> tuple[Any, Any]:
+    model = model or image_model()
+
     def load() -> tuple[Any, Any]:
         from diffusers import AutoPipelineForImage2Image, AutoPipelineForText2Image
 
-        model = image_model()
         _device, dtype = _device_and_dtype()
         logger.info("Carregando modelo de imagem %s", model)
         txt = _place(_from_pretrained(AutoPipelineForText2Image, model, torch_dtype=dtype))
+        # A 1024 px o VAE decodifica em blocos: evita o pico de memória no MPS.
+        vae = getattr(txt, "vae", None)
+        if vae is not None and hasattr(vae, "enable_tiling") and not is_turbo(model):
+            vae.enable_tiling()
         img = AutoPipelineForImage2Image.from_pipe(txt)
+        img.set_progress_bar_config(disable=True)
         return txt, img
 
-    return _cached_pipe(f"image:{image_model()}", load)
+    return _cached_pipe(f"image:{model}", load)
+
+
+def refiner_model() -> str | None:
+    """`VEDIC_SD_REFINER` (ex.: stabilityai/stable-diffusion-xl-refiner-1.0).
+
+    Só vale para modelos completos; no turbo e offline sem pesos é ignorado.
+    """
+    model = (os.environ.get("VEDIC_SD_REFINER") or "").strip()
+    if not model or model.lower() in {"0", "off", "none", "false"}:
+        return None
+    offline = (os.environ.get("HF_HUB_OFFLINE") or "").strip().lower() in {"1", "true", "yes", "on"}
+    if offline and _cached_snapshot(model) is None:
+        logger.warning("VEDIC_SD_REFINER=%s não está no cache offline; seguindo sem refiner", model)
+        return None
+    return model
+
+
+def refiner_split() -> float:
+    """Fração do ruído que fica com o base antes do refiner (ensemble of experts)."""
+    raw = (os.environ.get("VEDIC_SD_REFINER_SPLIT") or "").strip()
+    try:
+        value = float(raw) if raw else 0.8
+    except ValueError:
+        value = 0.8
+    return max(0.5, min(value, 0.95))
+
+
+def upscale_factor() -> float:
+    """`VEDIC_SD_UPSCALE=2` amplia o quadro e refaz o detalhe com img2img (hires fix)."""
+    raw = (os.environ.get("VEDIC_SD_UPSCALE") or "").strip()
+    try:
+        value = float(raw) if raw else 1.0
+    except ValueError:
+        value = 1.0
+    return max(1.0, min(value, 2.0))
+
+
+def _refiner_pipe(model: str, base: Any) -> Any:
+    """O refiner reaproveita o segundo text encoder e o VAE do base."""
+
+    def load() -> Any:
+        from diffusers import StableDiffusionXLImg2ImgPipeline
+
+        _device, dtype = _device_and_dtype()
+        shared: dict[str, Any] = {"torch_dtype": dtype}
+        for name in ("text_encoder_2", "vae"):
+            module = getattr(base, name, None)
+            if module is not None:
+                shared[name] = module
+        logger.info("Carregando refiner %s", model)
+        return _place(_from_pretrained(StableDiffusionXLImg2ImgPipeline, model, **shared))
+
+    return _cached_pipe(f"refiner:{model}", load)
 
 
 def _warn_if_truncated(pipe: Any, prompt: str) -> None:
@@ -354,15 +451,25 @@ def render_image(
     *,
     negative: str | None = None,
     init_image: Path | None = None,
+    fast: bool = False,
 ) -> bytes:
-    """JPEG. `init_image` refina o still existente (img2img)."""
+    """JPEG. `init_image` refina o still existente (img2img).
+
+    `fast=True` ignora o modo qualidade e usa o turbo a 512 px em 4 passos.
+    """
     ensure_diffusion()
     from PIL import Image
 
-    model = image_model()
-    steps, guidance = sampling_for(model)
-    size = int(os.environ.get("VEDIC_SD_SIZE", "512"))
-    size = max(256, min(size, 1024)) // 8 * 8
+    if fast:
+        model = fast_image_model()
+        steps, guidance, size = 4, 1.5, 512
+        refiner, upscale = None, 1.0
+    else:
+        model = image_model()
+        steps, guidance = sampling_for(model)
+        size = image_size(model)
+        refiner = None if is_turbo(model) else refiner_model()
+        upscale = 1.0 if is_turbo(model) else upscale_factor()
     kwargs: dict[str, Any] = {
         "prompt": prompt,
         "num_inference_steps": steps,
@@ -371,18 +478,26 @@ def render_image(
     if guidance > 1.0:
         kwargs["negative_prompt"] = negative or negative_prompt()
     with _PIPE_LOCK:
-        txt, img = _image_pipes()
+        txt, img = _image_pipes(model)
         _warn_if_truncated(txt, prompt)
         generator = _generator()
         if generator is not None:
             kwargs["generator"] = generator
         if init_image is not None:
             strength = float(os.environ.get("VEDIC_SD_STRENGTH", "0.35"))
-            kwargs["num_inference_steps"] = img2img_steps(steps, strength)
             init = Image.open(init_image).convert("RGB").resize((size, size))
-            frame = img(image=init, strength=strength, **kwargs).images[0]
+            frame = img(image=init, strength=strength, **{**kwargs, "num_inference_steps": img2img_steps(steps, strength)}).images[0]
+        elif refiner:
+            split = refiner_split()
+            latents = txt(height=size, width=size, denoising_end=split, output_type="latent", **kwargs).images
+            frame = _refiner_pipe(refiner, txt)(image=latents, denoising_start=split, **kwargs).images[0]
         else:
             frame = txt(height=size, width=size, **kwargs).images[0]
+        if upscale > 1.0 and init_image is None:
+            target = min(2048, int(size * upscale) // 8 * 8)
+            strength = float(os.environ.get("VEDIC_SD_UPSCALE_STRENGTH", "0.3"))
+            big = frame.resize((target, target), Image.LANCZOS)
+            frame = img(image=big, strength=strength, **{**kwargs, "num_inference_steps": img2img_steps(steps, strength)}).images[0]
         buf = io.BytesIO()
         frame.save(buf, format="JPEG", quality=90)
         return buf.getvalue()

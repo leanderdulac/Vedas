@@ -289,7 +289,7 @@ class ImagineRoutingTests(unittest.TestCase):
     def test_diffusion_txt2img_then_refine(self):
         bundle = {"locator": "RV 1.1.1", "witnesses": [{"role": "en", "text": "I Laud Agni"}]}
         with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
-            "vedic_pipeline.llm.diffusion.media_backend", return_value="diffusion"
+            "vedic_pipeline.llm.diffusion.image_backend", return_value="diffusion"
         ), patch("vedic_pipeline.llm.diffusion.render_image", return_value=b"j" * 2000) as render, patch.object(
             imagine, "get_verse", return_value=bundle
         ):
@@ -302,7 +302,7 @@ class ImagineRoutingTests(unittest.TestCase):
 
     def test_figure_refresh_starts_over_with_the_negative(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
-            "vedic_pipeline.llm.diffusion.media_backend", return_value="diffusion"
+            "vedic_pipeline.llm.diffusion.image_backend", return_value="diffusion"
         ), patch("vedic_pipeline.llm.diffusion.render_image", return_value=b"j" * 2000) as render:
             first = imagine.generate_figure_image("agni", "Agni, two heads", negative="blue skin")
             self.assertTrue(first.exists())
@@ -324,7 +324,7 @@ class ImagineRoutingTests(unittest.TestCase):
         bundle = {"locator": "RV 1.1.1", "witnesses": [{"role": "en", "text": "Agni"}]}
         client = _FakeClient()
         with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
-            "vedic_pipeline.llm.diffusion.media_backend", return_value="xai"
+            "vedic_pipeline.llm.diffusion.image_backend", return_value="xai"
         ), patch.object(imagine, "get_verse", return_value=bundle), patch.object(
             imagine, "_client", return_value=client
         ):
@@ -396,6 +396,83 @@ class AudioBedTests(unittest.TestCase):
         ):
             path = tts.cached_verse_audio("RV.1.1.1", "agnim", language="sa")
             self.assertEqual(path.read_bytes(), b"speech")
+
+
+class QualityModeTests(unittest.TestCase):
+    def test_image_backend_overrides_media_backend(self):
+        with patch.dict(os.environ, {"VEDIC_IMAGE_BACKEND": "xai", "VEDIC_MEDIA_BACKEND": "diffusion"}):
+            self.assertEqual(diffusion.image_backend(), "xai")
+            self.assertEqual(diffusion.media_backend(), "diffusion")
+        with patch.dict(os.environ, {"VEDIC_IMAGE_BACKEND": "", "VEDIC_MEDIA_BACKEND": "diffusion"}):
+            self.assertEqual(diffusion.image_backend(), "diffusion")
+        with patch.dict(os.environ, {"VEDIC_IMAGE_BACKEND": "bogus", "VEDIC_MEDIA_BACKEND": "xai"}):
+            self.assertEqual(diffusion.image_backend(), "xai")
+
+    def test_full_models_default_to_1024_and_30_steps(self):
+        with patch.dict(os.environ, {"VEDIC_SD_SIZE": "", "VEDIC_SD_STEPS": "", "VEDIC_SD_GUIDANCE": "6.5"}):
+            self.assertEqual(diffusion.image_size("stabilityai/stable-diffusion-xl-base-1.0"), 1024)
+            self.assertEqual(diffusion.image_size("stabilityai/sdxl-turbo"), 512)
+            self.assertEqual(diffusion.sampling_for("stabilityai/stable-diffusion-xl-base-1.0"), (30, 6.5))
+            self.assertEqual(diffusion.sampling_for("stabilityai/sdxl-turbo")[0], 4)
+        with patch.dict(os.environ, {"VEDIC_SD_SIZE": "4096"}):
+            self.assertEqual(diffusion.image_size("x/y"), 1024)
+
+    def test_refiner_and_upscale_are_opt_in(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(
+            os.environ, {"HF_HOME": tmp, "HF_HUB_OFFLINE": "1", "VEDIC_SD_REFINER": "stabilityai/stable-diffusion-xl-refiner-1.0"}
+        ):
+            self.assertIsNone(diffusion.refiner_model())
+        with patch.dict(os.environ, {"HF_HUB_OFFLINE": "0", "VEDIC_SD_REFINER": "off"}):
+            self.assertIsNone(diffusion.refiner_model())
+        with patch.dict(os.environ, {"HF_HUB_OFFLINE": "0", "VEDIC_SD_REFINER": "org/refiner"}):
+            self.assertEqual(diffusion.refiner_model(), "org/refiner")
+        with patch.dict(os.environ, {"VEDIC_SD_UPSCALE": ""}):
+            self.assertEqual(diffusion.upscale_factor(), 1.0)
+        with patch.dict(os.environ, {"VEDIC_SD_UPSCALE": "9"}):
+            self.assertEqual(diffusion.upscale_factor(), 2.0)
+        with patch.dict(os.environ, {"VEDIC_SD_REFINER_SPLIT": "abc"}):
+            self.assertEqual(diffusion.refiner_split(), 0.8)
+
+    def test_xai_prompt_carries_the_negative_and_bans_lettering(self):
+        text = imagine.xai_image_prompt("Agni, two heads.", "blue skin, single head")
+        self.assertIn("Avoid: blue skin, single head.", text)
+        self.assertIn("No text, captions or lettering", text)
+        already = imagine.xai_image_prompt("Scene, no Latin or Devanagari lettering in the frame.")
+        self.assertEqual(already.count("lettering"), 1)
+
+    def test_xai_figure_uses_the_quality_model(self):
+        client = _FakeClient()
+        with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
+            "vedic_pipeline.llm.diffusion.image_backend", return_value="xai"
+        ), patch.object(imagine, "_client", return_value=client), patch.dict(os.environ, {"XAI_IMAGE_MODEL": ""}):
+            path = imagine.generate_figure_image("agni", "Agni, two heads", negative="blue skin")
+            self.assertTrue(path.exists())
+            body = client.posts[0][1]
+            self.assertEqual(body["model"], "grok-imagine-image-quality")
+            self.assertEqual(body["response_format"], "b64_json")
+            self.assertIn("Avoid: blue skin.", body["prompt"])
+
+    def test_xai_failure_falls_back_to_fast_turbo(self):
+        bundle = {"locator": "RV 1.1.1", "witnesses": [{"role": "en", "text": "I Laud Agni"}]}
+        with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
+            "vedic_pipeline.llm.diffusion.image_backend", return_value="xai"
+        ), patch("vedic_pipeline.llm.diffusion.diffusion_installed", return_value=True), patch.object(
+            imagine, "_client", side_effect=RuntimeError("XAI_API_KEY não definida")
+        ), patch("vedic_pipeline.llm.diffusion.render_image", return_value=b"j" * 2000) as render, patch.object(
+            imagine, "get_verse", return_value=bundle
+        ):
+            path = imagine.generate_verse_image("RV.1.1.1")
+            self.assertTrue(path.exists())
+            self.assertTrue(render.call_args.kwargs.get("fast"))
+            self.assertTrue(render.call_args.args[0].startswith(imagine.COMPACT_STYLE))
+
+    def test_xai_failure_without_media_extra_raises(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(imagine, "MEDIA_DIR", Path(tmp)), patch(
+            "vedic_pipeline.llm.diffusion.image_backend", return_value="xai"
+        ), patch("vedic_pipeline.llm.diffusion.diffusion_installed", return_value=False), patch.object(
+            imagine, "_client", side_effect=RuntimeError("XAI_API_KEY não definida")
+        ), self.assertRaises(RuntimeError):
+            imagine.generate_figure_image("agni", "Agni")
 
 
 if __name__ == "__main__":
