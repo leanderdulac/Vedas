@@ -89,7 +89,10 @@ def build_embedding_index(
     if not corpus_path.exists():
         raise FileNotFoundError(f"Corpus não encontrado: {corpus_path}")
 
-    records = load_corpus(corpus_path)
+    from vedic_pipeline.common.constants import PROJECT_ROOT
+    from vedic_pipeline.crawler.licensed_sources import records_for_index
+
+    records = records_for_index(load_corpus(corpus_path), PROJECT_ROOT)
     if not records:
         raise ValueError("Corpus vazio.")
 
@@ -186,6 +189,19 @@ def load_embedding_index(index_dir: Path = DEFAULT_EMBED_DIR) -> dict[str, Any]:
         raise ValueError(
             f"Mismatch chunks ({len(chunks)}) vs embeddings ({len(vectors)})"
         )
+
+    # Fontes licenciadas (permissão pendente) só aparecem com a flag ligada.
+    from vedic_pipeline.crawler.licensed_sources import visible_mask
+
+    mask = visible_mask(chunks)
+    if not all(mask):
+        keep = [i for i, ok in enumerate(mask) if ok]
+        logger.warning(
+            "%d trechos de fontes licenciadas ocultos (VEDIC_ENABLE_LICENSED_SOURCES desligada)",
+            len(chunks) - len(keep),
+        )
+        chunks = [chunks[i] for i in keep]
+        vectors = vectors[np.asarray(keep, dtype=np.int64)]
 
     from vedic_pipeline.search.lexical_index import ensure_lexical_index
 

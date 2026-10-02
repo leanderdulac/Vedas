@@ -36,6 +36,7 @@ import numpy as np  # noqa: E402
 
 from vedic_pipeline.common.constants import DEFAULT_CORPUS, DEFAULT_EMBED_DIR  # noqa: E402
 from vedic_pipeline.common.corpus import load_corpus, utc_now_iso  # noqa: E402
+from vedic_pipeline.crawler.licensed_sources import is_restricted, records_for_index  # noqa: E402
 from vedic_pipeline.etl.chunking import chunk_records  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
@@ -72,7 +73,8 @@ def build(
     model_name = meta.get("model_name") or "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     chunk_size = int(meta.get("chunk_size") or 800)
     overlap = int(meta.get("overlap") or 120)
-    records = load_corpus(corpus)
+    # fontes licenciadas (data/raw, fora do corpus) só com VEDIC_ENABLE_LICENSED_SOURCES=1
+    records = records_for_index(load_corpus(corpus), ROOT)
     chunks = list(chunk_records(records, chunk_size=chunk_size, overlap=overlap))
     dim = int(meta.get("dim") or (old_vectors.shape[1] if old_vectors is not None else 384))
     vectors = np.zeros((len(chunks), dim), dtype=np.float32)
@@ -116,6 +118,7 @@ def build(
         "reused_vectors": reused,
         "encoded_vectors": len(todo),
         "previous_built_at": meta.get("built_at"),
+        "licensed_docs": sum(1 for r in records if is_restricted(r)),
     }
     (out_dir / "index_meta.json").write_text(json.dumps(new_meta, ensure_ascii=False, indent=2), encoding="utf-8")
     save_lexical_index(out_dir, chunks)

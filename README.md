@@ -502,6 +502,19 @@ python scripts/eval_reranker_smoke.py --model artifacts/reranker_domain_v5 --jso
 
 Fontes sem licença na lista permitida são bloqueadas. Material BBT/Vedabase somente com autorização explícita.
 
+Fontes de uso privado com permissão pendente ficam no registro
+`vedic_pipeline/crawler/licensed_sources.py` (licença, nota e caminho local). Hoje há uma:
+o Śrīmad-Bhāgavatam em português do Vedabase (BBT), só verso em Devanāgarī, transliteração e
+tradução, sem sinônimos nem significados. O texto fica só em `data/raw/vedabase_sb_ptbr/`
+(gitignored), nunca no Git, e fica fora do índice até `VEDIC_ENABLE_LICENSED_SOURCES=1`:
+
+```bash
+# coleta educada (respeita robots.txt e o Crawl-delay de 10 s; retoma pelo cache)
+python -m vedic_pipeline.etl.vedabase_sb crawl --out data/raw/vedabase_sb_ptbr
+# depois da autorização da BBT: liga e reindexa (só os trechos novos são codificados)
+VEDIC_ENABLE_LICENSED_SOURCES=1 python scripts/rebuild_index_safe.py
+```
+
 ## Smoke / regressão
 
 ```bash
