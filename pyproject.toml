@@ -92,6 +92,8 @@ ignore = ["E501", "UP017"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Testes importam scripts/* (ex.: scripts.train_slm_lora); `pytest` puro não põe a raiz no sys.path.
+pythonpath = ["."]
 python_files = ["test_*.py"]
 addopts = "--cov=vedic_pipeline --cov-report=term-missing --cov-fail-under=60"
 
