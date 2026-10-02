@@ -76,8 +76,45 @@ class RequestPolicyTests(unittest.TestCase):
             )
             self.assertEqual(ask.call_args.kwargs["provider"], "xai")
 
+    def test_non_local_host_requires_generation_token_when_xai_set(self):
+        with patch.dict(
+            os.environ,
+            {
+                "VEDIC_GENERATION_API_TOKEN": "",
+                "VEDIC_REQUIRE_GENERATION_TOKEN": "",
+                "VEDIC_BIND_HOST": "0.0.0.0",
+                "XAI_API_KEY": "test-key",
+                "XAI_MODEL": "configured-model",
+            },
+        ), patch("vedic_pipeline.llm.ask.ask", return_value={"answer": "test"}) as ask, TestClient(
+            create_app()
+        ) as client:
+            self.assertEqual(client.post("/ask", json={"query": "atman", "provider": "auto"}).status_code, 503)
+            self.assertEqual(client.post("/ask", json={"query": "atman", "provider": "xai"}).status_code, 503)
+            self.assertEqual(client.post("/ask", json={"query": "atman", "provider": "extractive"}).status_code, 200)
+            ask.assert_called()
+
+    def test_unset_bind_host_is_fail_closed_with_xai(self):
+        env = {
+            "VEDIC_GENERATION_API_TOKEN": "",
+            "VEDIC_REQUIRE_GENERATION_TOKEN": "",
+            "XAI_API_KEY": "test-key",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            os.environ.pop("VEDIC_BIND_HOST", None)
+            with patch("vedic_pipeline.llm.ask.ask", return_value={"answer": "test"}), TestClient(
+                create_app()
+            ) as client:
+                self.assertEqual(client.post("/ask", json={"query": "atman"}).status_code, 503)
+
     def test_local_xai_allowed_without_generation_token(self):
-        with patch.dict(os.environ, {'VEDIC_GENERATION_API_TOKEN': '', 'XAI_API_KEY': 'test-key', 'XAI_MODEL': 'configured-model'}), \
+        with patch.dict(os.environ, {
+                'VEDIC_GENERATION_API_TOKEN': '',
+                'VEDIC_REQUIRE_GENERATION_TOKEN': '',
+                'VEDIC_BIND_HOST': '127.0.0.1',
+                'XAI_API_KEY': 'test-key',
+                'XAI_MODEL': 'configured-model',
+            }), \
              patch('vedic_pipeline.llm.ask.ask', return_value={'answer': 'test'}) as ask, \
              TestClient(create_app()) as client:
             self.assertEqual(client.post('/ask', json={'query': 'atman', 'provider': 'auto'}).status_code, 200)
@@ -109,7 +146,11 @@ class RequestPolicyTests(unittest.TestCase):
             self.assertEqual(stream.call_args.kwargs['model'], 'configured-model')
 
     def test_extractive_stays_public_even_with_xai_configured(self):
-        with patch.dict(os.environ, {'VEDIC_GENERATION_API_TOKEN': '', 'XAI_API_KEY': 'test-key'}), \
+        with patch.dict(os.environ, {
+                'VEDIC_GENERATION_API_TOKEN': '',
+                'VEDIC_BIND_HOST': '127.0.0.1',
+                'XAI_API_KEY': 'test-key',
+            }), \
              patch('vedic_pipeline.llm.ask.ask', return_value={'answer': 'test'}) as ask, TestClient(create_app()) as client:
             self.assertEqual(client.post('/ask', json={'query': 'atman', 'provider': 'extractive'}).status_code, 200)
             self.assertEqual(ask.call_args.kwargs['provider'], 'extractive')

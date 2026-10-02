@@ -10,12 +10,14 @@ if [[ -f .venv/bin/activate ]]; then
 fi
 
 # DATABASE_URL é opcional: a API carrega .env e usa o índice NumPy sem banco.
+# Bind localhost-only: geração xAI sem token continua ok no dev local.
+export VEDIC_BIND_HOST="${VEDIC_BIND_HOST:-127.0.0.1}"
 
 echo "→ Backend: http://127.0.0.1:8000"
 echo "→ Frontend dev: http://127.0.0.1:5173"
 echo
 
-uvicorn vedic_knowledge_pipeline:app --host 127.0.0.1 --port 8000 --reload &
+uvicorn vedic_knowledge_pipeline:app --host "${VEDIC_BIND_HOST}" --port 8000 --reload &
 BACK_PID=$!
 
 cleanup() {

@@ -84,11 +84,25 @@ class DeployCheckTests(unittest.TestCase):
         self.assertTrue(result["ok"], fails)
         self.assertIn("reranker_opt_in", warns)
 
-    def test_ssrf_disable_flag_fails(self):
-        with patch.dict(os.environ, {"VEDIC_DISABLE_SSRF_DNS_CHECK": "true"}, clear=False):
-            result = run_deploy_check(mode="local")
-        self.assertFalse(result["ok"])
-        self.assertIn("ssrf_dns_check_disabled", {i["code"] for i in result["issues"]})
+    def test_crawler_has_no_ssrf_dns_kill_switch(self):
+        root = Path(__file__).resolve().parents[1]
+        download = (root / "vedic_pipeline" / "crawler" / "download.py").read_text(encoding="utf-8")
+        deploy = (root / "vedic_pipeline" / "ops" / "deploy_check.py").read_text(encoding="utf-8")
+        self.assertNotIn("VEDIC_DISABLE_SSRF_DNS_CHECK", download)
+        self.assertNotIn("VEDIC_DISABLE_SSRF_DNS_CHECK", deploy)
+        self.assertNotIn("check_ssrf_escape", deploy)
+
+    def test_dockerfile_and_scripts_restrict_forwarded_allow_ips(self):
+        root = Path(__file__).resolve().parents[1]
+        dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
+        run_prod = (root / "scripts" / "run_prod.sh").read_text(encoding="utf-8")
+        cli = (root / "vedic_pipeline" / "cli.py").read_text(encoding="utf-8")
+        env_example = (root / ".env.example").read_text(encoding="utf-8")
+        self.assertNotIn("forwarded-allow-ips '*'", dockerfile)
+        self.assertNotIn("forwarded-allow-ips '*'", run_prod)
+        self.assertNotIn('forwarded_allow_ips="*"', cli)
+        self.assertIn("172.16.0.0/12", dockerfile)
+        self.assertIn("VEDIC_TRUST_PROXY_HEADERS=false", env_example)
 
     def test_caddyfile_denies_public_metrics(self):
         """Controle documentado: Caddy não deve proxiar /metrics no hostname público."""

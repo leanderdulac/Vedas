@@ -92,6 +92,7 @@
       "query": "Bhagavad Gita 2.47 you have a right to action never to its fruits",
       "top_k": 8,
       "expect_title_any": ["Gita", "Gītā", "Bhagavad", "Song Celestial"],
+      "reject_hymn_ids": ["2.47"],
       "min_hits": 1
     },
     {
@@ -99,6 +100,7 @@
       "query": "Patanjali Yoga Sutras yogaś citta-vṛtti-nirodhaḥ definition of yoga",
       "top_k": 8,
       "expect_title_any": ["Yoga Sutras", "Yoga Sutra", "Patanjali", "Patañjali"],
+      "reject_hymn_ids": ["1.2"],
       "min_hits": 1
     },
     {

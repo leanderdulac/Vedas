@@ -14,5 +14,8 @@ fi
 echo "→ Building frontend…"
 (cd frontend && npm install && npm run build)
 
+export VEDIC_BIND_HOST="${VEDIC_BIND_HOST:-0.0.0.0}"
+export VEDIC_FORWARDED_ALLOW_IPS="${VEDIC_FORWARDED_ALLOW_IPS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1,::1}"
+
 echo "→ Serving app at http://127.0.0.1:8000"
-exec uvicorn vedic_knowledge_pipeline:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '*'
+exec uvicorn vedic_knowledge_pipeline:app --host "${VEDIC_BIND_HOST}" --port 8000 --proxy-headers --forwarded-allow-ips "${VEDIC_FORWARDED_ALLOW_IPS}"

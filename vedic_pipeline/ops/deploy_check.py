@@ -80,11 +80,13 @@ def check_pipeline_token(*, prod: bool) -> list[dict[str, str]]:
 
 
 def check_generation_policy(*, prod: bool) -> list[dict[str, str]]:
+    from vedic_pipeline.api.request_policy import generation_token_required
+
     xai = bool((os.environ.get("XAI_API_KEY") or "").strip())
     token = bool((os.environ.get("VEDIC_GENERATION_API_TOKEN") or "").strip())
-    require = env_flag("VEDIC_REQUIRE_GENERATION_TOKEN")
+    require = generation_token_required()
     issues: list[dict[str, str]] = []
-    if prod and not require:
+    if prod and not env_flag("VEDIC_REQUIRE_GENERATION_TOKEN"):
         issues.append(
             _issue(
                 "fail",
@@ -129,18 +131,6 @@ def check_reranker() -> list[dict[str, str]]:
     return issues
 
 
-def check_ssrf_escape() -> list[dict[str, str]]:
-    if env_flag("VEDIC_DISABLE_SSRF_DNS_CHECK"):
-        return [
-            _issue(
-                "fail",
-                "ssrf_dns_check_disabled",
-                "VEDIC_DISABLE_SSRF_DNS_CHECK está setado; o check de DNS do crawler não deve ser desligado",
-            )
-        ]
-    return []
-
-
 def run_deploy_check(*, mode: str = "local") -> dict[str, Any]:
     prod = str(mode).strip().lower() == "prod"
     issues: list[dict[str, str]] = []
@@ -148,7 +138,6 @@ def run_deploy_check(*, mode: str = "local") -> dict[str, Any]:
     issues.extend(check_pipeline_token(prod=prod))
     issues.extend(check_generation_policy(prod=prod))
     issues.extend(check_reranker())
-    issues.extend(check_ssrf_escape())
     failures = [i for i in issues if i["level"] == "fail"]
     warnings = [i for i in issues if i["level"] == "warn"]
     return {

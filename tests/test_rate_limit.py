@@ -49,6 +49,27 @@ class RateLimitTests(unittest.TestCase):
             for _ in range(50):
                 self.assertTrue(allow_request("1.2.3.4", "/ask"))
 
+    def test_xff_ignored_when_proxy_untrusted(self):
+        reset_rate_limits()
+        with patch.dict(
+            os.environ,
+            {"VEDIC_TRUST_PROXY_HEADERS": "false", "VEDIC_RATE_LIMIT_PER_MINUTE": "2"},
+        ):
+            self.assertTrue(allow_request("1.2.3.4", "/ask", forwarded_for="9.9.9.9"))
+            self.assertTrue(allow_request("1.2.3.4", "/ask", forwarded_for="8.8.8.8"))
+            self.assertFalse(allow_request("1.2.3.4", "/ask", forwarded_for="7.7.7.7"))
+
+    def test_xff_uses_rightmost_hop_when_trusted(self):
+        reset_rate_limits()
+        with patch.dict(
+            os.environ,
+            {"VEDIC_TRUST_PROXY_HEADERS": "true", "VEDIC_RATE_LIMIT_PER_MINUTE": "2"},
+        ):
+            self.assertTrue(allow_request("10.0.0.2", "/ask", forwarded_for="1.1.1.1, 203.0.113.9"))
+            self.assertTrue(allow_request("10.0.0.2", "/ask", forwarded_for="9.9.9.9, 203.0.113.9"))
+            self.assertFalse(allow_request("10.0.0.2", "/ask", forwarded_for="8.8.8.8, 203.0.113.9"))
+            self.assertTrue(allow_request("10.0.0.2", "/ask", forwarded_for="1.1.1.1, 203.0.113.10"))
+
     def test_http_429_when_exhausted(self):
         reset_rate_limits()
         with patch.dict(os.environ, {"VEDIC_RATE_LIMIT_PER_MINUTE": "2"}), \
@@ -68,6 +89,7 @@ class MediaAuthTests(unittest.TestCase):
                 "VEDIC_GENERATION_API_TOKEN": "",
                 "XAI_API_KEY": "k",
                 "VEDIC_REQUIRE_GENERATION_TOKEN": "",
+                "VEDIC_BIND_HOST": "127.0.0.1",
             },
         ):
             authorize_media(None)

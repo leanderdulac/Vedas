@@ -246,3 +246,34 @@ def search_pgvector(
             item["score"] = round(float(item["score"]), 4)
         results.append(item)
     return results
+
+
+_CHUNK_COLUMNS = (
+    "chunk_id, doc_id, chunk_index, text, source_url, title, tradition, "
+    "language, license, char_count, work, verse_id, locator, book, hymn, "
+    "verse, verse_end, heading"
+)
+
+
+def list_chunks_for_hybrid(
+    *,
+    tradition: str | None = None,
+    language: str | None = None,
+    url: str | None = None,
+    limit: int = 100_000,
+) -> list[dict[str, Any]]:
+    """Metadados + texto dos chunks no Postgres para léxico/locator do híbrido."""
+    clauses = ["1=1"]
+    params: list[Any] = []
+    if tradition:
+        clauses.append("LOWER(tradition) = %s")
+        params.append(tradition.lower())
+    if language:
+        clauses.append("LOWER(language) = %s")
+        params.append(language.lower())
+    where = " AND ".join(clauses)
+    sql = f"SELECT {_CHUNK_COLUMNS} FROM chunks WHERE {where} LIMIT %s"
+    params.append(max(1, int(limit)))
+    with get_connection(url) as conn, conn.cursor() as cur:
+        cur.execute(sql, params)
+        return [dict(row) for row in cur.fetchall()]

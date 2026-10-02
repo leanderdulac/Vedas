@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -415,13 +416,18 @@ def main(argv: list[str] | None = None) -> int:
 
         from vedic_pipeline.api.app import create_app
 
+        os.environ.setdefault("VEDIC_BIND_HOST", args.host)
+        allow_ips = os.environ.get(
+            "VEDIC_FORWARDED_ALLOW_IPS",
+            "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1,::1",
+        )
         uvicorn.run(
             create_app(),
             host=args.host,
             port=args.port,
             reload=False,
             proxy_headers=True,
-            forwarded_allow_ips="*",
+            forwarded_allow_ips=allow_ips,
         )
         return 0
 

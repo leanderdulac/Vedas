@@ -119,6 +119,23 @@ class HymnIdExtractTests(unittest.TestCase):
         self.assertEqual(extract_query_hymn_ids("Rigveda 10.5"), ["10.5"])
         self.assertEqual(extract_query_hymn_ids("Rigveda 10.50"), ["10.50"])
 
+    def test_bare_xy_is_not_rv_without_context(self):
+        self.assertEqual(extract_query_hymn_ids("BG 2.47"), [])
+        self.assertEqual(
+            extract_query_hymn_ids(
+                "Bhagavad Gita 2.47 you have a right to action never to its fruits"
+            ),
+            [],
+        )
+        self.assertEqual(extract_query_hymn_ids("Yoga Sutra 1.2"), [])
+        self.assertEqual(extract_query_hymn_ids("version 1.2 of the text"), [])
+        self.assertEqual(extract_query_hymn_ids("see 3.14"), [])
+
+    def test_bare_named_hymn_id_still_counts(self):
+        self.assertEqual(extract_query_hymn_ids("10.129"), ["10.129"])
+        self.assertIn("10.129", extract_query_hymn_ids("read 10.129 please"))
+        self.assertEqual(extract_query_hymn_ids("maṇḍala 10.90"), ["10.90"])
+
 
 class LocatorHymnBoostTests(unittest.TestCase):
     def test_nasadiya_title_beats_generic_ce_decoys(self):

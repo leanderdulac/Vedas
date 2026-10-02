@@ -84,23 +84,47 @@ def retrieve_hits(
         try:
             if backend == "numpy" or Path(index_dir).exists():
                 idx = get_index(Path(index_dir))
-                all_chunks = [
+                loaded = [
                     chunk for chunk in (idx.get("chunks") or [])
                     if (not tradition or (chunk.get("tradition") or "").lower() == tradition.lower())
                     and (not language or (chunk.get("language") or "").lower() == language.lower())
                 ]
+                if loaded:
+                    all_chunks = loaded
         except Exception:  # noqa: BLE001
             all_chunks = None
 
-        # all_chunks alimenta léxico + injeção de locator (RV id + obra/coleção).
-        hits = hybrid_rerank(
-            query,
-            fused,
-            all_chunks=all_chunks,
-            top_k=top_k,
-            max_per_doc=2,
-        )
-        used = f"{backend}+hybrid"
+        if all_chunks is None and backend == "pgvector":
+            try:
+                from vedic_pipeline.storage.vectors import list_chunks_for_hybrid
+
+                loaded = list_chunks_for_hybrid(tradition=tradition, language=language)
+                if loaded:
+                    all_chunks = loaded
+            except Exception:  # noqa: BLE001
+                logger.warning("Falha ao carregar chunks do Postgres para o híbrido", exc_info=True)
+                all_chunks = None
+
+        if all_chunks:
+            # all_chunks alimenta léxico + injeção de locator (RV id + obra/coleção).
+            hits = hybrid_rerank(
+                query,
+                fused,
+                all_chunks=all_chunks,
+                top_k=top_k,
+                max_per_doc=2,
+            )
+            used = f"{backend}+hybrid"
+        else:
+            from vedic_pipeline.search.hybrid import diversify_by_doc
+
+            logger.warning(
+                "hybrid=true sem sidecar numpy nem chunks no Postgres; "
+                "retrieval_backend=%s (sem +hybrid)",
+                backend,
+            )
+            hits = diversify_by_doc(fused, top_k=top_k, max_per_doc=2)
+            used = backend
     else:
         from vedic_pipeline.search.hybrid import diversify_by_doc
 

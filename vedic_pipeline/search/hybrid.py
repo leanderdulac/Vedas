@@ -249,12 +249,13 @@ _NAMED_IN_BLOB: dict[str, re.Pattern[str]] = {
     "10.90": re.compile(r"puru[sṣś]h?a\s+s[uū]kta|\bpurusha\s+sukta|\bpurusa\s+sukta", re.I),
 }
 
-# "RV 10.129", "hymn 1.1", ou id solto "10.129" / "10.90".
+# "RV 10.129", "hymn 1.1", "maṇḍala 10.90". X.Y solto só conta se for id canónico.
 _EXPLICIT_HYMN_RE = re.compile(
-    r"(?:(?:\brv\b|ṛgveda|rigveda|rig\s*veda|hymn|s[uū]kta)\s*)(\d{1,2}\.\d{1,3})"
-    r"|\b(\d{1,2}\.\d{1,3})\b",
+    r"(?:(?:\brv\b|ṛgveda|rigveda|rig\s*veda|hymn|s[uū]kta|ma[nṇ][dḍ]ala)\s*)(\d{1,2}\.\d{1,3})",
     re.I,
 )
+_BARE_HYMN_RE = re.compile(r"\b(\d{1,2}\.\d{1,3})\b")
+_NAMED_HYMN_IDS = frozenset(hymn for _pattern, hymn in _NAMED_HYMN_PATTERNS)
 
 # PoC local: +~1.4 no título restaurou Nasadiya sob pressão do CE genérico.
 LOCATOR_HYMN_TITLE_BOOST = 1.45
@@ -521,8 +522,16 @@ def extract_query_hymn_ids(query: str) -> list[str]:
         if pattern.search(text):
             named.add(hymn)
             add(hymn)
+    # X.Y só é hino RV com contexto (RV/Rigveda/hymn/sūkta/maṇḍala)
+    # ou se o id for um locator canónico (10.129, 10.90, 3.62, …).
+    candidates: list[str] = []
     for match in _EXPLICIT_HYMN_RE.finditer(text):
-        explicit = (match.group(1) or match.group(2) or "").strip()
+        candidates.append(match.group(1).strip())
+    for match in _BARE_HYMN_RE.finditer(text):
+        bare = match.group(1).strip()
+        if bare in _NAMED_HYMN_IDS:
+            candidates.append(bare)
+    for explicit in candidates:
         if named and explicit not in named:
             continue
         add(explicit)

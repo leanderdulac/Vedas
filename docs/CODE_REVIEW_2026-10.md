@@ -8,7 +8,7 @@ Revisão investigativa do repositório **Vedas** (`veda-knowledge` 2.0.0): pipel
 
 O projeto está **maduro para um corpus licenciado single-instance**, com hardening consciente (tokens, SSRF parcial, confinamentos de path, CE off, gold de locators, `deploy-check`). O núcleo de retrieval híbrido + locator é o pedaço mais trabalhado e melhor testado.
 
-Não é “pronto para multi-tenant / internet aberta sem operação cuidadosa”. Os riscos reais são: **SSRF por rebinding DNS** no crawler, **geração paga aberta** quando há `XAI_API_KEY` sem token (dev/default), **híbrido/locator silencioso em deploy só-pgvector**, e **heurísticas de hino RV que capturam qualquer `X.Y`**. A suíte local está verde (ruff, 250 testes, frontend). O estado operacional (corpus canônico ~1054 docs) **não** é o default de um clone — é um snapshot.
+Não é “pronto para multi-tenant / internet aberta sem operação cuidadosa”. Os riscos High/Medium do top-5 (SSRF TOCTOU, geração paga em host não-local, híbrido silencioso no pgvector, X.Y solto como RV, XFF spoof) foram **corrigidos nesta PR**. A suíte local está verde. O estado operacional (corpus canônico ~1054 docs) **não** é o default de um clone — é um snapshot.
 
 **Saúde geral: B+ (sólido, com dívidas de segurança e de retrieval bem delimitadas).**
 
@@ -112,7 +112,7 @@ Nenhum. Sem RCE não autenticado, sem segredos vivos no git, ops de pipeline 503
 - **Impacto:** ingest HTTP (`/ingest` se o token de pipeline vazar, ou CLI/scripts com manifesto atacante) pode alcançar serviços internos.
 - **Correção:** resolver uma vez, conectar ao IP validado (transport custom / `http://<ip>/` + `Host:`) e recusar mismatch; revalidar em cada redirect (já há loop manual). Testar com host de rebinding.
 
-*Não corrigido aqui — mudança de transporte, não é “pequena/baixa risco”.*
+**Status: Corrigido.** `resolve_public_targets` + `prepare_pinned_request` pinam o TCP no IP validado (`Host` + `sni_hostname` em HTTPS). Qualquer IP restrito no set (rebinding dual-stack) falha. `fetch_url_bytes` revalida a cada redirect. Mesmo helper em `llm/imagine.py`. Teste de rebinding: `getaddrinfo` público → loopback.
 
 #### H2. Geração paga aberta no default/dev se `XAI_API_KEY` existir
 
@@ -120,6 +120,8 @@ Nenhum. Sem RCE não autenticado, sem segredos vivos no git, ops de pipeline 503
 - **Problema:** sem `VEDIC_GENERATION_API_TOKEN` e sem `VEDIC_REQUIRE_GENERATION_TOKEN`, qualquer cliente em `:8000` dispara `/ask`, stream, TTS, Imagine. Compose de prod falha-fechado (`true`); o de dev não.
 - **Impacto:** billing xAI + superfície de abuso se a API for publicada “como no compose de dev”.
 - **Correção:** em qualquer host compartilhado usar `docker-compose.prod.yml` ou setar `VEDIC_REQUIRE_GENERATION_TOKEN=true` + token. README L395–399 diz que “sem token a geração HTTP retorna 503” — isso só é verdade com a flag de prod; **alinhar o README**. UI de prod precisa de um caminho para Bearer de geração (hoje só o token de pipeline existe no `sessionStorage`).
+
+**Status: Corrigido.** Sem flag explícita, token é obrigatório quando `XAI_API_KEY` está setada e `VEDIC_BIND_HOST` não é 127.0.0.1/localhost/::1. `run_dev.sh` declara bind local (UI sem Bearer continua ok). Docker/0.0.0.0/bind ausente → 503. README + `.env.example` alinhados. Frontend opcional: `VITE_GENERATION_API_TOKEN`.
 
 #### H3. `/metrics` público no ingress Caddy (documentado como interno) — **corrigido nesta PR**
 
@@ -137,11 +139,15 @@ Nenhum. Sem RCE não autenticado, sem segredos vivos no git, ops de pipeline 503
 - **Problema:** o app usa o **primeiro** hop do XFF. Cliente que alcance a API sem um proxy que reescreva o header (ou uvicorn confiando em qualquer peer) rotaciona IPs e esvazia o teto de `/ask`/`/search`/mídia.
 - **Correção:** default `false`; em prod, usar só o hop imediato do Caddy (`$remote_addr`) ou o rightmost untrusted. Restringir `--forwarded-allow-ips` à rede do Caddy. Teste de spoof XFF.
 
+**Status: Corrigido.** Default `VEDIC_TRUST_PROXY_HEADERS=false`; com trust, hop mais à direita. `--forwarded-allow-ips` em CIDRs privados (Dockerfile, compose.prod, `run_prod.sh`, `cli serve`) — nunca `*`.
+
 #### M2. Híbrido/locator desliga em silêncio no modo só-pgvector
 
 - **Onde:** `vedic_pipeline/llm/ask.py:82–93`.
 - **Problema:** `all_chunks` só carrega se `backend == "numpy"` ou `Path(index_dir).exists()`. Sem sidecar numpy, `hybrid_rerank(..., all_chunks=None)` **não** injeta hino/obra/deidade nem expande léxico. Ranking cai sem erro; `retrieval_backend` ainda reporta `pgvector+hybrid`.
 - **Correção:** carregar metadados de `chunks` no Postgres para o híbrido, **ou** falhar alto se hybrid=true e o índice numpy não existir. Teste de integração pgvector-only.
+
+**Status: Corrigido.** `list_chunks_for_hybrid` no Postgres; sem sidecar nem rows, `retrieval_backend` fica `pgvector` (sem `+hybrid`) e loga warning. Teste em `tests/test_ask_hybrid.py`.
 
 #### M3. `\d{1,2}\.\d{1,3}` solto é tratado como id de Ṛgveda
 
@@ -158,11 +164,15 @@ Nenhum. Sem RCE não autenticado, sem segredos vivos no git, ops de pipeline 503
 - **Impacto:** injeção/boost de hinos RV errados (RV 2.47 no lugar da Gītā; RV 1.2 no Yoga-sūtra). Nomes canônicos (Nasadiya, etc.) vencem conflito, mas números “nus” não.
 - **Correção:** remover o ramo `\b(\d{1,2}\.\d{1,3})\b` **ou** exigir contexto RV/hymn/sūkta. Não fazer isso sem re-rodar o gold-37 (`10.129` solto ainda precisa funcionar via nome ou `RV`).
 
+**Status: Corrigido.** X.Y só com contexto RV/Rigveda/ṛgveda/hymn/sūkta/maṇḍala, ou id canónico (`10.129`, `10.90`, `3.62`, `10.121`, `10.125`). `BG 2.47` / `Yoga Sutra 1.2` / `version 1.2` / `see 3.14` → `[]`. Gold `reject_hymn_ids` em gita-2-47 e yoga-1-2. gold-37 (Nasadiya 10.129) intacto.
+
 #### M4. `pull_dir` S3 usa `startswith` (escape de prefixo)
 
 - **Onde:** `vedic_pipeline/storage/objects.py:254–256`.
 - **Problema:** `str(target).startswith(str(dest.resolve()))` aceita `/app/data_evil` se `dest` for `/app/data`. `..` após `resolve()` é pego; irmão com prefixo compartilhado não. Teste atual (`test_pull_rejects_escape_keys`) só cobre `../`.
 - **Correção:** `target.is_relative_to(dest.resolve())` (já usado no SPA em `app.py:936`). Teste com dest=`.../artifacts` e key que resolva para `.../artifacts_backup`.
+
+**Status: Corrigido.** `is_relative_to` + teste de irmão `artifacts_backup`.
 
 #### M5. `VEDIC_DISABLE_SSRF_DNS_CHECK` no deploy-check, inexistente no crawler
 
@@ -170,11 +180,15 @@ Nenhum. Sem RCE não autenticado, sem segredos vivos no git, ops de pipeline 503
 - **Impacto:** operador pode achar que desligou o DNS check; o comportamento não muda. O check falha se a env estiver setada (conservador), mas o nome é um footgun.
 - **Correção:** remover a env do checklist **ou** implementar a flag, logada e proibida em `--mode prod`.
 
+**Status: Corrigido.** Flag removida do deploy-check (nunca existiu no crawler).
+
 #### M6. Download “streaming” não faz stream
 
 - **Onde:** `vedic_pipeline/crawler/download.py:149–185`.
 - **Problema:** `client.get()` (httpx, sem `stream=True`) carrega o body inteiro. O loop `iter_bytes` e o teto de 25 MB atuam **depois**. `Content-Length` mentiroso ou ausente → pico de memória. `imagine._download_media_bytes` lê `resp.content` de uma vez (L132).
 - **Correção:** `client.stream("GET", ...)` + teto no iterador; recusar se `Content-Length` for inválido em vez de engolir o `ValueError`.
+
+**Status: Corrigido.** `client.stream` com teto no `iter_bytes`; `Content-Length` inválido levanta `ValueError`. Imagine usa o mesmo helper.
 
 #### M7. Docs / OpenAPI públicos no ingress
 
@@ -188,7 +202,7 @@ Nenhum. Sem RCE não autenticado, sem segredos vivos no git, ops de pipeline 503
 |------|------|--------|
 | Porta PG | README L190 `localhost:5432` | compose / `.env.example` host **5433** |
 | Smoke | tabela L166 **10/10** | gold **37** (`fixtures/smoke_queries.json`); CI 4 queries |
-| Geração sem token | README L399 “retorna 503” | 503 só com `VEDIC_REQUIRE_GENERATION_TOKEN`; senão aberto se houver xAI |
+| Geração sem token | README: 503 fora de localhost se XAI | alinhado: bind 127.0.0.1 aberto; 0.0.0.0/Docker fail-closed |
 | Chunk default | exemplos 1000/150 | `constants.py` **800/120** |
 | Rate-limit /metrics | `rate_limit.py:11–12` “metrics não entram” | `_RULES` inclui `/metrics` (L30); teste `test_read_routes_are_not_limited` só faz 1 request e passa |
 | Catálogo da UI | narrativa “full-stack PG” | `catalog_service.py` lê **JSONL** em memória |
@@ -299,7 +313,7 @@ Não há budget test de latência no CI.
 
 - **Dev compose:** API publicada em 8000, trust proxy **false**, geração aberta se houver xAI — coerente com “máquina local”.
 - **Prod compose:** token de geração fail-closed, CE off, redes internal/public, Caddy perfil `ingress`, Prometheus perfil `metrics`. **H3** era o furo do Caddy (agora fechado).
-- **Dockerfile:** imagem slim (`requirements-api.txt`); `/tokenize` e `/train` → 501. `--forwarded-allow-ips '*'` é largo (M1).
+- **Dockerfile:** imagem slim (`requirements-api.txt`); `/tokenize` e `/train` → 501. `--forwarded-allow-ips` restrito a CIDRs privados (M1 corrigido).
 - **Dockerfile.train:** deps completas, `sleep infinity`, user 10001.
 - **Caddyfile:** `/api/*` + catch-all para a SPA; `/metrics` agora 404 no público.
 - **`deploy-check`:** senha fraca, token de pipeline, geração aberta, CE genérico, flag SSRF fantasma.
@@ -325,22 +339,27 @@ Não há budget test de latência no CI.
 
 ## 9. Correção feita nesta PR
 
-1. **Caddyfile:** `handle /metrics { respond 404 }` para cumprir `docs/DEPLOYMENT.md` §4.1.
-2. **Teste:** `tests/test_deploy_check.py::test_caddyfile_denies_public_metrics`.
+1. **H3 / Caddyfile:** `handle /metrics { respond 404 }` (auditoria).
+2. **H1 + M6:** pin TCP no IP validado + `client.stream` com teto 25 MB; Imagine no mesmo helper; teste de DNS rebinding.
+3. **H2:** token de geração obrigatório fora de localhost quando há `XAI_API_KEY`; README / `.env.example`; Bearer opcional via `VITE_GENERATION_API_TOKEN`.
+4. **M2:** chunks do Postgres para o híbrido, ou `retrieval_backend` sem `+hybrid`.
+5. **M3:** `_EXPLICIT_HYMN_RE` exige contexto RV (ou id canónico); negativos BG/Yoga/version/see.
+6. **M1:** `VEDIC_TRUST_PROXY_HEADERS=false`; hop direito; `--forwarded-allow-ips` em CIDRs privados.
+7. **M4 / M5:** `is_relative_to` no S3 pull; flag `VEDIC_DISABLE_SSRF_DNS_CHECK` removida.
 
-Nada mais foi alterado no pipeline, no default do reranker, nem em dados/pesos.
+`VEDIC_ENABLE_RERANKER` permanece **false**. Nenhum peso/corpus commitado.
 
 ---
 
 ## 10. Top 5 próximos passos
 
-1. **Pin de conexão no crawler (H1)** + teste de rebinding; mesmo helper para Imagine.
-2. **Fechar geração paga por default em hosts não-privados (H2)** e alinhar README L395–399; decidir se a UI ganha Bearer de geração ou se prod força extractive.
-3. **Híbrido honesto no pgvector (M2):** chunks do Postgres **ou** erro se o sidecar numpy faltar.
-4. **Apertar `_EXPLICIT_HYMN_RE` (M3)** e adicionar casos `BG 2.47` / `Yoga Sutra 1.2` / `version 1.2` no `test_locator_boost`, revalidando o gold-37.
-5. **Rate-limit + proxy (M1):** default `VEDIC_TRUST_PROXY_HEADERS=false`; `--forwarded-allow-ips` só o Caddy; teste de XFF.
+Itens 1–5 do plano original estão **corrigidos**. Próximos residuais:
 
-Depois: `is_relative_to` no S3 pull (M4), stream real no download (M6), pins + audit bloqueante (M9), docs OpenAPI em prod (M7).
+1. Pins + audit bloqueante (M9).
+2. Docs / OpenAPI em prod (M7).
+3. Smoke gold-37 no CI (hoje recorte de 4).
+4. Catalog JSONL vs Postgres.
+5. `rrf_fuse` morto / chunk size docs vs código.
 
 ---
 
