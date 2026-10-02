@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR, DEFAULT_EMBEDDING_MODEL
+from vedic_pipeline.common.style import clean_prose
 from vedic_pipeline.llm.generate import generate_answer
 from vedic_pipeline.search.hybrid import expand_query, hybrid_rerank
 from vedic_pipeline.search.rag import build_rag_prompt, get_index, retrieve
@@ -17,6 +19,17 @@ logger = logging.getLogger("vedic_pipeline.llm.ask")
 # defaults mais generosos para inferência sobre corpus amplo
 DEFAULT_TOP_K = 10
 DEFAULT_FETCH_K = 36  # mais candidatos → diversificação por doc funciona melhor
+
+
+_EN_HINT = re.compile(r"\b(?:what|who|how|why|which|is|are|does|the|according)\b", re.IGNORECASE)
+_PT_HINT = re.compile(r"\b(?:que|qual|quem|como|por|segundo|é|são|o|a|os|as|do|da|no|na)\b", re.IGNORECASE)
+
+
+def _answer_lang(query: str) -> str:
+    """Idioma provável da resposta (o modelo responde no idioma da pergunta)."""
+    en = len(_EN_HINT.findall(query or ""))
+    pt = len(_PT_HINT.findall(query or ""))
+    return "en" if en > pt else "pt"
 
 
 def retrieve_hits(
@@ -161,7 +174,7 @@ def ask(
 
     out: dict[str, Any] = {
         "query": query,
-        "answer": gen["answer"],
+        "answer": clean_prose(gen["answer"], lang=_answer_lang(query)),
         "provider": gen["provider"],
         "model": gen.get("model"),
         "retrieval_backend": used_backend,
@@ -246,7 +259,9 @@ def ask_stream_events(
                         "model": model_used,
                     },
                 }
-        answer = "".join(full_parts).strip()
+        # o texto transmitido é bruto; o "done" leva a versão limpa, que a UI
+        # usa para substituir o que foi exibido durante o streaming
+        answer = clean_prose("".join(full_parts), lang=_answer_lang(query))
         yield {
             "event": "done",
             "data": {

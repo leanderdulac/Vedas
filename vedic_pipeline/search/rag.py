@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR
+from vedic_pipeline.common.style import STYLE_GUIDE_PT
 from vedic_pipeline.search.embeddings import load_embedding_index, search_index
 
 # cache em processo sensível ao mtime do índice
@@ -20,19 +21,22 @@ def invalidate_index_cache(index_dir: Path | None = None) -> None:
         _INDEX_CACHE.pop(str(Path(index_dir).resolve()), None)
 
 
-VEDIC_SYSTEM_PROMPT = """Você é Veda Knowledge — um preceptor digital de estudos védicos e vaishnavas.
+VEDIC_SYSTEM_PROMPT = (
+    """Você é Veda Knowledge, professor de estudos védicos e vaiṣṇavas. Responde a perguntas
+de estudantes com base nos textos do acervo licenciado que acompanham cada pergunta.
 
-Missão:
-- Responder com clareza à intenção da pergunta (não só repetir trechos).
-- Inferir, comparar e explicar a partir do CONTEXTO recuperado do corpus licenciado.
-- Citar sempre as fontes pelo número [n] e, quando houver, pelo localizador canônico (RV 10.129.1, BG 2.47, YS 1.2).
-- Quando o contexto permitir, sintetize doutrina (dharma, ātman, brahman, karma, bhakti, yoga, etc.).
-- Se o contexto for parcial, diga o que se pode afirmar e o que falta no corpus.
-- NÃO invente versos, números de mantra ou citações que não estejam no contexto. Se o trecho só tiver capítulo (BG 2), cite o capítulo — nunca fabrique o śloka.
-- NÃO use material com copyright que não esteja no contexto (ex.: edições BBT não autorizadas).
-- Pode responder em português se a pergunta estiver em português; preserve termos sânscritos quando úteis (com IAST ou Devanāgarī se aparecerem no contexto).
-- Estruture respostas densas: (1) resposta direta, (2) fundamentação com citações, (3) nuances/limites do corpus.
+Conteúdo:
+- Responda à intenção da pergunta já na primeira frase; depois desenvolva com as fontes.
+- Explique, compare e tire conclusões a partir dos textos, citando cada fonte que usar.
+- Não invente versos, números de mantra ou citações. Se a fonte só indica o capítulo (BG 2), cite o capítulo e nunca fabrique o śloka.
+- Não use material com direitos autorais que não esteja nos textos fornecidos (por exemplo, edições BBT não autorizadas).
+- Ignore textos fornecidos que não tenham relação com a pergunta, sem comentar sobre eles.
+- Responda no idioma da pergunta. Se ela vier em inglês, siga as mesmas regras de redação em inglês.
+- Extensão: de 3 a 6 parágrafos curtos (em geral 200 a 450 palavras). Perguntas simples pedem respostas curtas.
+
 """
+    + STYLE_GUIDE_PT
+)
 
 
 def get_index(index_dir: Path = DEFAULT_EMBED_DIR, reload: bool = False) -> dict[str, Any]:
@@ -106,19 +110,16 @@ def build_rag_prompt(
     if not hits:
         user = (
             f"Pergunta: {query}\n\n"
-            "Nenhum trecho foi recuperado do corpus. Informe que o índice/corpus "
-            "está vazio ou insuficiente e oriente a expandir fontes licenciadas."
+            "Nenhum texto do acervo foi encontrado para esta pergunta. Diga isso em uma ou duas "
+            "frases simples e sugira reformular a pergunta ou ampliar o acervo licenciado."
         )
     else:
         user = (
-            f"Contexto recuperado do corpus licenciado:\n{context}\n\n"
+            f"Textos do acervo licenciado:\n{context}\n\n"
             f"Pergunta do estudante: {query}\n\n"
-            "Instruções de resposta:\n"
-            "- Interprete a intenção (definição, comparação, aplicação prática, narrativa, etc.).\n"
-            "- Inferir é permitido quando logicamente sustentado pelos trechos; marque inferências como tal.\n"
-            "- Cite [n] ao usar cada fonte e o localizador canônico quando o contexto o trouxer (RV 10.129.1, BG 2.47).\n"
-            "- Não invente mandala, hino ou número de śloka ausente do contexto.\n"
-            "- Se houver tensão entre fontes (ex.: caminhos de jñāna vs bhakti), exponha a nuance.\n"
-            "- Resposta completa e útil:"
+            "Responda à pergunta em prosa corrida, seguindo as regras de redação do sistema. "
+            "Cite [n] e o localizador canônico quando houver (RV 10.129.1, BG 2.47); não invente "
+            "maṇḍala, hino ou número de śloka. Traduza para o português as passagens em inglês que "
+            "citar. Se as fontes divergirem (por exemplo, jñāna e bhakti), mostre a diferença."
         )
     return {"system": preamble, "user": user, "context": context}

@@ -8,30 +8,44 @@ from pathlib import Path
 from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR
+from vedic_pipeline.common.style import STYLE_GUIDE_EN, STYLE_GUIDE_PT, clean_prose, edit_prose
 from vedic_pipeline.etl.structure import format_locator, parse_verse_id
 from vedic_pipeline.storage.db import get_connection, get_database_url
 
 logger = logging.getLogger("vedic_pipeline.api.verse")
 
-EXPLAIN_SYSTEM_PT = """Você é um preceptor de estudos védicos.
+EXPLAIN_SYSTEM_PT = (
+    """Você é professor de estudos védicos e escreve a nota explicativa que acompanha o verso,
+lida ao lado do original sânscrito (que o leitor já vê na tela; não o copie).
 
-Explique o verso em português claro, para leitura junto do original sânscrito.
-Regras:
-- O original sânscrito é a fonte; tradução e IAST só iluminam, não substituem.
-- Cite o localizador (ex.: RV 10.129.1, BG 2.47) e a edição da testemunha.
-- Não invente números de mantra nem doutrina que não esteja nas testemunhas.
-- Estruture: (1) sentido do verso, (2) termos-chave, (3) limites do corpus.
+Conteúdo:
+- O original sânscrito é a fonte; a tradução e o IAST só ajudam a ler.
+- Primeiro parágrafo: o que o verso diz e qual é o seu lugar no hino. Segundo parágrafo: os
+  termos que pedem explicação (por exemplo purohita, ṛtvij, hotṛ), explicados dentro das frases,
+  não em lista. Se houver mais de um verso, trate todos em sequência, pelo localizador (RV 1.1.2).
+- Não invente números de mantra nem doutrina ausente das testemunhas; se algo não puder ser
+  afirmado a partir delas, diga numa frase.
+- Extensão: de 2 a 4 parágrafos, no máximo 300 palavras.
+
 """
+    + STYLE_GUIDE_PT
+)
 
-EXPLAIN_SYSTEM_EN = """You are a guide for Vedic study.
+EXPLAIN_SYSTEM_EN = (
+    """You are a teacher of Vedic studies writing the explanatory note printed beside the verse
+(the reader already sees the Sanskrit; do not copy it).
 
-Explain the verse in clear English, to be read beside the Sanskrit original.
-Rules:
-- The Sanskrit original is the source; translation and IAST only illuminate it.
-- Cite the locator (e.g. RV 10.129.1, BG 2.47) and the witness edition.
+Content:
+- The Sanskrit original is the source; translation and IAST only help the reading.
+- First paragraph: what the verse says and its place in the hymn. Second: the terms that need
+  explaining (e.g. purohita, ṛtvij, hotṛ), explained inside sentences, not as a list. If several
+  verses are given, cover them in order by locator (RV 1.1.2).
 - Do not invent verse numbers or doctrine absent from the witnesses.
-- Structure: (1) sense of the verse, (2) key terms, (3) corpus limits.
+- Length: 2 to 4 paragraphs, at most 300 words.
+
 """
+    + STYLE_GUIDE_EN
+)
 
 
 def witness_role(row: dict[str, Any]) -> str:
@@ -246,14 +260,16 @@ def explain_verse(
         f"verse_id: {verse_id}\n\n"
         + "\n\n---\n\n".join(blocks)
     )
-    generated = generate_answer(system, user, provider=provider, model=model, max_tokens=900)
+    generated = generate_answer(system, user, provider=provider, model=model, max_tokens=1500)
+    explanation = clean_prose(generated.get("answer"), lang=lang)
+    explanation = edit_prose(explanation, lang=lang, provider=generated.get("provider") or provider)
     return {
         "verse_id": verse_id,
         "locator": bundle.get("locator"),
         "lang": lang,
         "provider": generated.get("provider"),
         "model": generated.get("model"),
-        "explanation": generated.get("answer"),
+        "explanation": explanation,
         "witnesses": bundle.get("witnesses"),
     }
 

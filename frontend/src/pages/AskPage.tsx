@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, AskResponse, SearchHit } from "../api/client";
 import HitCard from "../components/HitCard";
+import { displayProse } from "../data/prose";
 
 type Turn = {
   role: "user" | "assistant";
@@ -250,7 +251,8 @@ export default function AskPage() {
                   )}
                 </div>
                 <div style={{ whiteSpace: "pre-wrap" }}>
-                  {t.content || (t.streaming ? "…" : "")}
+                  {(t.role === "assistant" ? displayProse(t.content) : t.content) ||
+                    (t.streaming ? "…" : "")}
                 </div>
               </div>
             ))}

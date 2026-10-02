@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, VerseAnalysis, VerseBundle, VerseTranslation, VerseUnit } from "../api/client";
 import { type PlaybackHandle, playVerseAudio, speakExclusive } from "../data/playback";
+import { displayProse, speechProse } from "../data/prose";
 import { speakPortuguese, speakSanskrit, stopSpeaking } from "../data/sanskrit";
 
 function revoke(url: string | null) {
@@ -108,7 +109,7 @@ export default function VerseCard({
 
   function speakTranslation() {
     if (!translation?.translation) return;
-    const text = translation.translation;
+    const text = speechProse(translation.translation);
     setError(null);
     setPlaying(true);
     playbackRef.current = speakExclusive((onEnd) => speakPortuguese(text, onEnd), stopSpeaking, {
@@ -292,7 +293,7 @@ export default function VerseCard({
       {explanation && (
         <div className="verse-explain">
           <div className="verse-explain-lang">{explanation.lang === "pt" ? "Explicação" : "Explanation"}</div>
-          <p>{explanation.text}</p>
+          <p>{displayProse(explanation.text)}</p>
         </div>
       )}
       {translation && (
@@ -301,7 +302,7 @@ export default function VerseCard({
             Tradução ({translation.source_role === "sa" ? "do sânscrito" : translation.source_role})
             {translation.cached ? " · em cache" : ""}
           </div>
-          {translation.translation && <p>{translation.translation}</p>}
+          {translation.translation && <p>{displayProse(translation.translation)}</p>}
           {translation.translation && (
             <button
               type="button"

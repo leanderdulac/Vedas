@@ -209,6 +209,12 @@ python -m vedic_pipeline ask "Explain verse 6 of the Isha Upanishad from the sou
   --provider auto --top-k 5
 ```
 
+Redação: os prompts de /ask, explicação e tradução levam o guia de estilo de
+`vedic_pipeline/common/style.py` (prosa corrida de professor, sem markdown, travessões nem
+clichês de chatbot; IAST consistente; citações `[n]` + localizador). Todo texto final passa
+por `clean_prose` (determinístico); a voz recebe `speech_text`. Explicações de verso ganham
+ainda uma revisão por um modelo barato (`VEDIC_TEXT_EDITOR=1`, padrão; `0` desliga).
+
 Providers:
 
 | Provider | Quando usar |
