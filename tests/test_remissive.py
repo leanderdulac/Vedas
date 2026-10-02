@@ -104,20 +104,23 @@ class SearchAsideApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {"VEDIC_GENERATION_API_TOKEN": ""}):
             dest = Path(tmp) / "agni.jpg"
 
-            def _write(figure_id: str, prompt: str, *, force: bool = False) -> Path:
+            def _write(figure_id: str, prompt: str, *, negative: str | None = None, force: bool = False) -> Path:
                 self.assertEqual(figure_id, "agni")
                 self.assertIn("Agni", prompt)
+                self.assertIn("letters", negative or "")
                 dest.write_bytes(b"j" * 2000)
                 return dest
 
-            with patch("vedic_pipeline.llm.imagine.generate_figure_image", side_effect=_write), TestClient(
-                create_app()
-            ) as client:
+            # O cache real em data/media/figures não pode decidir o teste.
+            with patch("vedic_pipeline.llm.imagine.figure_image_path", return_value=dest), patch(
+                "vedic_pipeline.llm.imagine.generate_figure_image", side_effect=_write
+            ) as gen, TestClient(create_app()) as client:
                 missing = client.get("/api/v1/figures/dharma/image")
                 self.assertEqual(missing.status_code, 404)
                 ok = client.get("/api/v1/figures/agni/image")
                 self.assertEqual(ok.status_code, 200, ok.text)
                 self.assertEqual(ok.headers["content-type"], "image/jpeg")
+                gen.assert_called_once()
 
 
 if __name__ == "__main__":

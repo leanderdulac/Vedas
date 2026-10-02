@@ -78,6 +78,7 @@ class BackendTests(unittest.TestCase):
             (snap.parents[1] / "refs" / "main").write_text("abc")
             self.assertEqual(diffusion.image_model(), diffusion.PREFERRED_SD_MODEL)
 
+    @unittest.skipUnless(find_spec("PIL") is not None, "requer Pillow")
     def test_video_still_is_cropped_not_stretched(self):
         from PIL import Image
 
