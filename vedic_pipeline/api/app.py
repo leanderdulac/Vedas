@@ -34,7 +34,7 @@ def create_app():
     from fastapi.staticfiles import StaticFiles
 
     from vedic_pipeline.api.metrics import METRICS
-    from vedic_pipeline.api.request_policy import authorize_generation
+    from vedic_pipeline.api.request_policy import authorize_generation, generation_token_required
     from vedic_pipeline.api.schemas import (
         AskRequest,
         BuildIndexRequest,
@@ -61,10 +61,16 @@ def create_app():
     clean_origins = [o.strip() for o in origins if o.strip() and o.strip() != "*"]
     if "*" in [o.strip() for o in origins if o.strip()]:
         logger.warning("CORS_ORIGINS contém '*': ignorado por segurança com allow_credentials")
-    if os.environ.get("XAI_API_KEY") and not os.environ.get("VEDIC_GENERATION_API_TOKEN"):
+    if generation_token_required() and not os.environ.get("VEDIC_GENERATION_API_TOKEN"):
         logger.warning(
-            "XAI_API_KEY configurada sem VEDIC_GENERATION_API_TOKEN: "
-            "/ask e mídia paga abertos — defina o token em API pública"
+            "VEDIC_PUBLIC_API/VEDIC_REQUIRE_GENERATION_TOKEN ativo sem VEDIC_GENERATION_API_TOKEN: "
+            "/ask (xAI ou local) e a geração de mídia respondem 503"
+        )
+    elif os.environ.get("XAI_API_KEY") and not os.environ.get("VEDIC_GENERATION_API_TOKEN"):
+        logger.warning(
+            "Instância privada: XAI_API_KEY sem VEDIC_GENERATION_API_TOKEN. "
+            "A chave do servidor autoriza /ask e mídia. "
+            "No deploy público use VEDIC_PUBLIC_API=1 e defina o token."
         )
     # Métodos/headers explícitos (evita '*' com credenciais).
     app.add_middleware(
@@ -84,7 +90,9 @@ def create_app():
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         # CSP conservador: API JSON + SPA estática local; sem inline scripts externos.
-        if request.url.path.startswith("/api/") or request.url.path in {"/metrics", "/health"}:
+        # Não impõe default-src 'none' em endpoints de mídia (áudio/vídeo/imagem) para permitir streaming limpo
+        is_media = any(request.url.path.endswith(ext) for ext in ("/audio", "/video", "/video/file", "/image"))
+        if not is_media and (request.url.path.startswith("/api/") or request.url.path in {"/metrics", "/health"}):
             response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
         return response
 
@@ -374,13 +382,31 @@ def create_app():
             "padas": padas,
         }
 
-    @app.get("/api/v1/verses/{verse_id}/audio")
+    @app.api_route("/api/v1/verses/{verse_id}/audio", methods=["GET", "HEAD"])
     def api_verse_audio(verse_id: str, authorization: str | None = Header(default=None)):
         from fastapi.responses import FileResponse
 
         from vedic_pipeline.api.request_policy import authorize_media
         from vedic_pipeline.api.verse_service import get_verse, recitation_text
-        from vedic_pipeline.llm.tts import cached_verse_audio, tts_available
+        from vedic_pipeline.llm.tts import cached_verse_audio, get_cached_verse_audio, tts_available
+
+        bundle = get_verse(verse_id)
+        if not bundle:
+            raise HTTPException(status_code=404, detail="Verso não encontrado no índice")
+        text = recitation_text(bundle)
+        if not text:
+            raise HTTPException(status_code=404, detail="Verso sem texto para narrar")
+        lang = "sa" if bundle.get("has_sanskrit") else "en"
+
+        # Leitura de cache é aberta (sem custo); áudio já sintetizado toca sem exigência de token
+        cached = get_cached_verse_audio(verse_id, text, language=lang)
+        if cached is not None:
+            return FileResponse(
+                cached,
+                media_type="audio/mpeg",
+                filename=f"{verse_id}.mp3",
+                content_disposition_type="inline",
+            )
 
         if not tts_available():
             raise HTTPException(
@@ -389,19 +415,17 @@ def create_app():
             )
         # Gera áudio pago via xAI: respeita a mesma política de token do /ask.
         authorize_media(authorization)
-        bundle = get_verse(verse_id)
-        if not bundle:
-            raise HTTPException(status_code=404, detail="Verso não encontrado no índice")
-        text = recitation_text(bundle)
-        if not text:
-            raise HTTPException(status_code=404, detail="Verso sem texto para narrar")
-        lang = "sa" if bundle.get("has_sanskrit") else "en"
         try:
             path = cached_verse_audio(verse_id, text, language=lang)
         except Exception:  # noqa: BLE001
             logger.exception("TTS falhou para %s", verse_id)
             raise HTTPException(status_code=503, detail="Falha ao narrar o verso") from None
-        return FileResponse(path, media_type="audio/mpeg", filename=f"{verse_id}.mp3")
+        return FileResponse(
+            path,
+            media_type="audio/mpeg",
+            filename=f"{verse_id}.mp3",
+            content_disposition_type="inline",
+        )
 
     @app.get("/api/v1/media/cached")
     def api_cached_media() -> dict[str, list[str]]:
@@ -409,7 +433,7 @@ def create_app():
 
         return list_cached_media()
 
-    @app.get("/api/v1/verses/{verse_id}/image")
+    @app.api_route("/api/v1/verses/{verse_id}/image", methods=["GET", "HEAD"])
     def api_verse_image(
         verse_id: str,
         refresh: bool = Query(default=False),
@@ -426,7 +450,7 @@ def create_app():
             return FileResponse(dest, media_type="image/jpeg")
         if cached:
             raise HTTPException(status_code=404, detail="Ilustração ainda não gerada")
-        # Só a geração nova é paga (xAI Imagine); leitura em cache fica aberta.
+        # Geração nova (Stable Diffusion local ou xAI Imagine). Leitura em cache fica aberta.
         authorize_media(authorization)
         try:
             path = generate_verse_image(verse_id, force=refresh)
@@ -437,6 +461,40 @@ def create_app():
         except Exception:  # noqa: BLE001
             logger.exception("Imagine imagem falhou para %s", verse_id)
             raise HTTPException(status_code=503, detail="Falha ao ilustrar o verso") from None
+        return FileResponse(path, media_type="image/jpeg")
+
+    @app.api_route("/api/v1/figures/{figure_id}/image", methods=["GET", "HEAD"])
+    def api_figure_image(
+        figure_id: str,
+        refresh: bool = Query(default=False),
+        authorization: str | None = Header(default=None),
+    ):
+        from fastapi.responses import FileResponse
+
+        from vedic_pipeline.api.request_policy import authorize_media
+        from vedic_pipeline.llm.imagine import figure_image_path, generate_figure_image
+        from vedic_pipeline.search.remissive import figure_negative, figure_prompt, get_figure
+
+        gloss = get_figure(figure_id)
+        if gloss is None:
+            raise HTTPException(status_code=404, detail="Personagem desconhecido")
+        dest = figure_image_path(figure_id)
+        if dest.exists() and dest.stat().st_size > 1000 and not refresh:
+            return FileResponse(dest, media_type="image/jpeg")
+        authorize_media(authorization)
+        try:
+            path = generate_figure_image(
+                figure_id,
+                figure_prompt(gloss),
+                negative=figure_negative(gloss),
+                force=refresh,
+                fallback_prompt=figure_prompt(gloss, compact=True),
+            )
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except Exception:  # noqa: BLE001
+            logger.exception("Figura falhou para %s", figure_id)
+            raise HTTPException(status_code=503, detail="Falha ao gerar a figura") from None
         return FileResponse(path, media_type="image/jpeg")
 
     @app.post("/api/v1/verses/{verse_id}/video")
@@ -458,7 +516,7 @@ def create_app():
             logger.exception("Imagine vídeo falhou para %s", verse_id)
             raise HTTPException(status_code=503, detail="Falha ao gerar vídeo") from None
 
-    @app.get("/api/v1/verses/{verse_id}/video")
+    @app.api_route("/api/v1/verses/{verse_id}/video", methods=["GET", "HEAD"])
     def api_verse_video_status(verse_id: str) -> dict[str, Any]:
         from vedic_pipeline.llm.imagine import poll_verse_video, video_path
 
@@ -469,7 +527,7 @@ def create_app():
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    @app.get("/api/v1/verses/{verse_id}/video/file")
+    @app.api_route("/api/v1/verses/{verse_id}/video/file", methods=["GET", "HEAD"])
     def api_verse_video_file(verse_id: str):
         from fastapi.responses import FileResponse
 
@@ -501,11 +559,16 @@ def create_app():
                 language=body.language,
             )
             METRICS.record_search(used, time.time() - t0)
+            from vedic_pipeline.search.remissive import annotate_search
+
+            aside = annotate_search(body.query, hits)
             payload: dict[str, Any] = {
                 "query": body.query,
                 "top_k": body.top_k,
                 "retrieval_backend": used,
                 "hits": hits,
+                "figure": aside["figure"],
+                "remissive": aside["entries"],
             }
             if body.include_prompt:
                 payload["rag_prompt"] = build_rag_prompt(body.query, hits)

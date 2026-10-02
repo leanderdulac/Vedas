@@ -65,6 +65,7 @@ class MediaAuthTests(unittest.TestCase):
         with patch.dict(
             os.environ,
             {
+                "VEDIC_PUBLIC_API": "",
                 "VEDIC_GENERATION_API_TOKEN": "",
                 "XAI_API_KEY": "k",
                 "VEDIC_REQUIRE_GENERATION_TOKEN": "",
@@ -73,12 +74,29 @@ class MediaAuthTests(unittest.TestCase):
             authorize_media(None)
             authorize_media("Bearer anything")
 
+    def test_public_api_refuses_media_without_token(self):
+        from fastapi import HTTPException
+
+        with patch.dict(
+            os.environ,
+            {
+                "VEDIC_PUBLIC_API": "1",
+                "VEDIC_GENERATION_API_TOKEN": "",
+                "XAI_API_KEY": "k",
+                "VEDIC_REQUIRE_GENERATION_TOKEN": "",
+            },
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                authorize_media(None)
+            self.assertEqual(ctx.exception.status_code, 503)
+
     def test_media_require_token_flag_is_fail_closed(self):
         from fastapi import HTTPException
 
         with patch.dict(
             os.environ,
             {
+                "VEDIC_PUBLIC_API": "",
                 "VEDIC_GENERATION_API_TOKEN": "",
                 "XAI_API_KEY": "k",
                 "VEDIC_REQUIRE_GENERATION_TOKEN": "true",
@@ -99,16 +117,32 @@ class MediaAuthTests(unittest.TestCase):
                 authorize_media("Bearer wrong")
 
     def test_audio_endpoint_gated_by_token(self):
-        with patch.dict(os.environ, {"VEDIC_GENERATION_API_TOKEN": "secret", "XAI_API_KEY": "k"}), \
-             patch("vedic_pipeline.api.verse_service.get_verse", return_value=None), \
-             TestClient(create_app()) as client:
-            # Sem token -> 401 antes de checar o verso
-            self.assertEqual(client.get("/api/v1/verses/RV.10.129.1/audio").status_code, 401)
-            # Com token -> passa do gate (verso inexistente -> 404)
-            self.assertEqual(
-                client.get("/api/v1/verses/RV.10.129.1/audio", headers={"Authorization": "Bearer secret"}).status_code,
-                404,
-            )
+        bundle = {
+            "verse_id": "RV.10.129.1",
+            "has_sanskrit": True,
+            "witnesses": [{"role": "sa", "text": "ना॑सदासी॒न्नो सदा॑सीत्त॒दानीं"}],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            cached = Path(tmp) / "RV.10.129.1_sa_test.mp3"
+            cached.write_bytes(b"\xff\xfb" + b"\x00" * 200)
+            with patch.dict(os.environ, {"VEDIC_GENERATION_API_TOKEN": "secret", "XAI_API_KEY": "k"}), \
+                 patch("vedic_pipeline.api.verse_service.get_verse", return_value=bundle), \
+                 patch("vedic_pipeline.llm.tts.get_cached_verse_audio", return_value=None), \
+                 TestClient(create_app()) as client:
+                # Cache miss sem token -> 401
+                self.assertEqual(client.get("/api/v1/verses/RV.10.129.1/audio").status_code, 401)
+                # Verso inexistente -> 404
+                with patch("vedic_pipeline.api.verse_service.get_verse", return_value=None):
+                    self.assertEqual(
+                        client.get("/api/v1/verses/RV.10.129.1/audio", headers={"Authorization": "Bearer secret"}).status_code,
+                        404,
+                    )
+                # Áudio em cache: leitura aberta mesmo sem cabeçalho Authorization
+                with patch("vedic_pipeline.llm.tts.get_cached_verse_audio", return_value=cached):
+                    res = client.get("/api/v1/verses/RV.10.129.1/audio")
+                    self.assertEqual(res.status_code, 200)
+                    self.assertEqual(res.headers["content-type"], "audio/mpeg")
+
 
     def test_image_generation_gated_but_cache_open(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -57,6 +57,18 @@ def synthesize(
         return resp.content
 
 
+def get_cached_verse_audio(
+    verse_id: str,
+    text: str,
+    *,
+    language: str = "sa",
+) -> Path | None:
+    dest = _cache_path(verse_id, language, text)
+    if dest.exists() and dest.stat().st_size > 100:
+        return dest
+    return None
+
+
 def cached_verse_audio(
     verse_id: str,
     text: str,
@@ -64,9 +76,17 @@ def cached_verse_audio(
     language: str = "sa",
 ) -> Path:
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    cached = get_cached_verse_audio(verse_id, text, language=language)
+    if cached is not None:
+        return cached
     dest = _cache_path(verse_id, language, text)
-    if dest.exists() and dest.stat().st_size > 100:
-        return dest
     audio = synthesize(text, language=language)
+    from vedic_pipeline.llm.diffusion import audio_bed_enabled, audio_bed_prompt, underlay_speech
+
+    if audio_bed_enabled():
+        try:
+            audio = underlay_speech(audio, audio_bed_prompt(text))
+        except Exception:  # noqa: BLE001
+            logger.exception("Cama de tanpura falhou para %s; gravando só a voz", verse_id)
     dest.write_bytes(audio)
     return dest

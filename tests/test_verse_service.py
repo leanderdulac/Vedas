@@ -112,3 +112,41 @@ class ChatHistoryTests(unittest.TestCase):
         self.assertEqual(msgs[0]["role"], "system")
         self.assertEqual(msgs[1]["content"], "explique BG 2.47")
         self.assertEqual(msgs[-1]["content"], "o que ele pede em seguida?")
+
+
+class RecitationTextTests(unittest.TestCase):
+    def test_deva_with_anukramani_and_accents_and_numerals(self):
+        bundle = {
+            "verse_id": "AV.1.1.1",
+            "witnesses": [
+                {
+                    "role": "sa",
+                    "text": "१-४ अथर्वा। वाचस्पतिः।\nये त्रि॒षप्ताः प॑रि॒यन्ति॒ विश्वा॒ रूपा॑णि॒ बिभ्र॑तः।\nवा॒चस्पति॒र्बला॒ तेषां॑ त॒न्वो३ अ॒द्य द॑धातु मे॥ १ ॥",
+                }
+            ],
+        }
+        res = recitation_text(bundle)
+        self.assertIsNotNone(res)
+        self.assertNotIn("अथर्वा", res or "")
+        self.assertNotIn("वाचस्पतिः", res or "")
+        self.assertIn("त्रिषप्ताः", res or "")
+        self.assertNotIn("१", res or "")
+
+    def test_iast_witness_preserved(self):
+        bundle = {
+            "verse_id": "RV.1.1.1",
+            "witnesses": [{"role": "iast", "text": "agním īḷe puróhitaṃ | yajñásya devám ṛtvíjam ||"}],
+        }
+        res = recitation_text(bundle)
+        self.assertIsNotNone(res)
+        self.assertIn("agním īḷe puróhitaṃ", res or "")
+        self.assertNotIn("|", res or "")
+
+    def test_en_witness_fallback(self):
+        bundle = {
+            "verse_id": "SV.1.1.1.1",
+            "witnesses": [{"role": "en", "text": "I Praise Agni, the chosen Priest."}],
+        }
+        res = recitation_text(bundle)
+        self.assertEqual(res, "I Praise Agni, the chosen Priest.")
+

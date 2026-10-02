@@ -77,7 +77,7 @@ class RequestPolicyTests(unittest.TestCase):
             self.assertEqual(ask.call_args.kwargs["provider"], "xai")
 
     def test_local_xai_allowed_without_generation_token(self):
-        with patch.dict(os.environ, {'VEDIC_GENERATION_API_TOKEN': '', 'XAI_API_KEY': 'test-key', 'XAI_MODEL': 'configured-model'}), \
+        with patch.dict(os.environ, {'VEDIC_PUBLIC_API': '', 'VEDIC_GENERATION_API_TOKEN': '', 'XAI_API_KEY': 'test-key', 'XAI_MODEL': 'configured-model'}), \
              patch('vedic_pipeline.llm.ask.ask', return_value={'answer': 'test'}) as ask, \
              TestClient(create_app()) as client:
             self.assertEqual(client.post('/ask', json={'query': 'atman', 'provider': 'auto'}).status_code, 200)
@@ -107,6 +107,16 @@ class RequestPolicyTests(unittest.TestCase):
             response = client.post('/ask/stream', json={'query': 'atman'}, headers=headers)
             self.assertIn('event: done', response.text)
             self.assertEqual(stream.call_args.kwargs['model'], 'configured-model')
+
+    def test_public_api_refuses_generation_without_token(self):
+        with patch.dict(os.environ, {'VEDIC_PUBLIC_API': '1', 'VEDIC_GENERATION_API_TOKEN': '', 'XAI_API_KEY': 'test-key'}), \
+             patch('vedic_pipeline.llm.ask.ask', return_value={'answer': 'test'}) as ask, \
+             TestClient(create_app()) as client:
+            self.assertEqual(client.post('/ask', json={'query': 'atman', 'provider': 'auto'}).status_code, 503)
+            self.assertEqual(client.post('/ask', json={'query': 'atman', 'provider': 'xai'}).status_code, 503)
+            self.assertEqual(client.post('/ask', json={'query': 'atman', 'provider': 'local'}).status_code, 503)
+            ask.assert_not_called()
+            self.assertEqual(client.post('/ask', json={'query': 'atman', 'provider': 'extractive'}).status_code, 200)
 
     def test_extractive_stays_public_even_with_xai_configured(self):
         with patch.dict(os.environ, {'VEDIC_GENERATION_API_TOKEN': '', 'XAI_API_KEY': 'test-key'}), \

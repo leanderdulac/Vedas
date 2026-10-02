@@ -1,0 +1,196 @@
+"""Índice remissivo e escolha do personagem ilustrado."""
+
+from __future__ import annotations
+
+import os
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from fastapi.testclient import TestClient
+
+from vedic_pipeline.api.app import create_app
+from vedic_pipeline.search.remissive import (
+    annotate_search,
+    figure_negative,
+    figure_prompt,
+    get_figure,
+)
+
+
+def _hit(text: str, locator: str = "RV 1.1.1") -> dict:
+    return {"chunk_id": locator, "text": text, "locator": locator, "title": locator}
+
+
+class RemissiveTests(unittest.TestCase):
+    def test_query_names_the_portrait_even_if_hits_differ(self):
+        aside = annotate_search("hymn to Agni", [_hit("Indra slew Vritra", "RV 1.32.1")])
+        self.assertEqual(aside["figure"]["id"], "agni")
+        ids = [e["id"] for e in aside["entries"]]
+        self.assertEqual(ids[:2], ["agni", "indra"])
+        indra = next(e for e in aside["entries"] if e["id"] == "indra")
+        self.assertEqual(indra["locators"][0]["locator"], "RV 1.32.1")
+        self.assertTrue(any(ref["id"] == "soma" for ref in aside["figure"]["see_also"]))
+
+    def test_hit_frequency_picks_the_character_when_the_query_does_not(self):
+        hits = [
+            _hit("Indra and the Maruts", "RV 1.85.1"),
+            _hit("Again Indra", "RV 1.32.2"),
+        ]
+        aside = annotate_search("storm and rain", hits)
+        self.assertEqual(aside["figure"]["id"], "indra")
+        self.assertEqual(aside["figure"]["count"], 2)
+
+    def test_concepts_do_not_become_a_portrait(self):
+        aside = annotate_search("dharma and the self", [_hit("Dharma holds the world")])
+        self.assertIsNone(aside["figure"])
+        self.assertIn("dharma", [e["id"] for e in aside["entries"]])
+
+    def test_generic_words_do_not_invent_a_god(self):
+        aside = annotate_search("fire and the self", [_hit("a bright flame")])
+        self.assertIsNone(aside["figure"])
+        self.assertEqual(aside["entries"], [])
+
+    def test_inflected_and_devanagari_names_match(self):
+        aside = annotate_search("अग्निम्", [_hit("agním īḷe")])
+        self.assertEqual(aside["figure"]["id"], "agni")
+
+    def test_short_names_do_not_match_inside_words(self):
+        aside = annotate_search("drama and soma", [])
+        self.assertEqual(aside["figure"]["id"], "soma")
+        self.assertNotIn("rama", [e["id"] for e in aside["entries"]])
+
+    def test_unknown_figure_has_no_portrait_prompt_target(self):
+        self.assertIsNone(get_figure("dharma"))
+        self.assertIsNone(get_figure("nope"))
+        gloss = get_figure("agni")
+        self.assertIsNotNone(gloss)
+        prompt = figure_prompt(gloss)
+        self.assertTrue(prompt.startswith("Agni"))
+        for icon in ("two bearded heads", "seven tongues of fire", "red-bronze skin", "white ram", "ladle"):
+            self.assertIn(icon, prompt)
+        # "seven flaming tongues" virava bigode de fogo no Imagine.
+        self.assertNotIn("flaming tongues", prompt)
+        # "no X" no positivo atrai X: o que não deve aparecer vai no negativo.
+        self.assertNotIn("no Latin", prompt)
+        negative = figure_negative(gloss)
+        self.assertIn("letters", negative)
+        self.assertIn("blue skin", negative)
+
+    def test_portrait_prompts_fit_the_clip_window(self):
+        from vedic_pipeline.search.remissive import _GLOSSES
+
+        for gloss in _GLOSSES:
+            if get_figure(gloss.id) is None:
+                continue
+            prompt = figure_prompt(gloss, compact=True)
+            # CLIP corta em 77 tokens; ~1,4 token por palavra deixa folga com 50.
+            self.assertLessEqual(len(prompt.split()), 50, gloss.id)
+            self.assertTrue(prompt.startswith(gloss.visual.split(",")[0]), gloss.id)
+            self.assertTrue(figure_prompt(gloss).startswith(gloss.visual.split(",")[0]), gloss.id)
+
+    def test_figure_style_follows_the_env(self):
+        from vedic_pipeline.search import remissive
+
+        gloss = get_figure("agni")
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": ""}):
+            self.assertIn("bronze-and-obsidian", figure_prompt(gloss))
+            self.assertNotIn("Rajput", figure_prompt(gloss))
+            # O render escultural não pode ir para o "Avoid".
+            self.assertNotIn("3d render", figure_negative(gloss))
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": "cinematic"}):
+            self.assertIn("golden halo", figure_prompt(gloss))
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": "miniature"}):
+            self.assertIn("Rajput miniature", figure_prompt(gloss))
+            self.assertIn("3d render", figure_negative(gloss))
+        with patch.dict(os.environ, {"VEDIC_FIGURE_STYLE": "bogus"}):
+            self.assertEqual(remissive.figure_style(), "sculpted")
+
+    def test_pasha_is_not_a_noose(self):
+        for fid in ("varuna", "yama"):
+            visual = get_figure(fid).visual
+            self.assertIn("pasha", visual)
+            self.assertNotIn("noose", visual)
+
+    def test_narada_has_a_sage_portrait(self):
+        aside = annotate_search("Narada Muni", [_hit("Vishnu and Indra", "VP 1.15"), _hit("Vishnu again", "VP 1.16")])
+        self.assertEqual(aside["figure"]["id"], "narada")
+        gloss = get_figure("narada")
+        prompt = figure_prompt(gloss)
+        for icon in ("veena", "tilaka", "topknot", "cymbals"):
+            self.assertIn(icon, prompt)
+        # Sábio não herda a coroa do estilo escultural.
+        self.assertNotIn("heavy ornate crown", prompt)
+        self.assertIn("crown", figure_negative(gloss))
+        self.assertIsNotNone(get_figure("brahma"))
+
+    def test_named_figure_without_gloss_gets_a_dynamic_portrait(self):
+        from vedic_pipeline.search import remissive
+
+        hits = [_hit("Vasishtha spoke to the king. Vasishtha blessed him."), _hit("And Vasishtha went home.")]
+        aside = annotate_search("Quem foi Vasishtha?", hits)
+        self.assertEqual(aside["figure"]["id"], "nome-vasishtha")
+        self.assertEqual(aside["figure"]["name"], "Vasishtha")
+        with patch.object(remissive, "_attested", return_value=True):
+            gloss = get_figure("nome-vasishtha")
+        self.assertIsNotNone(gloss)
+        self.assertTrue(figure_prompt(gloss).startswith("Vasishtha"))
+        self.assertNotIn("heavy ornate crown", figure_prompt(gloss))
+        with patch.object(remissive, "_attested", return_value=False):
+            self.assertIsNone(get_figure("nome-vasishtha"))
+        # Curado vence; slug inválido não vira prompt.
+        self.assertIsNone(get_figure("nome-agni"))
+        self.assertIsNone(get_figure("nome-<script>"))
+
+    def test_lowercase_terms_do_not_become_a_dynamic_portrait(self):
+        hits = [_hit("tapas burns; by tapas he rose; tapas again")]
+        aside = annotate_search("tapas", hits)
+        self.assertIsNone(aside["figure"])
+
+
+class SearchAsideApiTests(unittest.TestCase):
+    def test_search_payload_carries_the_index(self):
+        hits = [_hit("Indra slew Vritra", "RV 1.32.1")]
+        with patch("vedic_pipeline.llm.ask.retrieve_hits", return_value=(hits, "numpy")), TestClient(
+            create_app()
+        ) as client:
+            res = client.post("/api/v1/search", json={"query": "hymn to Agni"})
+        self.assertEqual(res.status_code, 200, res.text)
+        body = res.json()
+        self.assertEqual(body["figure"]["id"], "agni")
+        self.assertIn("indra", [e["id"] for e in body["remissive"]])
+
+    def test_figure_image_uses_the_named_cache(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {"VEDIC_GENERATION_API_TOKEN": ""}):
+            dest = Path(tmp) / "agni.jpg"
+
+            def _write(
+                figure_id: str,
+                prompt: str,
+                *,
+                negative: str | None = None,
+                force: bool = False,
+                fallback_prompt: str | None = None,
+            ) -> Path:
+                self.assertEqual(figure_id, "agni")
+                self.assertIn("Agni", prompt)
+                self.assertLessEqual(len((fallback_prompt or "").split()), 50)
+                self.assertIn("letters", negative or "")
+                dest.write_bytes(b"j" * 2000)
+                return dest
+
+            # O cache real em data/media/figures não pode decidir o teste.
+            with patch("vedic_pipeline.llm.imagine.figure_image_path", return_value=dest), patch(
+                "vedic_pipeline.llm.imagine.generate_figure_image", side_effect=_write
+            ) as gen, TestClient(create_app()) as client:
+                missing = client.get("/api/v1/figures/dharma/image")
+                self.assertEqual(missing.status_code, 404)
+                ok = client.get("/api/v1/figures/agni/image")
+                self.assertEqual(ok.status_code, 200, ok.text)
+                self.assertEqual(ok.headers["content-type"], "image/jpeg")
+                gen.assert_called_once()
+
+
+if __name__ == "__main__":
+    unittest.main()

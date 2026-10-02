@@ -7,6 +7,8 @@ import json
 import logging
 import os
 import re
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -17,15 +19,36 @@ from vedic_pipeline.api.verse_service import get_verse
 logger = logging.getLogger("vedic_pipeline.llm.imagine")
 
 MEDIA_DIR = Path("data/media")
-IMAGE_MODEL = os.environ.get("XAI_IMAGE_MODEL", "grok-imagine-image-2.0")
-VIDEO_MODEL = os.environ.get("XAI_VIDEO_MODEL", "grok-imagine-video-1.5")
+# Modo qualidade: o grok-imagine-image-quality desenha a iconografia (duas
+# cabeças do Agni, carneiro, concha) que nenhum SDXL local acertou, em ~6 s e
+# US$ 0,05 por imagem. `XAI_IMAGE_MODEL=grok-imagine-image-2.0` custa US$ 0,04.
+IMAGE_MODEL = "grok-imagine-image-quality"
 DEFAULT_BASE = "https://api.x.ai/v1"
 
-SCENE_STYLE = (
-    "Classical Indian mural and Pahari miniature sensibility, sacred and restrained, "
-    "soft mineral pigments, no photorealistic modern faces, no Latin or Devanagari "
-    "lettering in the frame, no logos, no cameras, no contemporary clothing."
+# Estilo dos stills de verso (ver docs/IMAGE_STYLE.md). `VEDIC_SCENE_STYLE`:
+# cinematic (padrão, o grupo maior das referências) ou miniature (o antigo).
+SCENE_STYLES: dict[str, str] = {
+    "cinematic": (
+        "Epic cinematic Hindu devotional digital painting, hyper-detailed semi-realistic rendering, "
+        "volumetric god rays and a glowing golden halo, dramatic sky, rich gold, saffron and deep blue "
+        "palette, ornate gold jewelry, majestic reverent mood, centered heroic composition."
+    ),
+    "miniature": (
+        "Classical Indian mural and Pahari miniature sensibility, sacred and restrained, "
+        "soft mineral pigments, no photorealistic modern faces."
+    ),
+}
+DEFAULT_SCENE_STYLE = "cinematic"
+SCENE_STYLE = SCENE_STYLES[DEFAULT_SCENE_STYLE]
+SCENE_GUARD = (
+    "Keep the frame clean: no Latin or Devanagari lettering, no logos, no cameras, "
+    "no contemporary clothing."
 )
+
+
+def scene_style() -> str:
+    choice = (os.environ.get("VEDIC_SCENE_STYLE") or "").strip().lower()
+    return choice if choice in SCENE_STYLES else DEFAULT_SCENE_STYLE
 
 
 def _safe_id(verse_id: str) -> str:
@@ -36,12 +59,35 @@ def image_path(verse_id: str) -> Path:
     return MEDIA_DIR / f"{_safe_id(verse_id)}.jpg"
 
 
+def figure_image_path(figure_id: str) -> Path:
+    return MEDIA_DIR / "figures" / f"{_safe_id(figure_id)}.jpg"
+
+
 def video_path(verse_id: str) -> Path:
     return MEDIA_DIR / f"{_safe_id(verse_id)}.mp4"
 
 
 def job_path(verse_id: str) -> Path:
     return MEDIA_DIR / "jobs" / f"{_safe_id(verse_id)}.json"
+
+
+def _read_job(verse_id: str) -> dict[str, Any] | None:
+    meta = job_path(verse_id)
+    if not meta.exists():
+        return None
+    try:
+        job = json.loads(meta.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    return job if isinstance(job, dict) else None
+
+
+def _write_job(verse_id: str, job: dict[str, Any]) -> None:
+    jp = job_path(verse_id)
+    jp.parent.mkdir(parents=True, exist_ok=True)
+    tmp = jp.with_suffix(".tmp")
+    tmp.write_text(json.dumps(job), encoding="utf-8")
+    tmp.replace(jp)
 
 
 def list_cached_media() -> dict[str, list[str]]:
@@ -51,7 +97,93 @@ def list_cached_media() -> dict[str, list[str]]:
     return {"images": images, "videos": videos}
 
 
-def visual_prompt(bundle: dict[str, Any]) -> str:
+# Stable Diffusion lê só 77 tokens do CLIP: estilo primeiro, sentido curto depois.
+# As proibições ficam no prompt negativo (`diffusion.negative_prompt`).
+COMPACT_STYLES: dict[str, str] = {
+    "cinematic": "Epic cinematic Hindu devotional painting, golden halo, god rays, rich gold and deep blue",
+    "miniature": "Pahari miniature painting, Indian devotional art, soft mineral pigments, gold detail",
+}
+COMPACT_STYLE = COMPACT_STYLES[DEFAULT_SCENE_STYLE]
+
+
+def compact_style() -> str:
+    return COMPACT_STYLES[scene_style()]
+
+
+# Referências de estilo opcionais (imagens locais, fora do git). Com elas o
+# Imagine usa /images/edits; ele copia também a composição (Agni saiu com três
+# cabeças), por isso fica desligado por padrão. Caminhos separados por ":".
+STYLE_REF_ENV = {"figure": "VEDIC_IMAGE_STYLE_REF", "scene": "VEDIC_SCENE_STYLE_REF"}
+STYLE_REF_MAX = 2
+_REF_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
+STYLE_REF_PREFIX = (
+    "Create a brand-new image in exactly the same artistic style, rendering, lighting, palette and "
+    "ornament as the reference images. Do not copy their faces, heads, subjects or composition. "
+)
+
+
+def style_refs(kind: str, exclude: str = "") -> list[Path]:
+    """Até `STYLE_REF_MAX` imagens de `VEDIC_IMAGE_STYLE_REF` (figuras) ou
+    `VEDIC_SCENE_STYLE_REF` (versos). `exclude` tira a referência do próprio
+    personagem, para o Imagine não copiar uma imagem de terceiros."""
+    raw = (os.environ.get(STYLE_REF_ENV.get(kind, "")) or "").strip()
+    if not raw:
+        return []
+    found: list[Path] = []
+    for part in raw.split(os.pathsep):
+        path = Path(part.strip()).expanduser()
+        if path.is_dir():
+            found.extend(sorted(x for x in path.iterdir() if x.suffix.lower() in _REF_SUFFIXES))
+        elif path.is_file() and path.suffix.lower() in _REF_SUFFIXES:
+            found.append(path)
+    skip = exclude.strip().lower()
+    return [p for p in found if not skip or p.stem.lower() != skip][:STYLE_REF_MAX]
+
+
+def _ref_data_uri(path: Path) -> str:
+    raw = path.read_bytes()
+    mime = "image/png" if path.suffix.lower() == ".png" else "image/jpeg"
+    try:
+        import io
+
+        from PIL import Image
+
+        with Image.open(io.BytesIO(raw)) as im:
+            im = im.convert("RGB")
+            im.thumbnail((768, 768))
+            buf = io.BytesIO()
+            im.save(buf, "JPEG", quality=88)
+        raw, mime = buf.getvalue(), "image/jpeg"
+    except ImportError:
+        if len(raw) > 4 * 1024 * 1024:
+            raise ValueError(f"Referência de estilo grande demais sem Pillow: {path.name}") from None
+    return f"data:{mime};base64," + base64.b64encode(raw).decode("ascii")
+
+
+def xai_image_model() -> str:
+    return (os.environ.get("XAI_IMAGE_MODEL") or "").strip() or IMAGE_MODEL
+
+
+def xai_image_prompt(prompt: str, negative: str | None = None) -> str:
+    """O Imagine não tem prompt negativo: as proibições viram uma frase final.
+
+    Sem ela o modelo escreve o nome da figura em devanágari na moldura.
+    """
+    text = prompt.strip()
+    avoid = (negative or "").strip().strip(",")
+    if avoid:
+        text = f"{text} Avoid: {avoid}."
+    if "lettering" not in text.lower():
+        text = f"{text} No text, captions or lettering anywhere in the image."
+    return text
+
+
+def _short(text: str, words: int) -> str:
+    parts = text.split()
+    return " ".join(parts[:words]).rstrip(",;:")
+
+
+def visual_prompt(bundle: dict[str, Any], *, compact: bool = False) -> str:
     locator = bundle.get("locator") or bundle.get("verse_id") or ""
     witnesses = bundle.get("witnesses") or []
     meaning = ""
@@ -63,9 +195,13 @@ def visual_prompt(bundle: dict[str, Any]) -> str:
         if meaning:
             break
     meaning = re.sub(r"\s+", " ", meaning)[:700]
+    if compact:
+        # Sem os localizadores "[RV 1.1.3]" que a tradução intercala.
+        plain = re.sub(r"\s+", " ", re.sub(r"\[[^\]]*\]", " ", meaning)).strip()
+        return f"{compact_style()}. One sacred scene: {_short(plain, 24)}"
     return (
         f"A single sacred scene illustrating Vedic verse {locator}. "
-        f"The verse evokes: {meaning}. {SCENE_STYLE} "
+        f"The verse evokes: {meaning}. {SCENE_STYLES[scene_style()]} {SCENE_GUARD} "
         "One clear subject, cinematic still suitable as the first frame of a short film."
     )
 
@@ -138,23 +274,54 @@ def _download_media_bytes(url: str, *, timeout: float = 60.0, limit: int = 25 * 
     raise ValueError("Muitos redirects ao baixar mídia")
 
 
-def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
-    dest = image_path(verse_id)
-    if dest.exists() and dest.stat().st_size > 1000 and not force:
-        return dest
-    bundle = get_verse(verse_id)
-    if not bundle:
-        raise FileNotFoundError(f"Verso {verse_id} não encontrado")
-    prompt = visual_prompt(bundle)
+def _provider_image(
+    prompt: str,
+    init: Path | None,
+    negative: str | None = None,
+    *,
+    fallback_prompt: str | None = None,
+    refs: list[Path] | None = None,
+) -> bytes:
+    """Bytes da imagem pelo backend de imagem.
+
+    Com o xAI, uma falha (sem chave, recusa, rede) cai no turbo local quando o
+    extra media existe; `fallback_prompt` é a versão curta para os 77 tokens.
+    `refs` (referências de estilo) só valem no xAI.
+    """
+    from vedic_pipeline.llm.diffusion import diffusion_installed, image_backend, render_image
+
+    if image_backend() == "diffusion":
+        # Still já gerado: img2img preserva a cena e refina o pigmento.
+        return render_image(prompt, negative=negative, init_image=init)
+    try:
+        if refs:
+            try:
+                return _xai_image(prompt, negative, refs=refs)
+            except (RuntimeError, ValueError, OSError, httpx.HTTPError) as exc:
+                logger.warning("Imagine com referência falhou (%s); gerando só pelo texto", exc)
+        return _xai_image(prompt, negative)
+    except (RuntimeError, ValueError, httpx.HTTPError) as exc:
+        if not diffusion_installed():
+            raise
+        logger.warning("Imagine falhou (%s); usando o turbo local", exc)
+        return render_image(fallback_prompt or prompt, negative=negative, fast=True)
+
+
+def _xai_image(prompt: str, negative: str | None = None, *, refs: list[Path] | None = None) -> bytes:
+    body: dict[str, Any] = {
+        "model": xai_image_model(),
+        "prompt": xai_image_prompt(prompt, negative),
+        "n": 1,
+        "aspect_ratio": "1:1",
+        "response_format": "b64_json",
+    }
+    endpoint = "/images/generations"
+    if refs:
+        endpoint = "/images/edits"
+        body["prompt"] = STYLE_REF_PREFIX + body["prompt"]
+        body["images"] = [{"url": _ref_data_uri(p), "type": "image_url"} for p in refs[:STYLE_REF_MAX]]
     with _client() as client:
-        resp = client.post(
-            "/images/generations",
-            json={
-                "model": IMAGE_MODEL,
-                "prompt": prompt,
-                "n": 1,
-            },
-        )
+        resp = client.post(endpoint, json=body)
         if resp.status_code >= 400:
             detail = resp.text
             try:
@@ -169,49 +336,146 @@ def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
         payload = resp.json()
     data = (payload.get("data") or [payload])[0]
     if data.get("b64_json"):
-        return _save_image_bytes(dest, base64.b64decode(data["b64_json"]))
+        return base64.b64decode(data["b64_json"])
     url = data.get("url")
     if not url:
         raise RuntimeError("Imagine não devolveu imagem")
-    return _save_image_bytes(dest, _download_media_bytes(url, timeout=60.0))
+    return _download_media_bytes(url, timeout=60.0)
 
 
-def start_verse_video(verse_id: str, *, duration: int = 6) -> dict[str, Any]:
-    still = generate_verse_image(verse_id)
-    bundle = get_verse(verse_id) or {}
-    b64 = base64.b64encode(still.read_bytes()).decode("ascii")
-    data_url = f"data:image/jpeg;base64,{b64}"
-    with _client() as client:
-        resp = client.post(
-            "/videos/generations",
-            json={
-                "model": VIDEO_MODEL,
-                "prompt": motion_prompt(bundle),
-                "image": {"url": data_url},
-                "duration": duration,
-            },
+def generate_verse_image(verse_id: str, *, force: bool = False) -> Path:
+    dest = image_path(verse_id)
+    cached = dest.exists() and dest.stat().st_size > 1000
+    if cached and not force:
+        return dest
+    bundle = get_verse(verse_id)
+    if not bundle:
+        raise FileNotFoundError(f"Verso {verse_id} não encontrado")
+    from vedic_pipeline.llm.diffusion import image_backend
+
+    compact = visual_prompt(bundle, compact=True)
+    if image_backend() == "diffusion":
+        raw = _provider_image(compact, dest if cached else None)
+    else:
+        raw = _provider_image(
+            visual_prompt(bundle), None, fallback_prompt=compact, refs=style_refs("scene")
         )
-        if resp.status_code >= 400:
-            detail = resp.text
+    return _save_image_bytes(dest, raw)
+
+
+def generate_figure_image(
+    figure_id: str,
+    prompt: str,
+    *,
+    negative: str | None = None,
+    force: bool = False,
+    fallback_prompt: str | None = None,
+) -> Path:
+    """Retrato do personagem. `force` gera de novo do zero.
+
+    O retrato é definido pela iconografia do prompt: refinar (img2img) um
+    retrato errado só preservaria a composição errada.
+    """
+    dest = figure_image_path(figure_id)
+    cached = dest.exists() and dest.stat().st_size > 1000
+    if cached and not force:
+        return dest
+    raw = _provider_image(
+        prompt,
+        None,
+        negative,
+        fallback_prompt=fallback_prompt,
+        refs=style_refs("figure", exclude=figure_id),
+    )
+    return _save_image_bytes(dest, raw)
+
+
+VIDEO_STALE_SECONDS = 20 * 60
+
+
+def api_motion_prompt(bundle: dict[str, Any]) -> str:
+    """Prompt das APIs de vídeo (xAI, Runway): o sentido do verso e movimento
+    lento, sem mudar rostos nem estilo do still."""
+    locator = bundle.get("locator") or bundle.get("verse_id") or ""
+    meaning = ""
+    for w in bundle.get("witnesses") or []:
+        if w.get("role") == "en" and (w.get("text") or "").strip():
+            meaning = re.sub(r"\s+", " ", re.sub(r"\[[^\]]*\]", " ", w["text"])).strip()
+            break
+    about = f" The verse evokes: {_short(meaning, 30)}." if meaning else ""
+    return (
+        f"Animate this devotional painting of Vedic verse {locator}.{about} "
+        "Slow, reverent motion: the sacred flames flicker and rise gently, thin smoke and incense "
+        "drift upward, a very slow camera push-in. Keep every figure, face and the painted style "
+        "unchanged; no new characters, no text, no sudden cuts."
+    )
+
+
+def _video_worker(verse_id: str, backend: str) -> None:
+    """Thread de fundo do vídeo: API (xAI/Runway) com fallback no SVD, ou SVD."""
+    from vedic_pipeline.llm.diffusion import diffusion_installed, render_video
+    from vedic_pipeline.llm.video_providers import RENDERERS, VideoProviderError
+
+    started = time.monotonic()
+    job: dict[str, Any] = {"verse_id": verse_id, "status": "done", "backend": backend}
+    try:
+        bundle = get_verse(verse_id) or {}
+        still, dest = image_path(verse_id), video_path(verse_id)
+        renderer = RENDERERS.get(backend)
+        if renderer is None:
+            render_video(still, dest, motion_prompt(bundle))
+        else:
             try:
-                err = resp.json()
-                detail = err.get("error") or err.get("message") or detail
-            except Exception:
-                pass
-            raise RuntimeError(
-                f"Imagine recusou o vídeo ({resp.status_code}): {detail}. "
-                "Ative Image/Video nesta chave em console.x.ai."
-            )
-        payload = resp.json()
-    request_id = payload.get("request_id") or payload.get("id")
-    if not request_id:
-        raise RuntimeError(f"Imagine vídeo sem request_id: {payload}")
-    job = {"verse_id": verse_id, "request_id": request_id, "status": "pending"}
-    jp = job_path(verse_id)
-    jp.parent.mkdir(parents=True, exist_ok=True)
-    tmp = jp.with_suffix(".tmp")
-    tmp.write_text(json.dumps(job), encoding="utf-8")
-    tmp.replace(jp)
+                job.update(renderer(still, dest, api_motion_prompt(bundle)))
+            except (VideoProviderError, ValueError, OSError, httpx.HTTPError) as exc:
+                if not diffusion_installed():
+                    raise
+                logger.warning("Vídeo %s falhou para %s (%s); usando o SVD local", backend, verse_id, exc)
+                job.update({"backend": "svd", "fallback_from": backend, "fallback_reason": str(exc)[:300]})
+                render_video(still, dest, motion_prompt(bundle))
+        job["render_seconds"] = round(time.monotonic() - started, 1)
+        _write_job(verse_id, job)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Vídeo (%s) falhou para %s", job["backend"], verse_id)
+        _write_job(
+            verse_id,
+            {"verse_id": verse_id, "status": "failed", "backend": job["backend"], "detail": str(exc)},
+        )
+
+
+def _diffusion_video_worker(verse_id: str) -> None:
+    _video_worker(verse_id, "svd")
+
+
+def _is_live(job: dict[str, Any] | None) -> bool:
+    """Job pendente desta execução (sem `request_id` legado e não abandonado)."""
+    if not job or job.get("status") != "pending" or job.get("request_id"):
+        return False
+    started = job.get("started_at")
+    return not isinstance(started, (int, float)) or time.time() - started < VIDEO_STALE_SECONDS
+
+
+def start_verse_video(verse_id: str) -> dict[str, Any]:
+    """Gera o still (se faltar) e renderiza o vídeo numa thread de fundo.
+
+    `VEDIC_VIDEO_BACKEND` escolhe svd | xai | runway (`diffusion.video_backend`).
+    O status sai em `poll_verse_video`.
+    """
+    from vedic_pipeline.llm.diffusion import video_backend
+
+    backend = video_backend()
+    generate_verse_image(verse_id)
+    current = _read_job(verse_id)
+    if _is_live(current):
+        return current  # type: ignore[return-value]
+    job = {"verse_id": verse_id, "status": "pending", "backend": backend, "started_at": time.time()}
+    _write_job(verse_id, job)
+    threading.Thread(
+        target=_video_worker,
+        args=(verse_id, backend),
+        name=f"video-{backend}-{_safe_id(verse_id)}",
+        daemon=True,
+    ).start()
     return job
 
 
@@ -219,15 +483,18 @@ def poll_verse_video(verse_id: str) -> dict[str, Any]:
     dest = video_path(verse_id)
     if dest.exists() and dest.stat().st_size > 1000:
         return {"verse_id": verse_id, "status": "done", "ready": True}
-    meta = job_path(verse_id)
-    if not meta.exists():
+    job = _read_job(verse_id)
+    if not job:
         return {"verse_id": verse_id, "status": "missing", "ready": False}
-    try:
-        job = json.loads(meta.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return {"verse_id": verse_id, "status": "missing", "ready": False}
+    if not job.get("request_id"):
+        status = str(job.get("status") or "pending")
+        out = {"verse_id": verse_id, "status": status, "ready": status == "done", "backend": job.get("backend")}
+        if status in {"failed", "error"}:
+            out["detail"] = job.get("detail")
+        return out
+    # Job legado (xAI assíncrono gravado antes da thread de fundo).
     request_id = job.get("request_id")
-    if not request_id or not isinstance(request_id, str) or len(request_id) > 128:
+    if not isinstance(request_id, str) or len(request_id) > 128:
         return {"verse_id": verse_id, "status": "missing", "ready": False}
     with _client() as client:
         resp = client.get(f"/videos/{request_id}")
@@ -235,14 +502,14 @@ def poll_verse_video(verse_id: str) -> dict[str, Any]:
         payload = resp.json()
     status = (payload.get("status") or "").lower()
     job["status"] = status
-    tmp = meta.with_suffix(".tmp")
-    tmp.write_text(json.dumps(job), encoding="utf-8")
-    tmp.replace(meta)
+    _write_job(verse_id, job)
     if status in {"done", "completed", "succeeded"}:
         url = (payload.get("video") or {}).get("url") or payload.get("url")
         if not url:
             raise RuntimeError("Vídeo pronto sem URL")
-        _save_image_bytes(dest, _download_media_bytes(url, timeout=120.0))
+        from vedic_pipeline.llm.video_providers import VIDEO_LIMIT_BYTES, _save
+
+        _save(dest, _download_media_bytes(url, timeout=120.0, limit=VIDEO_LIMIT_BYTES))
         return {"verse_id": verse_id, "status": "done", "ready": True}
     if status in {"failed", "expired", "error"}:
         return {"verse_id": verse_id, "status": status, "ready": False, "detail": payload}

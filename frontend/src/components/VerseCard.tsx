@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, VerseAnalysis, VerseBundle, VerseTranslation, VerseUnit } from "../api/client";
-
-function speakBrowser(text: string, lang: string) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = lang;
-  utter.rate = 0.85;
-  window.speechSynthesis.speak(utter);
-}
+import { type PlaybackHandle, playVerseAudio, speakExclusive } from "../data/playback";
+import { displayProse, speechProse } from "../data/prose";
+import { speakPortuguese, speakSanskrit, stopSpeaking } from "../data/sanskrit";
 
 function revoke(url: string | null) {
   if (url && url.startsWith("blob:")) {
@@ -34,7 +28,7 @@ export default function VerseCard({
   hasImage?: boolean;
   hasVideo?: boolean;
 }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackRef = useRef<PlaybackHandle | null>(null);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState<"audio" | "pt" | "en" | "trad" | "anlz" | "image" | "video" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,60 +68,59 @@ export default function VerseCard({
     return next;
   }
 
-  async function play() {
+  function getIastWitness(): string | undefined {
+    return bundle?.witnesses?.find((w) => w.role === "iast" || w.role === "translit")?.text;
+  }
+
+  function play() {
     setError(null);
     setBusy("audio");
-    try {
-      await ensureBundle().catch(() => undefined);
-      const url = api.verseAudioUrl(unit.verse_id);
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 30000);
-      const res = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(timer);
-      if (res.ok) {
-        const blob = await res.blob();
-        const src = URL.createObjectURL(blob);
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        const prev = (audioRef.current as HTMLAudioElement & { __src?: string } | null)?.__src;
-        revoke(prev ?? null);
-        const audio = new Audio(src);
-        (audio as HTMLAudioElement & { __src?: string }).__src = src;
-        audioRef.current = audio;
-        audio.onended = () => setPlaying(false);
-        await audio.play();
-        setPlaying(true);
-        return;
-      }
-      speakBrowser(unit.text, unit.verse_id.startsWith("BG") || /[\u0900-\u097F]/.test(unit.text) ? "hi-IN" : "en-US");
-      setPlaying(true);
-    } catch (e) {
-      speakBrowser(unit.text, "hi-IN");
-      setPlaying(true);
-      setError(e instanceof Error ? e.message : "Áudio do navegador");
-    } finally {
-      setBusy(null);
-    }
+    setPlaying(false);
+    playbackRef.current = playVerseAudio(
+      api.verseAudioUrl(unit.verse_id),
+      {
+        createAudio: (url) => new Audio(url),
+        speakFallback: (onEnd) => speakSanskrit(unit.text, getIastWitness(), onEnd),
+        stopSpeech: stopSpeaking,
+      },
+      {
+        onPlaying: () => {
+          setPlaying(true);
+          setBusy(null);
+        },
+        onFallback: () => {
+          setPlaying(true);
+          setBusy(null);
+          setError("♪ Áudio do servidor indisponível; usando a voz do navegador");
+        },
+        onIdle: () => {
+          if (cancelled.current) return;
+          setPlaying(false);
+          setBusy((b) => (b === "audio" ? null : b));
+        },
+      },
+    );
   }
 
   function stop() {
-    audioRef.current?.pause();
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
-    setPlaying(false);
+    playbackRef.current?.stop();
+    playbackRef.current = null;
   }
 
   function speakTranslation() {
     if (!translation?.translation) return;
+    const text = speechProse(translation.translation);
     setError(null);
-    stop();
-    speakBrowser(translation.translation, "pt-BR");
     setPlaying(true);
-    const done = () => setPlaying(false);
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      // utterance.onend dispara só se o texto ainda existir; fallback por tempo.
-      setTimeout(done, Math.max(4000, translation.translation.length * 90));
-    }
+    playbackRef.current = speakExclusive((onEnd) => speakPortuguese(text, onEnd), stopSpeaking, {
+      onIdle: () => {
+        if (!cancelled.current) setPlaying(false);
+      },
+    });
+  }
+
+  function speakWord(form: string, iast?: string) {
+    speakExclusive((onEnd) => speakSanskrit(form, iast, onEnd), stopSpeaking);
   }
 
   async function illustrate() {
@@ -136,7 +129,7 @@ export default function VerseCard({
     try {
       await ensureBundle();
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 60000);
+      const timer = setTimeout(() => ctrl.abort(), 180000);
       const res = await fetch(api.verseImageUrl(unit.verse_id), { signal: ctrl.signal });
       clearTimeout(timer);
       if (!res.ok) {
@@ -174,7 +167,7 @@ export default function VerseCard({
         });
       }
       await api.startVerseVideo(unit.verse_id);
-      for (let i = 0; i < 40; i += 1) {
+      for (let i = 0; i < 90; i += 1) {
         if (cancelled.current) return;
         const st = await api.verseVideoStatus(unit.verse_id);
         if (st.ready || st.status === "done") {
@@ -185,7 +178,8 @@ export default function VerseCard({
           return;
         }
         if (st.status === "failed" || st.status === "expired" || st.status === "error") {
-          throw new Error(`Vídeo ${st.status}`);
+          const detail = typeof st.detail === "string" ? st.detail : "";
+          throw new Error(detail || `Vídeo ${st.status}`);
         }
         if (!cancelled.current) setVideoNote(`Vídeo ${st.status || "pendente"}…`);
         await new Promise((r) => setTimeout(r, 4000));
@@ -299,7 +293,7 @@ export default function VerseCard({
       {explanation && (
         <div className="verse-explain">
           <div className="verse-explain-lang">{explanation.lang === "pt" ? "Explicação" : "Explanation"}</div>
-          <p>{explanation.text}</p>
+          <p>{displayProse(explanation.text)}</p>
         </div>
       )}
       {translation && (
@@ -308,13 +302,12 @@ export default function VerseCard({
             Tradução ({translation.source_role === "sa" ? "do sânscrito" : translation.source_role})
             {translation.cached ? " · em cache" : ""}
           </div>
-          {translation.translation && <p>{translation.translation}</p>}
+          {translation.translation && <p>{displayProse(translation.translation)}</p>}
           {translation.translation && (
             <button
               type="button"
               className="btn btn-ghost verse-btn"
-              onClick={speakTranslation}
-              disabled={playing}
+              onClick={playing ? stop : speakTranslation}
               title="Ouvir a tradução em português"
             >
               {playing ? "■ Parar" : "▶ Ouvir tradução"}
@@ -355,7 +348,7 @@ export default function VerseCard({
               <tbody>
                 {analysis.words.map((wd, i) => (
                   <tr key={`${wd.form}-${i}`}>
-                    <td className="analysis-word-deva" onClick={() => speakBrowser(wd.form, "hi-IN")} title="Ouvir">
+                    <td className="analysis-word-deva" onClick={() => speakWord(wd.form, wd.iast)} title="Ouvir">
                       {wd.form}
                     </td>
                     <td className="analysis-word-iast">{wd.iast}</td>

@@ -5,6 +5,8 @@ data/structured/
 data/audio/
 data/media/
 data/jobs/
+data/translations/
+data/analyses/
 data/bulk_state.json
 data/bulk_errors.jsonl
 data/*.log
@@ -33,3 +35,6 @@ frontend/coverage/
 *.pem
 *.key
 *.p12
+
+# scratch de agentes/ferramentas
+.agent_tmp/

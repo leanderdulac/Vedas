@@ -42,6 +42,18 @@ train = [
     "accelerate>=0.27.0",
     "torch>=2.1.0",
     "sentencepiece>=0.1.99",
+    "peft>=0.10.0",
+]
+media = [
+    "torch>=2.1.0",
+    "torchvision>=0.16.0",
+    "diffusers>=0.31.0",
+    "torchsde>=0.2.6",
+    "transformers>=4.38.0",
+    "accelerate>=0.27.0",
+    "safetensors>=0.4.0",
+    "imageio>=2.34.0",
+    "imageio-ffmpeg>=0.5.0",
 ]
 all = [
     "psycopg[binary]>=3.1.0",
@@ -80,6 +92,8 @@ ignore = ["E501", "UP017"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Testes importam scripts/* (ex.: scripts.train_slm_lora); `pytest` puro não põe a raiz no sys.path.
+pythonpath = ["."]
 python_files = ["test_*.py"]
 addopts = "--cov=vedic_pipeline --cov-report=term-missing --cov-fail-under=60"
 
