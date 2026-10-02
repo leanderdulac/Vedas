@@ -210,15 +210,21 @@ class RecordTests(unittest.TestCase):
         ]
         self.assertEqual(titled_works(parse_entity_query("Narada Muni"), chunks), ["narada bhakti sutra", "narada smrti"])
 
-    def test_manifest_is_valid_and_gretil_is_catalogued_only(self):
+    def test_manifest_is_valid_and_gretil_enters_by_exception(self):
         from vedic_pipeline.crawler.licenses import validate_source
 
         root = Path(__file__).resolve().parents[1]
         sources = json.loads((root / "fixtures" / "sources_narada_2026_10.json").read_text(encoding="utf-8"))["sources"]
         ok = [s for s in sources if validate_source(s)[0]]
-        blocked = [s for s in sources if not validate_source(s)[0]]
-        self.assertEqual([s["language"] for s in blocked], ["sa"])
-        self.assertEqual(len(ok), 58)
+        self.assertEqual(len(ok), len(sources))
+        self.assertEqual(len(ok), 61)
+        gretil = [s for s in sources if s["language"] == "sa"]
+        self.assertEqual(len(gretil), 1)
+        self.assertTrue(gretil[0]["download"])
+        self.assertIn("exceção por fonte", validate_source(gretil[0])[1])
+        self.assertIn("NonCommercial", gretil[0]["license_note"])
+        bhp = [s for s in ok if s.get("work_title") == "Bhāgavata Purāṇa"]
+        self.assertEqual(len(bhp), 4)  # Dutt I–VII, Dutt VIII–IX, Subba Rau X–XII, GRETIL
         for s in ok:
             self.assertEqual(s["etl"], "book")
             self.assertTrue(s.get("license_note"))

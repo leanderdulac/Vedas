@@ -264,6 +264,11 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
+def _locator_anchor(locator: str) -> str:
+    """"Book 8, ch. 23" → "book-8-ch-23"; "Book 8, ch. 3–4" → "book-8-ch-3"."""
+    return _slug(re.sub(r"[–-]\d+$", "", locator.strip()))
+
+
 def _chapter_label(start: int, end: int | None) -> str:
     return f"ch. {start}" if not end or end <= start else f"ch. {start}–{end}"
 
@@ -577,7 +582,320 @@ def split_single(text: str) -> list[Section]:
     return [Section("", "", text)] if text.strip() else []
 
 
+# ------------------------------------------------------------- Subba Rau (OCR local)
+
+_SR_PAGE = re.compile(r"^\[\[page (\d+)\]\]$")
+# cabeçalho de página: "[Sk. 10. Adh. 41." lido como "Sx. 10, ApH. 41", "8k. 10, Aba, 6"…
+_SR_HEAD = re.compile(r"(?:S|8|\$)\s*[kxeKX][eo]?\s*[.,]?\s*([0-9lIO]{1,2})\s*[.,]?\s*A?[A-Za-z]{1,3}\s*[.,]*\s*(\d{1,3})")
+_SR_HEAD_LINE = re.compile(r"RIMAD|BHAGAVAT", re.I)
+_SR_ORDINALS = {"EIGHTH": 8, "NINTH": 9, "TENTH": 10, "ELEVENTH": 11, "TWELFTH": 12}
+_SR_ENDS = re.compile(r"thus\s+ends\s+the\s+(\w+)\s+skandha", re.I)
+_SR_VERSE_ONE = re.compile(r"^\W{0,3}1\s*[.,]\s+(?!V\.|D\.|J|Note|AT\.)[A-Z‘'\"“(]")
+_SR_VERSE = re.compile(r"^\W{0,3}(\d{1,3})\s*[.,]\s+\S")
+_SR_TOC_HEADER = re.compile(r"\bP\s*[AaE]\s*[CcGgO]\s*[EeH]\b", re.I)
+_SR_TOC_ENTRY = re.compile(r"^(?:\S{1,3}\s+){0,2}\W{0,3}\d{1,2}\s*[.,]\s.{8,}\s\d{1,3}\W{0,4}(?:\s\S{1,3}){0,3}\s*$")
+
+
+_SR_SHORT_WORDS = frozenset(
+    ["a", "i", "o", "an", "as", "at", "be", "by", "do", "go", "he", "if", "in", "is", "it", "me", "my", "no", "of", "on", "or", "so", "to", "up", "us", "we", "ye"]
+)
+
+
+def _sr_trim_line(line: str) -> str:
+    """Tira das margens os restos de OCR da página escaneada ("| i ... a 4 |")."""
+    toks = line.split()
+
+    def junk(tok: str, edge_next: str | None) -> bool:
+        if not any(c.isalnum() for c in tok):
+            return True
+        core = tok.strip("|!:;'\"‘’“”_~-—.,()[]{}")
+        if len(core) > 2:
+            return False
+        if core.isdigit():  # número de verso no começo fica; no fim é resto
+            return edge_next is None
+        if core == "i":  # o pronome vem em maiúscula
+            return True
+        if edge_next is not None and edge_next[:1].isdigit():  # "a 6. Sri Suka…"
+            return True
+        return core.lower() not in _SR_SHORT_WORDS
+
+    while toks and junk(toks[0], toks[1] if len(toks) > 1 else None):
+        toks.pop(0)
+    while toks and junk(toks[-1], None):
+        toks.pop()
+    return " ".join(toks)
+
+
+def _sr_heading_number(line: str) -> int | None | bool:
+    """"ADHYAYA 41." (com OCR ruim: "ADHVAYA 34", "ADAYAYA 80") → 41; False se não é título."""
+    s = line.strip()
+    if len(s) > 45 or _SR_TOC_HEADER.search(s) or "ijayadhva" in s or "ijayadhwa" in s:
+        return False
+    for m in re.finditer(r"[A-Za-z]{5,9}", s):
+        # o título vem em caixa alta; "Adhyaya" em nota ("[84th Adhyaya ends…]") não conta
+        if sum(c.isupper() for c in m.group(0)) < 5:
+            continue
+        if difflib.SequenceMatcher(None, m.group(0).upper(), "ADHYAYA").ratio() >= 0.7:
+            rest = re.sub(r"[Il|](?=\d)|(?<=\d)[Il|]", "1", s[m.end():].replace(" ", ""))  # "I7" = 17
+            digits = re.findall(r"\d+", rest)
+            if not digits:
+                return None
+            n = int(digits[0])
+            return n if 1 <= n <= 99 else None
+    return False
+
+
+def _sr_skandha_title(line: str) -> int | None:
+    s = line.strip()
+    up = re.sub(r"[^A-Z]", "", s.upper()).replace("SKANDUA", "SKANDHA")
+    if "SKANDHA" not in up or len(s) > 40 or "ENDS" in up:
+        return None
+    for word, num in _SR_ORDINALS.items():
+        if word + "SKANDHA" in up:
+            return num
+    return None
+
+
+def repair_by_anchors(nums: list[int | None], max_ch: int) -> list[int]:
+    """Numeração de capítulos a partir de numerais OCR, guiada pelos mais coerentes.
+
+    Fica com o maior conjunto de numerais lidos que cabem juntos em ordem
+    (entre os blocos i < j há espaço para j - i capítulos: n_j - n_i ≥ j - i)
+    e preenche os demais pela posição. Um numeral mal lido ("9" no lugar de
+    "2") não arrasta os seguintes, como faria uma correção só para a frente.
+    """
+    size = len(nums)
+    cand = [
+        (k, n) for k, n in enumerate(nums)
+        if n is not None and k + 1 <= n <= max_ch - (size - 1 - k)
+    ]
+    # maior subsequência não decrescente de v = n - k (programação dinâmica)
+    best: list[int] = []
+    prev: list[int] = []
+    for i, (k, n) in enumerate(cand):
+        best.append(1)
+        prev.append(-1)
+        for j in range(i):
+            kj, nj = cand[j]
+            if nj - kj <= n - k and best[j] + 1 > best[i]:
+                best[i], prev[i] = best[j] + 1, j
+    anchors: dict[int, int] = {}
+    if cand:
+        i = max(range(len(cand)), key=lambda x: best[x])
+        while i >= 0:
+            anchors[cand[i][0]] = cand[i][1]
+            i = prev[i]
+    out: list[int] = []
+    last: tuple[int, int] | None = None
+    for k in range(size):
+        if k in anchors:
+            last = (k, anchors[k])
+            out.append(anchors[k])
+        elif last is None:
+            out.append(k + 1)
+        else:
+            out.append(last[1] + (k - last[0]))
+    return out
+
+
+def split_subbarau_bhagavata(text: str) -> list[Section]:
+    """Vol. II de S. Subba Rau (Tirupati, 1928) em OCR local com ``[[page N]]``.
+
+    Capítulo começa no título "ADHYAYA N" e, quando o OCR perdeu o título, no
+    verso "1." que o cabeçalho de página ("[Sk. 11. Adh. 14]", capítulo em
+    curso no fim da página) confirma como capítulo novo. O numeral do último
+    título de cada página é trocado pelo do cabeçalho dela quando os dois são
+    próximos; numeral ilegível ou fora de ordem cede ao capítulo que se repete
+    nos cabeçalhos das páginas do bloco; depois vale a sequência
+    (``repair_by_anchors``). Sumários de cada skandha (da página
+    "CONTENTS" até o título do skandha no texto) e o índice final ficam de fora.
+    """
+    pages: list[tuple[int, list[str]]] = []
+    for line in text.splitlines():
+        m = _SR_PAGE.match(line.strip())
+        if m:
+            pages.append((int(m.group(1)), []))
+        elif pages:
+            pages[-1][1].append(line)
+    heads: list[tuple[int, int] | None] = []
+    for _n, lines in pages:
+        head = None
+        for ln in lines[:3]:
+            m = _SR_HEAD.search(ln) if _SR_HEAD_LINE.search(ln) else None
+            if m:
+                sk = int(m.group(1).replace("l", "1").replace("I", "1").replace("O", "0"))
+                head = (sk, int(m.group(2)))
+                break
+        heads.append(head)
+
+    def page_head_ch(pi: int, sk: int) -> int | None:
+        h = heads[pi] if 0 <= pi < len(heads) else None
+        if not h or sorted(str(h[0])) != sorted(str(sk)):  # "Sk. 21" = 12 com dígitos trocados
+            return None
+        return h[1] if 1 <= h[1] <= BHAGAVATA_CHAPTERS[sk - 1] else None
+
+    skandha = 8
+    toc = False
+    finished = False
+    # blocos: [skandha, número | None, página, linhas, implícito?]
+    blocks: list[list[Any]] = []
+
+    def has_verses(block: list[Any]) -> bool:
+        return any(_SR_VERSE.match(x.strip()) for x in block[3])
+
+    for pi, (_n, lines) in enumerate(pages):
+        if finished:
+            break
+        top = " ".join(lines[:4]).upper()
+        entries = sum(1 for ln in lines if _SR_TOC_ENTRY.match(ln.strip()))
+        titled = any(_sr_skandha_title(ln) for ln in lines[:6])
+        # sumário: página "CONTENTS", ou nome do skandha + entradas "N. assunto … página",
+        # ou continuação de um sumário
+        toc_page = "CONTENTS" in top or (entries >= 3 and (titled or toc))
+        if toc_page:
+            toc = True
+        elif toc:
+            # fim do sumário: o texto do skandha começa aqui (mesmo sem título)
+            toc = False
+            if any(len(ln.strip()) > 40 for ln in lines):
+                blocks.append([skandha, 1, pi, [], True])
+        page_titles = [i for i, ln in enumerate(lines) if _sr_heading_number(ln) is not False]
+        last_title = page_titles[-1] if page_titles else None
+        last_verse = 0
+        for li, line in enumerate(lines):
+            s = line.strip()
+            if li < 3 and _SR_HEAD_LINE.search(s) and (_SR_HEAD.search(s) or len(s) < 30):
+                continue
+            sk_title = _sr_skandha_title(s)
+            if sk_title:
+                skandha = sk_title
+                if not toc and not (blocks and blocks[-1][4] and blocks[-1][0] == skandha):
+                    blocks.append([skandha, 1, pi, [], True])
+                continue
+            m_end = _SR_ENDS.search(s)
+            if m_end and "part" not in s.lower():
+                if m_end.group(1).lower() in {"twelfth", "12th"}:
+                    finished = True
+                    break
+                continue
+            num = _sr_heading_number(s)
+            if num is not False:
+                if toc:
+                    continue
+                head = page_head_ch(pi, skandha)
+                if li == last_title and head and (num is None or abs(head - num) <= 3):
+                    num = head
+                if blocks and blocks[-1][4] and not has_verses(blocks[-1]):
+                    blocks[-1][1] = num or blocks[-1][1]  # título logo após o nome do skandha
+                    blocks[-1][4] = False
+                else:
+                    blocks.append([skandha, num, pi, [], False])
+                continue
+            if toc or not blocks:
+                continue
+            vm = _SR_VERSE.match(s)
+            if _SR_VERSE_ONE.match(s) and last_verse >= 4:
+                cur = blocks[-1][1]
+                ahead = [c for c in (page_head_ch(pi, skandha), page_head_ch(pi + 1, skandha)) if c]
+                if cur and any(cur < c <= cur + 2 for c in ahead) and pi != blocks[-1][2]:
+                    blocks.append([skandha, cur + 1, pi, [line], False])
+                    last_verse = 1
+                    continue
+            if vm:
+                last_verse = int(vm.group(1))
+            blocks[-1][3].append(line)
+    by_sk: dict[int, list[int]] = {}
+    for i, b in enumerate(blocks):
+        by_sk.setdefault(b[0], []).append(i)
+    # numeral ilegível ou fora de ordem: vale o primeiro capítulo que se repete
+    # nos cabeçalhos das páginas inteiras do bloco
+    for sk, idxs in by_sk.items():
+        for pos, i in enumerate(idxs):
+            num = blocks[i][1]
+            prev = blocks[idxs[pos - 1]][1] if pos else None
+            nxt = blocks[idxs[pos + 1]][1] if pos + 1 < len(idxs) else None
+            ordered = (prev is None or num > prev) and (nxt is None or num < nxt) if num else False
+            if ordered and num <= BHAGAVATA_CHAPTERS[sk - 1]:
+                continue
+            stop = blocks[idxs[pos + 1]][2] if pos + 1 < len(idxs) else len(pages)
+            seen = [c for pi in range(blocks[i][2] + 1, stop) if (c := page_head_ch(pi, sk))]
+            confirmed = next((c for c in seen if seen.count(c) >= 2), None)
+            if confirmed:
+                blocks[i][1] = confirmed
+    fixed: dict[int, int] = {}
+    for sk, idxs in by_sk.items():
+        for i, n in zip(idxs, repair_by_anchors([blocks[i][1] for i in idxs], BHAGAVATA_CHAPTERS[sk - 1]), strict=True):
+            fixed[i] = n
+    sections: list[Section] = []
+    for sk, idxs in by_sk.items():
+        for pos, i in enumerate(idxs):
+            raw = "\n".join(_sr_trim_line(x) for x in blocks[i][3])
+            body = clean_ocr_text(raw, running_heads=("SRIMAD BHAGAVATAM",))
+            if not body:
+                continue
+            ch = fixed[i]
+            end = fixed[idxs[pos + 1]] - 1 if pos + 1 < len(idxs) else BHAGAVATA_CHAPTERS[sk - 1]
+            sections.append(Section(f"Book {sk}, {_chapter_label(ch, end)}", f"book-{sk}-ch-{ch}", body))
+    return sections
+
+
+# ------------------------------------------------------------- GRETIL (sânscrito)
+
+_GRETIL_REF = re.compile(r"//\s*bhp_(\d{2})\.(\d{2})\.(\d{3})(_\d+)?\*?\s*//")
+_GRETIL_SPEAKER = re.compile(r"bhp_\d{2}\.\d{2}\.\d{3}(?:_\d+)?/\d+\s+")
+# metro longo: GRETIL repete a primeira metade ("A $ B & A $ B & C % D")
+_GRETIL_DUP_HALF = re.compile(r"([^$&%/]+?\$[^$&%/]+?&)\s*\1")
+
+
+def _gretil_verse(raw: str) -> str:
+    """Texto de um verso do GRETIL em linhas: "pāda a pāda b /" + "pāda c pāda d"."""
+    t = raw.replace("&amp;", "&")
+    t = _GRETIL_SPEAKER.sub("", t)
+    for _ in range(2):
+        t = _GRETIL_DUP_HALF.sub(r"\1", t)
+    t = t.replace("$", " ").replace("%", " ").replace("&", " /\n")
+    lines = [normalize_whitespace(x) for x in t.splitlines()]
+    return "\n".join(x for x in lines if x)
+
+
+def split_gretil_bhagavata(text: str) -> list[Section]:
+    """Bhāgavata Purāṇa do GRETIL (texto puro): um registro por adhyāya.
+
+    Cada verso termina em "// bhp_SS.AA.VVV //". O arquivo tem rótulos trocados
+    (3.31.22–48 marcados como 3.32.x; um 8.8.3 no meio do 8.7), então o capítulo
+    só avança quando o adhyāya seguinte começa (verso ≤ 3 e o próximo rótulo
+    não volta ao corrente); rótulo fora de ordem fica no capítulo corrente,
+    onde o texto de fato está, com o número de verso do rótulo.
+    """
+    body = text.split("# Text", 1)[1] if "# Text" in text else text
+    units: list[tuple[int, int, int, str, str]] = []
+    pos = 0
+    for m in _GRETIL_REF.finditer(body):
+        units.append((int(m.group(1)), int(m.group(2)), int(m.group(3)), m.group(4) or "", body[pos : m.start()]))
+        pos = m.end()
+
+    def following(s: int, a: int) -> tuple[int, int]:
+        return (s, a + 1) if a < BHAGAVATA_CHAPTERS[s - 1] else (s + 1, 1)
+
+    cur = (1, 1)
+    chapters: dict[tuple[int, int], list[str]] = {}
+    for i, (s, a, v, part, raw) in enumerate(units):
+        nxt = units[i + 1][:2] if i + 1 < len(units) else None
+        if (s, a) == following(*cur) and v <= 3 and nxt != cur:
+            cur = (s, a)
+        verse = _gretil_verse(raw)
+        if verse:
+            # capítulo pela posição, verso pelo rótulo
+            chapters.setdefault(cur, []).append(f"{verse} // {cur[0]}.{cur[1]}.{v}{part} //")
+    sections: list[Section] = []
+    for (s, a), verses in chapters.items():
+        sections.append(Section(f"Skandha {s}, adhyāya {a}", f"bhp-{s}-{a}", "\n\n".join(verses)))
+    return sections
+
+
 SPLITTERS: dict[str, Callable[[str], list[Section]]] = {
+    "gretil-bhagavata": split_gretil_bhagavata,
+    "subbarau-bhagavata": split_subbarau_bhagavata,
     "dutt-bhagavata": split_dutt_bhagavata,
     "sturdy-narada-bhakti": split_sturdy_narada_bhakti,
     "dutt-harivamsa": split_dutt_harivamsa,
@@ -647,7 +965,7 @@ def is_book_source(src: dict[str, Any]) -> bool:
 def book_title(src: dict[str, Any], locator: str) -> str:
     """"Bhāgavata Purāṇa — Book 3, ch. 25 (M. N. Dutt, 1896)"."""
     work = (src.get("work_title") or src.get("title") or "").strip()
-    credit = ", ".join(str(x) for x in (src.get("translator"), src.get("year")) if x)
+    credit = src.get("credit") or ", ".join(str(x) for x in (src.get("translator"), src.get("year")) if x)
     head = f"{work} — {locator}" if locator else work
     return f"{head} ({credit})" if credit else head
 
@@ -657,7 +975,12 @@ def expand_book_file(path: Path | str, source: dict[str, Any]) -> list[dict[str,
     from vedic_pipeline.etl.extractors import extract_txt
 
     path = Path(path)
-    raw = extract_txt(path)
+    if source.get("ocr") and path.suffix.lower() == ".pdf":
+        from vedic_pipeline.etl.ocr import ocr_pdf
+
+        raw = ocr_pdf(path, source["ocr"])  # scan sem camada de texto aproveitável
+    else:
+        raw = extract_txt(path)
     clean = (source.get("clean") or "").lower()
     if clean == "sacred-texts":
         text = sacred_texts_html_to_text(raw)
@@ -673,10 +996,23 @@ def expand_book_file(path: Path | str, source: dict[str, Any]) -> list[dict[str,
     base_url = (source.get("citation_url") or source.get("url") or "").strip()
     records: list[dict[str, Any]] = []
     seen_anchors: dict[str, int] = {}
+    # volume que traz livros já cobertos por outra fonte: só os listados entram
+    keep_books = {int(b) for b in source.get("keep_books") or []}
+    # scan encadernado fora de ordem: o manifesto lista as seções que entram,
+    # cada uma com o localizador certo (None = manter o do recorte)
+    select: dict[str, str | None] | None = source.get("select")
     for sec in splitter(text):
         body = sec.text.strip()
         if len(body) < min_chars:
             continue
+        if keep_books and not any(sec.anchor.startswith(f"book-{b}-") for b in keep_books):
+            continue
+        if select is not None:
+            if sec.anchor not in select:
+                continue
+            new_locator = select[sec.anchor]
+            if new_locator:
+                sec = Section(new_locator, _locator_anchor(new_locator), sec.text)
         locator = sec.locator or (source.get("locator") or "")
         title = book_title(source, locator)
         anchor = sec.anchor
