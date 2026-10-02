@@ -26,6 +26,7 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -187,13 +188,67 @@ def audio_bed_prompt(_text: str = "") -> str:
     )
 
 
+DEFAULT_BED_DB = -22.0
+BED_LOWPASS_HZ = 1200.0
+
+
+def bed_level_db() -> float:
+    """Nível RMS do drone relativo à voz. `VEDIC_AUDIO_BED_DB`, padrão -22 dB.
+
+    Com o drone normalizado e ganho fixo de 0,18, ele ficava só ~3 dB abaixo
+    da voz e os harmônicos de 300 Hz a 4 kHz soavam como um segundo narrador.
+    """
+    raw = (os.environ.get("VEDIC_AUDIO_BED_DB") or "").strip()
+    try:
+        value = float(raw) if raw else DEFAULT_BED_DB
+    except ValueError:
+        logger.warning("VEDIC_AUDIO_BED_DB=%r inválido; usando %s", raw, DEFAULT_BED_DB)
+        value = DEFAULT_BED_DB
+    return max(-40.0, min(value, -12.0))
+
+
+def _rms(samples: np.ndarray) -> float:
+    arr = np.asarray(samples, dtype=np.float64).reshape(-1)
+    return float(np.sqrt(np.mean(arr * arr))) if arr.size else 0.0
+
+
+def soften_bed(samples: np.ndarray, sample_rate: int, *, cutoff_hz: float = BED_LOWPASS_HZ) -> np.ndarray:
+    """Passa-baixa suave e fades: tira do drone a faixa dos formantes da voz.
+
+    O Stable Audio deixa harmônicos modulados de 1 a 4 kHz que lembram vogais
+    cantadas; abaixo de ~1,2 kHz sobra o zumbido da tanpura.
+    """
+    arr = np.asarray(samples, dtype=np.float32).reshape(-1)
+    if arr.size < 16 or sample_rate <= 0:
+        return arr
+    spec = np.fft.rfft(arr.astype(np.float64))
+    freqs = np.fft.rfftfreq(arr.size, d=1.0 / sample_rate)
+    lo, hi = cutoff_hz, cutoff_hz * 2.0
+    gain = np.ones_like(freqs)
+    band = (freqs > lo) & (freqs < hi)
+    gain[band] = 0.5 * (1.0 + np.cos(np.pi * (freqs[band] - lo) / (hi - lo)))
+    gain[freqs >= hi] = 0.0
+    out = np.fft.irfft(spec * gain, n=arr.size).astype(np.float32)
+    fade = min(int(0.4 * sample_rate), out.size // 4)
+    if fade > 1:
+        ramp = np.linspace(0.0, 1.0, fade, dtype=np.float32)
+        out[:fade] *= ramp
+        out[-fade:] *= ramp[::-1]
+    return out
+
+
 def mix_waveforms(
     speech: np.ndarray,
     bed: np.ndarray,
     *,
-    bed_gain: float = 0.18,
+    bed_gain: float | None = None,
+    bed_db: float | None = None,
 ) -> np.ndarray:
-    """Soma a voz com o drone, repetindo o drone se ele for mais curto."""
+    """Soma a voz com o drone, repetindo o drone se ele for mais curto.
+
+    Sem `bed_gain`, o drone fica `bed_db` (padrão `bed_level_db()`) abaixo da
+    voz em RMS, independente do volume que o Stable Audio devolveu.
+    """
     voice = np.asarray(speech, dtype=np.float32).reshape(-1)
     drone = np.asarray(bed, dtype=np.float32).reshape(-1)
     if voice.size == 0 or drone.size == 0:
@@ -203,7 +258,14 @@ def mix_waveforms(
         drone = np.tile(drone, reps)[: voice.size]
     else:
         drone = drone[: voice.size]
-    mixed = voice * 0.9 + drone * bed_gain
+    voice = voice * 0.9
+    if bed_gain is None:
+        drone_rms = _rms(drone)
+        if drone_rms < 1e-9:
+            return voice.astype(np.float32)
+        level = bed_level_db() if bed_db is None else float(bed_db)
+        bed_gain = _rms(voice) * (10.0 ** (level / 20.0)) / drone_rms
+    mixed = voice + drone * float(bed_gain)
     peak = float(np.max(np.abs(mixed))) if mixed.size else 0.0
     if peak > 0.98:
         mixed = mixed * (0.98 / peak)
@@ -514,13 +576,61 @@ def _video_pipe() -> Any:
     return _cached_pipe("video", load)
 
 
+def _env_int(name: str, default: int, lo: int, hi: int) -> int:
+    raw = (os.environ.get(name) or "").strip()
+    try:
+        value = int(float(raw)) if raw else default
+    except ValueError:
+        logger.warning("%s=%r inválido; usando %s", name, raw, default)
+        value = default
+    return max(lo, min(value, hi))
+
+
+def _env_float(name: str, default: float, lo: float, hi: float) -> float:
+    raw = (os.environ.get(name) or "").strip()
+    try:
+        value = float(raw) if raw else default
+    except ValueError:
+        logger.warning("%s=%r inválido; usando %s", name, raw, default)
+        value = default
+    return max(lo, min(value, hi))
+
+
 def video_size() -> tuple[int, int]:
-    """SVD foi treinado em 1024x576. `VEDIC_SVD_WIDTH` menor (ex.: 768) poupa memória."""
+    """Tamanho em que o SVD roda. Padrão 768x432: com 25 quadros, 1024x576
+    passa dos 36 GB de memória unificada do MPS. `VEDIC_SVD_WIDTH=1024` volta
+    ao tamanho de treino (com 14 quadros cabe em ~26 GB)."""
     raw = (os.environ.get("VEDIC_SVD_WIDTH") or "").strip()
-    width = int(raw) if raw.isdigit() else 1024
+    width = int(raw) if raw.isdigit() else 768
     width = max(512, min(width, 1024)) // 64 * 64
     height = (width * 9 // 16) // 8 * 8
     return width, height
+
+
+def video_output_size() -> tuple[int, int]:
+    """Tamanho final do MP4 (upscale lanczos do SVD). `VEDIC_VIDEO_OUT_WIDTH`."""
+    width = _env_int("VEDIC_VIDEO_OUT_WIDTH", 1024, 512, 1920) // 16 * 16
+    height = (width * 9 // 16) // 2 * 2
+    return width, height
+
+
+def video_settings() -> dict[str, Any]:
+    """Quadros e ritmo do vídeo do verso.
+
+    - `VEDIC_SVD_FRAMES` (25, máx. do img2vid-xt): quadros gerados pelo SVD.
+    - `VEDIC_SVD_FPS` (5): ritmo desses quadros; 25 / 5 = 5 s de vídeo.
+    - `VEDIC_VIDEO_INTERP_FPS` (24): interpolação por movimento (ffmpeg
+      minterpolate) até esse fps; 0 desliga.
+    - `VEDIC_VIDEO_ZOOM` (1.06): Ken Burns lento sobre o movimento do SVD;
+      1 desliga.
+    """
+    frames = _env_int("VEDIC_SVD_FRAMES", 25, 8, 25)
+    fps = _env_int("VEDIC_SVD_FPS", 5, 2, 30)
+    interp = _env_int("VEDIC_VIDEO_INTERP_FPS", 24, 0, 60)
+    if interp and interp <= fps:
+        interp = 0
+    zoom = _env_float("VEDIC_VIDEO_ZOOM", 1.06, 1.0, 1.3)
+    return {"frames": frames, "fps": fps, "interp_fps": interp, "zoom": zoom}
 
 
 def _cover(image: Any, width: int, height: int) -> Any:
@@ -539,29 +649,158 @@ def _cover(image: Any, width: int, height: int) -> Any:
     return image.crop(box).resize((width, height))
 
 
-def render_video(still: Path, dest: Path, motion: str) -> None:
-    """MP4 curto a partir do still. Movimento sai do texto de `motion`."""
-    ensure_diffusion()
-    from diffusers.utils import export_to_video
+def _pad_frame(image: Any, width: int, height: int, *, margin: float = 1.0) -> Any:
+    """Still inteiro no centro, laterais com o próprio still desfocado.
+
+    O still do Imagine é quadrado: recortar para 16:9 cortava o alto das
+    chamas e o carneiro. `margin` > 1 deixa uma folga em cima e embaixo que o
+    zoom lento consome sem cortar nada.
+    """
+    from PIL import ImageFilter
+
+    src_w, src_h = image.size
+    bg = _cover(image, width, height).filter(ImageFilter.GaussianBlur(radius=max(8, width // 40)))
+    bg = bg.point(lambda v: int(v * 0.55))
+    scale = min(width / src_w, height / (src_h * margin))
+    fg = image.resize((max(1, round(src_w * scale)), max(1, round(src_h * scale))))
+    left = (width - fg.width) // 2
+    top = (height - fg.height) // 2
+    bg.paste(fg, (left, top))
+    return bg
+
+
+def _frame_for_video(image: Any, width: int, height: int, zoom: float = 1.0) -> Any:
+    """`VEDIC_SVD_FRAMING`: `pad` (padrão, still inteiro) ou `cover` (recorte)."""
+    mode = (os.environ.get("VEDIC_SVD_FRAMING") or "pad").strip().lower()
+    src_w, src_h = image.size
+    if mode == "cover" or src_w / src_h >= width / height:
+        return _cover(image, width, height)
+    return _pad_frame(image, width, height, margin=zoom)
+
+
+def ken_burns(frames: list[Any], size: tuple[int, int], zoom: float) -> list[Any]:
+    """Zoom lento e contínuo (sub-pixel) e redimensiona para `size`."""
     from PIL import Image
 
+    out_w, out_h = size
+    n = len(frames)
+    result = []
+    for i, frame in enumerate(frames):
+        t = i / (n - 1) if n > 1 else 0.0
+        ease = 0.5 - 0.5 * np.cos(np.pi * t)
+        z = 1.0 + (zoom - 1.0) * ease
+        src_w, src_h = frame.size
+        # Mapa saída -> entrada: janela central de (src/z), um pouco acima do centro.
+        sx = src_w / (out_w * z)
+        sy = src_h / (out_h * z)
+        cx = src_w / 2.0
+        cy = src_h * 0.48
+        ox = cx - (out_w * sx) / 2.0
+        oy = min(max(cy - (out_h * sy) / 2.0, 0.0), src_h - out_h * sy)
+        result.append(
+            frame.transform((out_w, out_h), Image.AFFINE, (sx, 0.0, ox, 0.0, sy, oy), resample=Image.BICUBIC)
+        )
+    return result
+
+
+def interpolate_frames(frames: list[Any], src_fps: int, dst_fps: int) -> list[Any]:
+    """Interpolação por movimento (minterpolate). Sem ffmpeg, devolve os quadros."""
+    from PIL import Image
+
+    ffmpeg = _ffmpeg()
+    if not ffmpeg or not frames or dst_fps <= src_fps:
+        return frames
+    w, h = frames[0].size
+    raw = b"".join(f.convert("RGB").tobytes() for f in frames)
+    # Sem o tpad o minterpolate para no último quadro e perde ~0,4 s;
+    # o trim fixa a duração em quadros / fps (25 / 5 = 5 s).
+    duration = len(frames) / src_fps
+    vf = (
+        f"tpad=stop_mode=clone:stop_duration={2 / src_fps:.3f},"
+        f"minterpolate=fps={dst_fps}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,"
+        f"trim=duration={duration:.3f}"
+    )
+    proc = subprocess.run(
+        [
+            ffmpeg, "-hide_banner", "-loglevel", "error",
+            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(src_fps), "-i", "pipe:0",
+            "-vf", vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1",
+        ],
+        input=raw,
+        capture_output=True,
+        check=False,
+    )
+    size = w * h * 3
+    if proc.returncode != 0 or len(proc.stdout) < size:
+        logger.warning("minterpolate falhou; vídeo fica a %s fps", src_fps)
+        return frames
+    data = proc.stdout
+    return [Image.frombytes("RGB", (w, h), data[i : i + size]) for i in range(0, len(data) - size + 1, size)]
+
+
+def encode_mp4(frames: list[Any], dest: Path, fps: int) -> None:
+    """H.264 yuv420p com faststart: toca no Safari e no Chrome."""
+    ffmpeg = _ffmpeg()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dest.with_name(dest.stem + ".tmp.mp4")
+    if not ffmpeg:
+        from diffusers.utils import export_to_video
+
+        export_to_video(frames, str(tmp), fps=fps)
+        tmp.replace(dest)
+        return
+    w, h = frames[0].size
+    proc = subprocess.run(
+        [
+            ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(fps), "-i", "pipe:0",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart", str(tmp),
+        ],
+        input=b"".join(f.convert("RGB").tobytes() for f in frames),
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0 or not tmp.exists():
+        raise RuntimeError(f"ffmpeg não codificou o vídeo: {proc.stderr.decode(errors='ignore')[-300:]}")
+    tmp.replace(dest)
+
+
+def render_video(still: Path, dest: Path, motion: str) -> None:
+    """MP4 de ~5 s a partir do still: SVD (25 quadros a 5 fps), interpolação
+    até 24 fps e um zoom lento. O still entra inteiro (laterais desfocadas)."""
+    ensure_diffusion()
+    from PIL import Image
+
+    started = time.monotonic()
+    cfg = video_settings()
     width, height = video_size()
-    image = _cover(Image.open(still).convert("RGB"), width, height)
-    frames_n = int(os.environ.get("VEDIC_SVD_FRAMES", "14"))
-    fps = int(os.environ.get("VEDIC_SVD_FPS", "7"))
+    image = _frame_for_video(Image.open(still).convert("RGB"), width, height, cfg["zoom"])
     with _PIPE_LOCK:
         result = _video_pipe()(
             image,
             width=width,
             height=height,
-            num_frames=max(8, frames_n),
+            num_frames=cfg["frames"],
             decode_chunk_size=4,
             motion_bucket_id=motion_bucket(motion),
-            fps=fps,
+            fps=cfg["fps"],
             noise_aug_strength=0.02,
         )
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        export_to_video(result.frames[0], str(dest), fps=fps)
+        frames = list(result.frames[0])
+        _empty_device_cache()
+    out_fps = cfg["fps"]
+    if cfg["interp_fps"]:
+        frames = interpolate_frames(frames, cfg["fps"], cfg["interp_fps"])
+        if len(frames) > cfg["frames"]:
+            out_fps = cfg["interp_fps"]
+    frames = ken_burns(frames, video_output_size(), cfg["zoom"])
+    encode_mp4(frames, dest, out_fps)
+    logger.info(
+        "Vídeo %s: SVD %dx%d, %d quadros a %d fps -> %d quadros a %d fps (%.1f s) em %.0f s",
+        dest.name, width, height, cfg["frames"], cfg["fps"], len(frames), out_fps,
+        len(frames) / out_fps, time.monotonic() - started,
+    )
 
 
 def _audio_sample_rate(pipe: Any) -> int:
@@ -651,6 +890,18 @@ def render_audio_bed(prompt: str, seconds: float = 12.0) -> tuple[np.ndarray, in
         return _to_mono(out.audios), _audio_sample_rate(pipe)
 
 
+def _empty_device_cache() -> None:
+    try:
+        import torch
+
+        if torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+        elif torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _ffmpeg() -> str | None:
     return shutil.which("ffmpeg")
 
@@ -701,5 +952,5 @@ def underlay_speech(speech: bytes, prompt: str) -> bytes:
     voice, voice_sr = _decode_mp3(speech)
     seconds = max(4.0, min(47.0, (len(voice) / voice_sr) + 0.5)) if voice_sr else 12.0
     bed, bed_sr = render_audio_bed(prompt, seconds)
-    bed = normalize_peak(_resample(bed, bed_sr, voice_sr))
+    bed = soften_bed(_resample(bed, bed_sr, voice_sr), voice_sr)
     return _encode_mp3(mix_waveforms(voice, bed), voice_sr)

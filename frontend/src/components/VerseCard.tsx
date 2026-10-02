@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, VerseAnalysis, VerseBundle, VerseTranslation, VerseUnit } from "../api/client";
+import { type PlaybackHandle, playVerseAudio, speakExclusive } from "../data/playback";
 import { speakPortuguese, speakSanskrit, stopSpeaking } from "../data/sanskrit";
 
 function revoke(url: string | null) {
@@ -26,7 +27,7 @@ export default function VerseCard({
   hasImage?: boolean;
   hasVideo?: boolean;
 }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackRef = useRef<PlaybackHandle | null>(null);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState<"audio" | "pt" | "en" | "trad" | "anlz" | "image" | "video" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,76 +71,55 @@ export default function VerseCard({
     return bundle?.witnesses?.find((w) => w.role === "iast" || w.role === "translit")?.text;
   }
 
-  async function play() {
+  function play() {
     setError(null);
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      } catch { /* ignore */ }
-      audioRef.current = null;
-    }
-    stopSpeaking();
-    setPlaying(false);
     setBusy("audio");
-
-    const url = api.verseAudioUrl(unit.verse_id);
-    const audio = new Audio(url);
-    audioRef.current = audio;
-    let fellBack = false;
-
-    const fallback = () => {
-      if (fellBack) return;
-      fellBack = true;
-      setBusy(null);
-      setPlaying(true);
-      setError("♪ Usando voz sintetizada");
-      const iast = getIastWitness();
-      speakSanskrit(unit.text, iast, () => {
-        setPlaying(false);
-      });
-    };
-
-    audio.onended = () => {
-      setPlaying(false);
-      setBusy(null);
-    };
-
-    audio.onerror = () => {
-      fallback();
-    };
-
-    try {
-      await audio.play();
-      if (fellBack) return;
-      setPlaying(true);
-      setBusy(null);
-    } catch {
-      fallback();
-    }
+    setPlaying(false);
+    playbackRef.current = playVerseAudio(
+      api.verseAudioUrl(unit.verse_id),
+      {
+        createAudio: (url) => new Audio(url),
+        speakFallback: (onEnd) => speakSanskrit(unit.text, getIastWitness(), onEnd),
+        stopSpeech: stopSpeaking,
+      },
+      {
+        onPlaying: () => {
+          setPlaying(true);
+          setBusy(null);
+        },
+        onFallback: () => {
+          setPlaying(true);
+          setBusy(null);
+          setError("♪ Áudio do servidor indisponível; usando a voz do navegador");
+        },
+        onIdle: () => {
+          if (cancelled.current) return;
+          setPlaying(false);
+          setBusy((b) => (b === "audio" ? null : b));
+        },
+      },
+    );
   }
 
   function stop() {
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      } catch {
-        /* ignore */
-      }
-      audioRef.current = null;
-    }
-    stopSpeaking();
-    setPlaying(false);
-    setBusy(null);
+    playbackRef.current?.stop();
+    playbackRef.current = null;
   }
 
   function speakTranslation() {
     if (!translation?.translation) return;
+    const text = translation.translation;
     setError(null);
-    stop();
     setPlaying(true);
-    speakPortuguese(translation.translation, () => setPlaying(false));
+    playbackRef.current = speakExclusive((onEnd) => speakPortuguese(text, onEnd), stopSpeaking, {
+      onIdle: () => {
+        if (!cancelled.current) setPlaying(false);
+      },
+    });
+  }
+
+  function speakWord(form: string, iast?: string) {
+    speakExclusive((onEnd) => speakSanskrit(form, iast, onEnd), stopSpeaking);
   }
 
   async function illustrate() {
@@ -326,8 +306,7 @@ export default function VerseCard({
             <button
               type="button"
               className="btn btn-ghost verse-btn"
-              onClick={speakTranslation}
-              disabled={playing}
+              onClick={playing ? stop : speakTranslation}
               title="Ouvir a tradução em português"
             >
               {playing ? "■ Parar" : "▶ Ouvir tradução"}
@@ -368,7 +347,7 @@ export default function VerseCard({
               <tbody>
                 {analysis.words.map((wd, i) => (
                   <tr key={`${wd.form}-${i}`}>
-                    <td className="analysis-word-deva" onClick={() => speakSanskrit(wd.form, wd.iast)} title="Ouvir">
+                    <td className="analysis-word-deva" onClick={() => speakWord(wd.form, wd.iast)} title="Ouvir">
                       {wd.form}
                     </td>
                     <td className="analysis-word-iast">{wd.iast}</td>

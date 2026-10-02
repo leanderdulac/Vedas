@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import os
+import shutil
 import tempfile
 import unittest
 from importlib.util import find_spec
@@ -87,8 +88,104 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(out.size, (1024, 576))
         with patch.dict(os.environ, {"VEDIC_SVD_WIDTH": "768"}):
             self.assertEqual(diffusion.video_size(), (768, 432))
-        with patch.dict(os.environ, {"VEDIC_SVD_WIDTH": ""}):
+        with patch.dict(os.environ, {"VEDIC_SVD_WIDTH": "1024"}):
             self.assertEqual(diffusion.video_size(), (1024, 576))
+        with patch.dict(os.environ, {"VEDIC_SVD_WIDTH": ""}):
+            # 25 quadros em 1024x576 não cabem nos 36 GB do MPS.
+            self.assertEqual(diffusion.video_size(), (768, 432))
+
+    def test_video_settings_target_five_seconds(self):
+        env = {k: "" for k in ("VEDIC_SVD_FRAMES", "VEDIC_SVD_FPS", "VEDIC_VIDEO_INTERP_FPS", "VEDIC_VIDEO_ZOOM")}
+        with patch.dict(os.environ, env):
+            cfg = diffusion.video_settings()
+        self.assertEqual(cfg["frames"], 25)
+        self.assertEqual(cfg["fps"], 5)
+        self.assertEqual(cfg["interp_fps"], 24)
+        self.assertGreaterEqual(cfg["frames"] / cfg["fps"], 5.0)
+        with patch.dict(os.environ, {"VEDIC_SVD_FRAMES": "99", "VEDIC_SVD_FPS": "7", "VEDIC_VIDEO_INTERP_FPS": "0"}):
+            cfg = diffusion.video_settings()
+        self.assertEqual(cfg["frames"], 25)  # máximo do img2vid-xt
+        self.assertEqual(cfg["interp_fps"], 0)
+        with patch.dict(os.environ, {"VEDIC_SVD_FPS": "6", "VEDIC_VIDEO_INTERP_FPS": "6", "VEDIC_VIDEO_ZOOM": "x"}):
+            cfg = diffusion.video_settings()
+        self.assertEqual(cfg["interp_fps"], 0)
+        self.assertEqual(cfg["zoom"], 1.06)
+
+    @unittest.skipUnless(find_spec("PIL") is not None, "requer Pillow")
+    def test_square_still_is_padded_not_cropped(self):
+        from PIL import Image
+
+        # Quadro com uma faixa branca no topo (as chamas): tem de sobreviver.
+        square = Image.new("RGB", (512, 512), (40, 40, 40))
+        square.paste((255, 255, 255), (0, 0, 512, 20))
+        with patch.dict(os.environ, {"VEDIC_SVD_FRAMING": ""}):
+            out = diffusion._frame_for_video(square, 768, 432, zoom=1.0)
+        self.assertEqual(out.size, (768, 432))
+        self.assertGreater(out.getpixel((384, 2))[0], 200)
+        with patch.dict(os.environ, {"VEDIC_SVD_FRAMING": "cover"}):
+            cropped = diffusion._frame_for_video(square, 768, 432)
+        self.assertLess(cropped.getpixel((384, 2))[0], 100)
+        # Com zoom, sobra folga em cima para o Ken Burns consumir.
+        with patch.dict(os.environ, {"VEDIC_SVD_FRAMING": ""}):
+            padded = diffusion._frame_for_video(square, 768, 432, zoom=1.1)
+        self.assertLess(padded.getpixel((384, 2))[0], 200)
+
+    @unittest.skipUnless(find_spec("PIL") is not None, "requer Pillow")
+    def test_ken_burns_zooms_smoothly_to_output_size(self):
+        from PIL import Image
+
+        frames = [Image.new("RGB", (768, 432), (i * 10, 0, 0)) for i in range(5)]
+        out = diffusion.ken_burns(frames, (1024, 576), 1.06)
+        self.assertEqual(len(out), 5)
+        self.assertTrue(all(f.size == (1024, 576) for f in out))
+        same = diffusion.ken_burns(frames[:1], (768, 432), 1.0)[0]
+        self.assertEqual(same.getpixel((10, 10)), frames[0].getpixel((10, 10)))
+
+    @unittest.skipUnless(find_spec("PIL") is not None, "requer Pillow")
+    def test_render_video_runs_svd_then_interpolates_and_encodes(self):
+        from PIL import Image
+
+        calls: dict = {}
+
+        class _Pipe:
+            def __call__(self, image, **kw):
+                calls.update(kw, size=image.size)
+                frames = [Image.new("RGB", (kw["width"], kw["height"])) for _ in range(kw["num_frames"])]
+                return type("R", (), {"frames": [frames]})()
+
+        encoded: dict = {}
+        with tempfile.TemporaryDirectory() as tmp:
+            still = Path(tmp) / "s.jpg"
+            Image.new("RGB", (64, 64), (200, 50, 0)).save(still)
+            env = {k: "" for k in ("VEDIC_SVD_FRAMES", "VEDIC_SVD_FPS", "VEDIC_VIDEO_INTERP_FPS",
+                                   "VEDIC_VIDEO_ZOOM", "VEDIC_SVD_WIDTH", "VEDIC_VIDEO_OUT_WIDTH")}
+            with patch.dict(os.environ, env), patch.object(diffusion, "ensure_diffusion"), patch.object(
+                diffusion, "_video_pipe", return_value=_Pipe()
+            ), patch.object(
+                diffusion, "interpolate_frames", side_effect=lambda f, a, b: f + f + f + f + f
+            ), patch.object(
+                diffusion, "encode_mp4", side_effect=lambda f, d, fps: encoded.update(n=len(f), fps=fps, size=f[0].size)
+            ):
+                diffusion.render_video(still, Path(tmp) / "v.mp4", "gentle flame")
+        self.assertEqual(calls["num_frames"], 25)
+        self.assertEqual(calls["fps"], 5)
+        self.assertEqual(calls["size"], (768, 432))
+        self.assertEqual(encoded["fps"], 24)
+        self.assertEqual(encoded["size"], (1024, 576))
+        self.assertEqual(encoded["n"], 125)
+
+    @unittest.skipUnless(find_spec("PIL") is not None and shutil.which("ffmpeg"), "requer Pillow e ffmpeg")
+    def test_interpolation_and_encoding_with_ffmpeg(self):
+        from PIL import Image
+
+        frames = [Image.new("RGB", (64, 36), (i * 20, 0, 0)) for i in range(6)]
+        out = diffusion.interpolate_frames(frames, 5, 20)
+        # 6 quadros a 5 fps = 1,2 s; a 20 fps, 24 quadros.
+        self.assertEqual(len(out), 24)
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "v.mp4"
+            diffusion.encode_mp4(out, dest, 20)
+            self.assertGreater(dest.stat().st_size, 200)
 
     def test_gentle_motion_uses_a_low_bucket(self):
         with patch.dict(os.environ, {"VEDIC_SVD_MOTION": ""}):
@@ -248,6 +345,46 @@ class MixTests(unittest.TestCase):
         self.assertAlmostEqual(float(np.max(np.abs(loud))), 1.0, places=5)
         silent = np.zeros(3, dtype=np.float32)
         self.assertEqual(diffusion.normalize_peak(silent).tolist(), [0.0, 0.0, 0.0])
+
+    def test_bed_sits_well_below_the_voice(self):
+        """Regressão da voz dupla: o drone normalizado ficava ~3 dB abaixo da voz."""
+        sr = 44100
+        t = np.arange(sr * 2) / sr
+        speech = (0.3 * np.sin(2 * np.pi * 220 * t)).astype(np.float32)
+        loud_bed = (0.9 * np.sin(2 * np.pi * 130 * t)).astype(np.float32)
+        mixed = diffusion.mix_waveforms(speech, loud_bed)
+        resid = mixed - speech * 0.9
+        rel = 20 * np.log10(diffusion._rms(resid) / diffusion._rms(speech * 0.9))
+        self.assertAlmostEqual(rel, diffusion.DEFAULT_BED_DB, places=3)
+        with patch.dict(os.environ, {"VEDIC_AUDIO_BED_DB": "-30"}):
+            mixed = diffusion.mix_waveforms(speech, loud_bed)
+        rel = 20 * np.log10(diffusion._rms(mixed - speech * 0.9) / diffusion._rms(speech * 0.9))
+        self.assertAlmostEqual(rel, -30.0, places=3)
+
+    def test_bed_level_env_is_clamped(self):
+        with patch.dict(os.environ, {"VEDIC_AUDIO_BED_DB": "0"}):
+            self.assertEqual(diffusion.bed_level_db(), -12.0)
+        with patch.dict(os.environ, {"VEDIC_AUDIO_BED_DB": "abc"}):
+            self.assertEqual(diffusion.bed_level_db(), diffusion.DEFAULT_BED_DB)
+        with patch.dict(os.environ, {"VEDIC_AUDIO_BED_DB": ""}):
+            self.assertEqual(diffusion.bed_level_db(), -22.0)
+
+    def test_soften_bed_drops_the_voice_band(self):
+        sr = 44100
+        t = np.arange(sr) / sr
+        low = np.sin(2 * np.pi * 130 * t)
+        high = np.sin(2 * np.pi * 3000 * t)
+        out = diffusion.soften_bed((low + high).astype(np.float32), sr)
+        spec = np.abs(np.fft.rfft(out))
+        freqs = np.fft.rfftfreq(out.size, 1 / sr)
+        at = lambda f: spec[np.argmin(np.abs(freqs - f))]  # noqa: E731
+        self.assertLess(at(3000), at(130) * 0.01)
+        self.assertEqual(out[0], 0.0)  # fade-in
+
+    def test_silent_bed_leaves_the_voice_alone(self):
+        speech = np.array([0.2, -0.2, 0.1], dtype=np.float32)
+        out = diffusion.mix_waveforms(speech, np.zeros(3, dtype=np.float32))
+        np.testing.assert_allclose(out, speech * 0.9, rtol=1e-6)
 
     def test_empty_bed_returns_speech(self):
         speech = np.array([0.2, -0.2], dtype=np.float32)

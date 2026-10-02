@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, Pada } from "../api/client";
+import { stopAllPlayback } from "../data/playback";
 import { RECITATIONS, echoGapMs } from "../data/recitation";
 import { speakSanskritWithPromise, stopSpeaking } from "../data/sanskrit";
 
@@ -24,6 +25,7 @@ export default function RecitationCard() {
     runId.current += 1;
     if (echoTimer.current) window.clearTimeout(echoTimer.current);
     echoTimer.current = null;
+    stopAllPlayback();
     stopSpeaking();
     setPhase("idle");
     setStep(0);

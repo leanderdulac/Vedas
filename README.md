@@ -313,6 +313,32 @@ opcionais.
 Sem `ffmpeg` no `PATH`, a recitação é gravada sem o drone. `VEDIC_AUDIO_BED=0`
 desliga a cama e mantém a voz sozinha.
 
+O drone fica 22 dB abaixo da voz em RMS (`VEDIC_AUDIO_BED_DB`, de -40 a -12)
+e passa por um passa-baixa em ~1,2 kHz. Antes ele era normalizado e somado com
+ganho fixo, ficava só ~3 dB abaixo da voz, e os harmônicos de 1 a 4 kHz soavam
+como um segundo narrador. No front, `src/data/playback.ts` garante uma voz por
+vez: o MP3 do backend nunca toca junto com a voz do navegador, que só entra
+quando o MP3 falha antes de começar.
+
+### Vídeo dos versos (~5 s)
+
+O SVD img2vid-xt gera 25 quadros a 768×432 (~90 s e ~21 GB no MPS do M5 Max;
+1024×576 com 25 quadros não cabe nos 36 GB). Os quadros tocam a 5 fps (5 s),
+o `ffmpeg minterpolate` interpola até 24 fps e um zoom lento (Ken Burns) com
+upscale lanczos fecha em 1024×576, H.264 com faststart. O still quadrado entra
+inteiro, com as laterais preenchidas pelo próprio still desfocado, então o
+alto das chamas não é mais cortado.
+
+| Variável | Padrão | Efeito |
+| --- | --- | --- |
+| `VEDIC_SVD_FRAMES` | 25 | Quadros do SVD (máx. 25 no xt) |
+| `VEDIC_SVD_FPS` | 5 | Ritmo dos quadros; duração = quadros / fps |
+| `VEDIC_VIDEO_INTERP_FPS` | 24 | Interpolação por movimento; 0 desliga |
+| `VEDIC_VIDEO_ZOOM` | 1.06 | Zoom do Ken Burns; 1 desliga |
+| `VEDIC_SVD_WIDTH` | 768 | Largura em que o SVD roda (512–1024) |
+| `VEDIC_VIDEO_OUT_WIDTH` | 1024 | Largura do MP4 final |
+| `VEDIC_SVD_FRAMING` | `pad` | `pad` (still inteiro) ou `cover` (recorte 16:9) |
+
 ## SLM local (continued-pretraining LoRA) + migração de embeddings
 
 **SLM** — adaptar um modelo pequeno ao corpus védico (base recomendada
