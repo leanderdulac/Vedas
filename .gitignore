@@ -38,3 +38,6 @@ frontend/coverage/
 
 # scratch de agentes/ferramentas
 .agent_tmp/
+
+# tanpura do canto (CC BY 4.0, baixada por scripts/fetch_tanpura.py)
+data/assets/

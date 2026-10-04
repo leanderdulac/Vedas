@@ -5,6 +5,14 @@ import { type PlaybackHandle, playVerseAudio, speakExclusive } from "../data/pla
 import { displayProse, speechProse } from "../data/prose";
 import { speakPortuguese, speakSanskrit, stopSpeaking } from "../data/sanskrit";
 
+// Estilo de recitação do servidor (falada ou cantada) — buscado uma vez por sessão.
+// No modo cantado a UI mostra o crédito da tanpura (CC BY 4.0) enquanto toca.
+let recitationInfo: Promise<{ style: string; credits: string[] } | null> | null = null;
+function getRecitationInfo() {
+  if (!recitationInfo) recitationInfo = api.recitationInfo().catch(() => null);
+  return recitationInfo;
+}
+
 function revoke(url: string | null) {
   if (url && url.startsWith("blob:")) {
     try {
@@ -32,6 +40,7 @@ export default function VerseCard({
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState<"audio" | "pt" | "en" | "trad" | "anlz" | "image" | "video" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [audioCredit, setAudioCredit] = useState<string | null>(null);
   const [bundle, setBundle] = useState<VerseBundle | null>(null);
   const [explanation, setExplanation] = useState<{ lang: "pt" | "en"; text: string } | null>(null);
   const [translation, setTranslation] = useState<VerseTranslation | null>(null);
@@ -87,6 +96,11 @@ export default function VerseCard({
         onPlaying: () => {
           setPlaying(true);
           setBusy(null);
+          void getRecitationInfo().then((info) => {
+            if (!cancelled.current && info?.style === "chant" && info.credits.length) {
+              setAudioCredit(`♪ ${info.credits.join(" · ")}`);
+            }
+          });
         },
         onFallback: () => {
           setPlaying(true);
@@ -372,6 +386,7 @@ export default function VerseCard({
         <video className="verse-media-video" src={videoUrl} controls playsInline />
       )}
       {videoNote && <p className="verse-audio-note">{videoNote}</p>}
+      {audioCredit && <p className="verse-audio-note">{audioCredit}</p>}
       {error && <p className="verse-error">{error}</p>}
     </section>
   );

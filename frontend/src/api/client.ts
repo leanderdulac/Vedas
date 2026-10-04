@@ -284,6 +284,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ lang, provider }),
     }),
+  recitationInfo: () =>
+    request<{ style: "spoken" | "chant"; chant_available: boolean; credits: string[] }>("/api/v1/recitation"),
   verseAudioUrl: (verseId: string) =>
     `${API_BASE}/api/v1/verses/${encodeURIComponent(verseId)}/audio`,
   mediaCached: () =>

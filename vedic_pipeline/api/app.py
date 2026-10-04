@@ -91,7 +91,7 @@ def create_app():
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         # CSP conservador: API JSON + SPA estática local; sem inline scripts externos.
         # Não impõe default-src 'none' em endpoints de mídia (áudio/vídeo/imagem) para permitir streaming limpo
-        is_media = any(request.url.path.endswith(ext) for ext in ("/audio", "/video", "/video/file", "/image"))
+        is_media = any(request.url.path.endswith(ext) for ext in ("/audio", "/video", "/video/file", "/image", "/recite"))
         if not is_media and (request.url.path.startswith("/api/") or request.url.path in {"/metrics", "/health"}):
             response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
         return response
@@ -384,10 +384,10 @@ def create_app():
 
     @app.api_route("/api/v1/verses/{verse_id}/audio", methods=["GET", "HEAD"])
     def api_verse_audio(verse_id: str, authorization: str | None = Header(default=None)):
-        from fastapi.responses import FileResponse
 
         from vedic_pipeline.api.request_policy import authorize_media
-        from vedic_pipeline.api.verse_service import get_verse, recitation_text
+        from vedic_pipeline.api.verse_service import get_verse, padas_of, recitation_text
+        from vedic_pipeline.llm import chant
         from vedic_pipeline.llm.tts import cached_verse_audio, get_cached_verse_audio, tts_available
 
         bundle = get_verse(verse_id)
@@ -398,15 +398,17 @@ def create_app():
             raise HTTPException(status_code=404, detail="Verso sem texto para narrar")
         lang = "sa" if bundle.get("has_sanskrit") else "en"
 
+        if lang == "sa" and chant.recitation_style() == "chant":
+            padas = [p.get("sa") or p.get("iast") or "" for p in padas_of(bundle)]
+            lines = chant.lyric_lines(padas=padas) or chant.lyric_lines(text=text)
+            chanted = _chant_or_none(verse_id, lines, authorization, title=str(bundle.get("locator") or verse_id))
+            if chanted is not None:
+                return chanted
+
         # Leitura de cache é aberta (sem custo); áudio já sintetizado toca sem exigência de token
         cached = get_cached_verse_audio(verse_id, text, language=lang)
         if cached is not None:
-            return FileResponse(
-                cached,
-                media_type="audio/mpeg",
-                filename=f"{verse_id}.mp3",
-                content_disposition_type="inline",
-            )
+            return _spoken_response(cached, verse_id)
 
         if not tts_available():
             raise HTTPException(
@@ -420,12 +422,90 @@ def create_app():
         except Exception:  # noqa: BLE001
             logger.exception("TTS falhou para %s", verse_id)
             raise HTTPException(status_code=503, detail="Falha ao narrar o verso") from None
+        return _spoken_response(path, verse_id)
+
+    def _spoken_response(path: Path, name: str):
         return FileResponse(
             path,
             media_type="audio/mpeg",
-            filename=f"{verse_id}.mp3",
+            filename=f"{name}.mp3",
             content_disposition_type="inline",
+            headers={"X-Recitation-Style": "spoken"},
         )
+
+    def _chant_or_none(key: str, lines: list[str], authorization: str | None, *, title: str):
+        """Recitação cantada (VEDIC_RECITATION_STYLE=chant): cache aberto; geração
+        local com a mesma política de token da mídia; qualquer falha -> None
+        (quem chama cai na voz falada)."""
+        from vedic_pipeline.api.request_policy import authorize_media
+        from vedic_pipeline.llm import chant
+
+        if not lines:
+            return None
+        path = chant.get_cached_chant(key, lines)
+        if path is None:
+            missing = chant.missing_requirements()
+            if missing:
+                logger.warning("Canto indisponível para %s (%s); usando a voz falada", key, "; ".join(missing))
+                return None
+            try:
+                authorize_media(authorization)
+            except HTTPException:
+                # sem token para gerar o canto: a voz falada em cache ainda toca aberta
+                return None
+            try:
+                path = chant.cached_chant(key, lines, title=title)
+            except Exception:  # noqa: BLE001
+                logger.exception("Canto falhou para %s; usando a voz falada", key)
+                return None
+        return FileResponse(
+            path,
+            media_type="audio/mpeg",
+            filename=f"{key}.mp3",
+            content_disposition_type="inline",
+            headers={"X-Recitation-Style": "chant", "X-Recitation-Credit": chant.TANPURA_CREDIT},
+        )
+
+    @app.get("/api/v1/recitation")
+    def api_recitation_info() -> dict[str, Any]:
+        """Estilo de recitação ativo e créditos a exibir (CC BY da tanpura)."""
+        from vedic_pipeline.llm import chant
+
+        info = chant.describe()
+        info.pop("missing", None)
+        return info
+
+    @app.post("/api/v1/recite")
+    def api_recite(body: dict[str, Any], authorization: str | None = Header(default=None)):
+        """Recita um trecho sânscrito avulso (versos sem verse_id, ex. Bhāgavata
+        do GRETIL): canto no modo chant, senão a voz falada; mesmas regras de cache/token."""
+        import hashlib
+
+        from vedic_pipeline.api.request_policy import authorize_media
+        from vedic_pipeline.llm import chant
+        from vedic_pipeline.llm.tts import cached_verse_audio, get_cached_verse_audio, tts_available
+
+        text = str(body.get("text") or "").strip()
+        if not text or len(text) > 800:
+            raise HTTPException(status_code=422, detail="Envie 'text' com 1–800 caracteres")
+        label = str(body.get("label") or "").strip()[:60]
+        key = "recite_" + (label or hashlib.sha256(text.encode("utf-8")).hexdigest()[:12])
+        if chant.recitation_style() == "chant":
+            chanted = _chant_or_none(key, chant.lyric_lines(text=text), authorization, title=label or key)
+            if chanted is not None:
+                return chanted
+        cached = get_cached_verse_audio(key, text, language="sa")
+        if cached is not None:
+            return _spoken_response(cached, key)
+        if not tts_available():
+            raise HTTPException(status_code=503, detail="TTS indisponível (sem XAI_API_KEY)")
+        authorize_media(authorization)
+        try:
+            path = cached_verse_audio(key, text, language="sa")
+        except Exception:  # noqa: BLE001
+            logger.exception("TTS falhou para %s", key)
+            raise HTTPException(status_code=503, detail="Falha ao narrar o trecho") from None
+        return _spoken_response(path, key)
 
     @app.get("/api/v1/media/cached")
     def api_cached_media() -> dict[str, list[str]]:

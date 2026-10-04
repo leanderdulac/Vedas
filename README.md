@@ -337,6 +337,35 @@ como um segundo narrador. No front, `src/data/playback.ts` garante uma voz por
 vez: o MP3 do backend nunca toca junto com a voz do navegador, que só entra
 quando o MP3 falha antes de começar.
 
+### Recitação cantada (`VEDIC_RECITATION_STYLE=chant`)
+
+Padrão: `spoken` (voz falada do xAI, como antes). Com `chant`, o "▶ Ouvir" dos
+versos em sânscrito canta o verso com o ACE-Step 1.5 (MIT) rodando localmente
+(MLX/MPS no Mac): letra em IAST com um pāda por linha, `vocal_language=sa`,
+66 bpm, C# maior e seed 33 fixos (a receita aprovada na rodada v3; o modelo
+compõe a própria melodia, igual para o mesmo verso). O Demucs htdemucs (MIT)
+isola a voz e ela é mixada sobre a tanpura real "Acoustic Tanpura 10" de
+sankalp (Freesound #155272, **CC BY 4.0**), afinada em C#. O crédito vai nos
+metadados do MP3, no cabeçalho `X-Recitation-Credit` e na UI enquanto toca
+(`GET /api/v1/recitation`).
+
+Instalação (fora do git, ~10 GB): `scripts/setup_chant.sh` clona o ACE-Step
+num venv próprio, instala o Demucs, baixa os checkpoints e roda
+`scripts/fetch_tanpura.py` (a tanpura vai para `data/assets/`, ignorado). No
+`.env`: `VEDIC_RECITATION_STYLE=chant` e `VEDIC_ACESTEP_DIR=<checkout>`.
+Opcionais: `VEDIC_ACESTEP_PYTHON`, `VEDIC_CHANT_TANPURA`, `VEDIC_CHANT_TIMEOUT`
+(600 s).
+
+O app conversa com `scripts/chant_worker.py` (no venv do ACE-Step) por
+stdin/stdout; o worker sobe na primeira recitação cantada e mantém o modelo na
+memória. Cada verso é gerado uma vez e fica em `data/audio/*_chant_*.mp3`
+(~45 s no M5 Max com a carga do modelo, ~25–40 s depois). Gerar segue a mesma
+política de token da mídia; cache toca aberto. Se o ACE-Step não estiver
+instalado, falhar ou estourar o tempo, o endpoint cai na voz falada.
+`POST /api/v1/recite` (`{"text", "label"}`) recita um trecho avulso sem
+`verse_id` (ex.: Bhāgavata do GRETIL) com as mesmas regras. Nada de NC/GPL no
+caminho do app (o alinhador MMS e o Seed-VC só serviram para avaliar).
+
 ### Vídeo dos versos (~5 s)
 
 O SVD img2vid-xt gera 25 quadros a 768×432 (~90 s e ~21 GB no MPS do M5 Max;
