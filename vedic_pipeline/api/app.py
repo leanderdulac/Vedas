@@ -401,7 +401,10 @@ def create_app():
         if lang == "sa" and chant.recitation_style() == "chant":
             padas = [p.get("sa") or p.get("iast") or "" for p in padas_of(bundle)]
             lines = chant.lyric_lines(padas=padas) or chant.lyric_lines(text=text)
-            chanted = _chant_or_none(verse_id, lines, authorization, title=str(bundle.get("locator") or verse_id))
+            reference = " ".join(p.get("sa") or "" for p in padas_of(bundle))
+            chanted = _chant_or_none(
+                verse_id, lines, authorization, title=str(bundle.get("locator") or verse_id), reference=reference
+            )
             if chanted is not None:
                 return chanted
 
@@ -433,7 +436,7 @@ def create_app():
             headers={"X-Recitation-Style": "spoken"},
         )
 
-    def _chant_or_none(key: str, lines: list[str], authorization: str | None, *, title: str):
+    def _chant_or_none(key: str, lines: list[str], authorization: str | None, *, title: str, reference: str = ""):
         """Recitação cantada (VEDIC_RECITATION_STYLE=chant): cache aberto; geração
         local com a mesma política de token da mídia; qualquer falha -> None
         (quem chama cai na voz falada)."""
@@ -443,7 +446,9 @@ def create_app():
         if not lines:
             return None
         path = chant.get_cached_chant(key, lines)
-        if path is None:
+        if path is not None:
+            chant.resume_upgrade(key, lines, reference=reference, title=title)
+        else:
             missing = chant.missing_requirements()
             if missing:
                 logger.warning("Canto indisponível para %s (%s); usando a voz falada", key, "; ".join(missing))
@@ -454,16 +459,23 @@ def create_app():
                 # sem token para gerar o canto: a voz falada em cache ainda toca aberta
                 return None
             try:
-                path = chant.cached_chant(key, lines, title=title)
+                path = chant.cached_chant(key, lines, title=title, reference=reference)
             except Exception:  # noqa: BLE001
                 logger.exception("Canto falhou para %s; usando a voz falada", key)
                 return None
+        meta = chant.chant_meta(path)
         return FileResponse(
             path,
             media_type="audio/mpeg",
             filename=f"{key}.mp3",
             content_disposition_type="inline",
-            headers={"X-Recitation-Style": "chant", "X-Recitation-Credit": chant.TANPURA_CREDIT},
+            headers={
+                "X-Recitation-Style": "chant",
+                "X-Recitation-Credit": chant.TANPURA_CREDIT,
+                "X-Chant-Seed": str(meta.get("chosen_seed", "")),
+                "X-Chant-Status": str(meta.get("status", "")),
+                "Cache-Control": "no-cache",
+            },
         )
 
     @app.get("/api/v1/recitation")
@@ -482,6 +494,7 @@ def create_app():
         import hashlib
 
         from vedic_pipeline.api.request_policy import authorize_media
+        from vedic_pipeline.common.sanskrit import has_devanagari
         from vedic_pipeline.llm import chant
         from vedic_pipeline.llm.tts import cached_verse_audio, get_cached_verse_audio, tts_available
 
@@ -491,7 +504,10 @@ def create_app():
         label = str(body.get("label") or "").strip()[:60]
         key = "recite_" + (label or hashlib.sha256(text.encode("utf-8")).hexdigest()[:12])
         if chant.recitation_style() == "chant":
-            chanted = _chant_or_none(key, chant.lyric_lines(text=text), authorization, title=label or key)
+            reference = text if has_devanagari(text) else ""
+            chanted = _chant_or_none(
+                key, chant.lyric_lines(text=text), authorization, title=label or key, reference=reference
+            )
             if chanted is not None:
                 return chanted
         cached = get_cached_verse_audio(key, text, language="sa")

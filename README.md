@@ -356,6 +356,17 @@ num venv próprio, instala o Demucs, baixa os checkpoints e roda
 Opcionais: `VEDIC_ACESTEP_PYTHON`, `VEDIC_CHANT_TANPURA`, `VEDIC_CHANT_TIMEOUT`
 (600 s).
 
+Melhor de 3 (`VEDIC_CHANT_TAKES`, padrão 3; 1 = uma tomada só): o primeiro
+pedido de um verso gera a tomada com seed 33 e já a serve (cache
+provisório, ~30–50 s, abaixo dos ~100 s do túnel). Em segundo plano saem as
+seeds 44 e 77; a voz isolada de cada tomada (antes da tanpura) passa pelo
+speech-to-text do xAI (`grok-voice-transcribe-2.0`, US$0,10/h, ~US$0,003 por
+verso) e a de menor CER contra o devanāgarī substitui o arquivo. Seed, CER e
+transcrição de cada tomada ficam no `.json` ao lado do MP3; os cabeçalhos
+`X-Chant-Seed`/`X-Chant-Status` dizem qual está tocando. Sem `XAI_API_KEY` ou
+com erro no STT, fica a primeira tomada. Se o app recarregar no meio, a
+seleção recomeça no próximo pedido do verso.
+
 O app conversa com `scripts/chant_worker.py` (no venv do ACE-Step) por
 stdin/stdout; o worker sobe na primeira recitação cantada e mantém o modelo na
 memória. Cada verso é gerado uma vez e fica em `data/audio/*_chant_*.mp3`

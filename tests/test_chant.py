@@ -237,3 +237,159 @@ def test_chant_without_token_plays_cached_spoken(tmp_path):
         with patch("vedic_pipeline.llm.tts.get_cached_verse_audio", return_value=None):
             assert c.get("/api/v1/verses/BG.12.13/audio").status_code == 401
     gen.assert_not_called()
+
+
+# --- melhor de N tomadas (VEDIC_CHANT_TAKES) ---------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("raw", "n"), [(None, 3), ("1", 1), ("3", 3), ("0", 1), ("9", 6), ("x", 3)]
+)
+def test_chant_takes(raw, n, monkeypatch):
+    if raw is None:
+        monkeypatch.delenv("VEDIC_CHANT_TAKES", raising=False)
+    else:
+        monkeypatch.setenv("VEDIC_CHANT_TAKES", raw)
+    assert chant.chant_takes() == n
+
+
+def test_take_seeds():
+    assert chant.take_seeds(1) == [33]
+    assert chant.take_seeds(3) == [33, 44, 77]
+    assert len(set(chant.take_seeds(6))) == 6
+
+
+def test_cer_devanagari_and_latin():
+    ref = "अद्वेष्टा सर्वभूतानां मैत्रः करुण एव च ।"
+    assert chant.cer(ref, "अद्वेष्टा सर्वभूतानाम्, मैत्र करुण एवच।") == 0.0
+    assert 0 < chant.cer(ref, "अंदरष्टा सर्वभूताना मत्र करुण एवच") < 0.3
+    assert chant.cer(ref, "") == 1.0
+    lines = ["sa vai puṁsāṁ paro dharmo"]
+    assert chant.cer("", "स वै पुंसां परो धर्मो", lines) < 0.15
+    assert chant.cer("", "हरि ओम", lines) > 0.5
+
+
+@pytest.fixture
+def fake_takes(tmp_path, monkeypatch):
+    """Worker falso: cada tomada grava um MP3 com a seed no conteúdo."""
+    monkeypatch.setattr(chant, "AUDIO_DIR", tmp_path)
+    monkeypatch.setattr(chant, "missing_requirements", lambda: [])
+    monkeypatch.setattr(chant, "chant_available", lambda: True)
+    calls: list[int] = []
+
+    def run_take(key, lines, seed, dest, title):
+        calls.append(seed)
+        d = chant._takes_dir(dest)
+        d.mkdir(parents=True, exist_ok=True)
+        mp3, voc = d / f"s{seed}.mp3", d / f"s{seed}_vocal.mp3"
+        mp3.write_bytes(f"seed{seed}".encode() + b"\0" * 2000)
+        voc.write_bytes(f"voc{seed}".encode())
+        return {"seed": seed, "mp3": str(mp3), "vocal": str(voc), "secs": 1.0}
+
+    monkeypatch.setattr(chant, "_run_take", run_take)
+    scheduled: list[str] = []
+    monkeypatch.setattr(
+        chant, "_schedule_upgrade", lambda key, lines, ref, title: scheduled.append(key) or True
+    )
+    return calls, scheduled
+
+
+LINES = ["adveṣṭā sarvabhūtānāṁ", "maitraḥ karuṇa eva ca"]
+REF = "अद्वेष्टा सर्वभूतानां मैत्रः करुण एव च"
+
+
+def test_single_take_is_old_behaviour(fake_takes, monkeypatch):
+    calls, scheduled = fake_takes
+    monkeypatch.setenv("VEDIC_CHANT_TAKES", "1")
+    dest = chant.cached_chant("BG.12.13", LINES, reference=REF)
+    assert calls == [33] and scheduled == []
+    assert dest.read_bytes().startswith(b"seed33")
+    meta = chant.chant_meta(dest)
+    assert meta["status"] == "final" and meta["chosen_seed"] == 33
+
+
+def test_first_take_served_then_best_installed(fake_takes, monkeypatch):
+    calls, scheduled = fake_takes
+    monkeypatch.setenv("VEDIC_CHANT_TAKES", "3")
+    monkeypatch.setenv("XAI_API_KEY", "k")
+    dest = chant.cached_chant("BG.12.13", LINES, reference=REF)
+    assert calls == [33] and scheduled == ["BG.12.13"]
+    assert (
+        dest.read_bytes().startswith(b"seed33")
+        and chant.chant_meta(dest)["status"] == "provisional"
+    )
+    said = {"voc33": "अंदरष्टा सर्वभूताना मत्र करुण", "voc44": REF, "voc77": "हरि ओम"}
+    monkeypatch.setattr(chant, "transcribe", lambda p: said[Path(p).read_bytes().decode()])
+    meta = chant.upgrade("BG.12.13", LINES, reference=REF)
+    assert calls == [33, 44, 77]
+    assert meta["status"] == "final" and meta["chosen_seed"] == 44 and meta["chosen_cer"] == 0.0
+    assert [t["seed"] for t in meta["takes"]] == [33, 44, 77]
+    assert dest.read_bytes().startswith(b"seed44")
+    assert not chant._takes_dir(dest).exists()
+    assert chant.upgrade("BG.12.13", LINES, reference=REF)["status"] == "final"  # idempotente
+
+
+def test_stt_unavailable_keeps_first_take(fake_takes, monkeypatch):
+    monkeypatch.setenv("VEDIC_CHANT_TAKES", "3")
+    monkeypatch.delenv("XAI_API_KEY", raising=False)
+    dest = chant.cached_chant("BG.12.13", LINES, reference=REF)
+    meta = chant.upgrade("BG.12.13", LINES, reference=REF)
+    assert meta["chosen_seed"] == 33 and "XAI_API_KEY" in meta["stt_error"]
+    assert dest.read_bytes().startswith(b"seed33")
+
+
+def test_stt_error_keeps_first_take(fake_takes, monkeypatch):
+    monkeypatch.setenv("VEDIC_CHANT_TAKES", "3")
+    monkeypatch.setenv("XAI_API_KEY", "k")
+    dest = chant.cached_chant("BG.12.13", LINES, reference=REF)
+
+    def boom(path):
+        raise RuntimeError("503")
+
+    monkeypatch.setattr(chant, "transcribe", boom)
+    meta = chant.upgrade("BG.12.13", LINES, reference=REF)
+    assert meta["chosen_seed"] == 33 and meta["stt_error"]
+    assert dest.read_bytes().startswith(b"seed33")
+
+
+def test_failed_background_take_is_skipped(fake_takes, monkeypatch):
+    calls, _ = fake_takes
+    monkeypatch.setenv("VEDIC_CHANT_TAKES", "3")
+    monkeypatch.setenv("XAI_API_KEY", "k")
+    chant.cached_chant("BG.12.13", LINES, reference=REF)
+    ok = chant._run_take
+
+    def flaky(key, lines, seed, dest, title):
+        if seed == 44:
+            raise RuntimeError("MPS caiu")
+        return ok(key, lines, seed, dest, title)
+
+    monkeypatch.setattr(chant, "_run_take", flaky)
+    said = {"voc33": "हरि ओम", "voc77": REF}
+    monkeypatch.setattr(chant, "transcribe", lambda p: said[Path(p).read_bytes().decode()])
+    meta = chant.upgrade("BG.12.13", LINES, reference=REF)
+    assert [t["seed"] for t in meta["takes"]] == [33, 77] and meta["chosen_seed"] == 77
+
+
+def test_resume_upgrade_only_for_provisional(fake_takes, monkeypatch):
+    _, scheduled = fake_takes
+    monkeypatch.setenv("VEDIC_CHANT_TAKES", "3")
+    chant.cached_chant("BG.12.13", LINES, reference=REF)
+    scheduled.clear()
+    assert chant.resume_upgrade("BG.12.13", LINES, reference=REF) is True
+    monkeypatch.setenv("XAI_API_KEY", "k")
+    monkeypatch.setattr(chant, "transcribe", lambda p: REF)
+    chant.upgrade("BG.12.13", LINES, reference=REF)
+    assert chant.resume_upgrade("BG.12.13", LINES, reference=REF) is False
+
+
+def test_endpoint_exposes_seed_and_status(client, tmp_path, monkeypatch):
+    monkeypatch.setattr(chant, "AUDIO_DIR", tmp_path)
+    lines = chant.lyric_lines(padas=BG_12_13)
+    dest = chant.cache_path("BG.12.13", lines)
+    dest.write_bytes(b"ID3" + b"\0" * 2000)
+    chant._write_meta(dest, {"status": "final", "chosen_seed": 77})
+    with patch.dict(os.environ, {"VEDIC_RECITATION_STYLE": "chant"}):
+        r = client.get("/api/v1/verses/BG.12.13/audio")
+    assert r.headers["x-recitation-style"] == "chant"
+    assert r.headers["x-chant-seed"] == "77" and r.headers["x-chant-status"] == "final"

@@ -94,15 +94,16 @@ def generate(root: str, req: dict, tmp: str) -> tuple[np.ndarray, int]:
         keyscale=recipe["keyscale"],
         timesignature=recipe["timesignature"],
         duration=float(req["duration"]),
-        seed=recipe["seed"],
+        seed=int(req.get("seed", recipe["seed"])),
         inference_steps=recipe["inference_steps"],
         shift=recipe["shift"],
         thinking=True,
         use_cot_caption=False,
         use_cot_language=False,
     )
+    seed = int(req.get("seed", recipe["seed"]))
     config = GenerationConfig(
-        batch_size=1, use_random_seed=False, seeds=[recipe["seed"]], audio_format="flac"
+        batch_size=1, use_random_seed=False, seeds=[seed], audio_format="flac"
     )
     result = generate_music(dit, llm, params, config, save_dir=tmp)
     if not result.success:
@@ -240,6 +241,30 @@ def mix_and_encode(vocal: np.ndarray, req: dict, tmp: str) -> float:
     return len(v) / SR
 
 
+def write_vocal(vocal: np.ndarray, out: str, tmp: str) -> None:
+    """Voz isolada (antes da tanpura), mono, para o STT escolher a melhor tomada."""
+    import soundfile as sf
+
+    wav = os.path.join(tmp, "vocal.wav")
+    sf.write(wav, (0.9 * vocal / (np.abs(vocal).max() + 1e-9)).astype(np.float32), SR)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-loglevel",
+        "error",
+        "-i",
+        wav,
+        "-ac",
+        "1",
+        "-ar",
+        "16000",
+        "-b:a",
+        "64k",
+        out,
+    ]
+    subprocess.run(cmd, check=True)
+
+
 def handle(root: str, req: dict) -> dict:
     timings: dict = {}
     with tempfile.TemporaryDirectory(prefix="vedas_chant_") as tmp:
@@ -249,6 +274,8 @@ def handle(root: str, req: dict) -> dict:
         t = time.monotonic()
         vocal = isolate_vocals(wav, sr)
         timings["demucs_s"] = round(time.monotonic() - t, 1)
+        if req.get("vocal_out"):
+            write_vocal(vocal, req["vocal_out"], tmp)
         t = time.monotonic()
         dur = mix_and_encode(vocal, req, tmp)
         timings["mix_s"] = round(time.monotonic() - t, 1)

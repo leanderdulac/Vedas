@@ -47,7 +47,7 @@ CAPTION = (
 )
 # Receita vencedora da rodada v3 (BG 12.13: FA 0,75, CER 0,13, platô 0,51).
 RECIPE: dict[str, Any] = {
-    "version": 1,
+    "version": 2,
     "dit": "acestep-v15-turbo",
     "lm": "acestep-5Hz-lm-1.7B",
     "caption": CAPTION,
@@ -195,8 +195,35 @@ def chant_duration(lines: list[str]) -> int:
     return int(min(150, max(20, round(6 + 0.875 * syllable_count(lines)))))
 
 
+BASE_SEEDS = (33, 44, 77)  # 33 = receita aprovada; 44 e 77 também foram bons na rodada v3
+STT_URL_PATH = "/stt"
+STT_MODEL = "grok-voice-transcribe-2.0"
+
+
+def chant_takes() -> int:
+    """`VEDIC_CHANT_TAKES` (padrão 3, 1–6): quantas tomadas por verso; 1 = sem seleção."""
+    raw = (os.environ.get("VEDIC_CHANT_TAKES") or "3").strip()
+    try:
+        n = int(raw)
+    except ValueError:
+        logger.warning("VEDIC_CHANT_TAKES=%r inválido; usando 3", raw)
+        return 3
+    return min(6, max(1, n))
+
+
+def take_seeds(n: int) -> list[int]:
+    seeds = list(BASE_SEEDS[:n])
+    while len(seeds) < n:
+        seeds.append(101 * len(seeds))
+    return seeds
+
+
 def _digest(lines: list[str]) -> str:
-    blob = json.dumps({"lines": lines, "recipe": RECIPE}, ensure_ascii=False, sort_keys=True)
+    blob = json.dumps(
+        {"lines": lines, "recipe": RECIPE, "seeds": take_seeds(chant_takes())},
+        ensure_ascii=False,
+        sort_keys=True,
+    )
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
 
 
@@ -292,8 +319,213 @@ def shutdown_worker() -> None:
     _WORKER.stop()
 
 
-def cached_chant(key: str, lines: list[str], *, title: str = "") -> Path:
-    """Devolve o MP3 cantado do verso (cache ou geração local). Levanta em falha."""
+def meta_path(dest: Path) -> Path:
+    return dest.with_suffix(".json")
+
+
+def chant_meta(dest: Path) -> dict[str, Any]:
+    try:
+        return json.loads(meta_path(dest).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_meta(dest: Path, meta: dict[str, Any]) -> None:
+    tmp = meta_path(dest).with_suffix(".json.part")
+    tmp.write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(meta_path(dest))
+
+
+def _takes_dir(dest: Path) -> Path:
+    return dest.parent / "chant_takes" / dest.stem
+
+
+def _run_take(key: str, lines: list[str], seed: int, dest: Path, title: str) -> dict[str, Any]:
+    """Uma tomada no worker: MP3 mixado + voz isolada (antes da tanpura) para o STT."""
+    tdir = _takes_dir(dest)
+    tdir.mkdir(parents=True, exist_ok=True)
+    mp3, vocal = tdir / f"s{seed}.mp3", tdir / f"s{seed}_vocal.mp3"
+    payload = {
+        "lyrics": lyrics_for(lines),
+        "duration": chant_duration(lines),
+        "seed": seed,
+        "out": str(mp3.resolve()),
+        "vocal_out": str(vocal.resolve()),
+        "tanpura": str(tanpura_path().resolve()),
+        "recipe": RECIPE,
+        "title": title or key,
+        "comment": f"{MODEL_CREDIT} (seed {seed}). Tanpura: {TANPURA_CREDIT}.",
+    }
+    t0 = time.monotonic()
+    reply = _WORKER.request(payload, chant_timeout())
+    if not mp3.exists() or mp3.stat().st_size < 1000:
+        raise RuntimeError("worker de canto não gravou o MP3")
+    secs = round(time.monotonic() - t0, 1)
+    logger.info(
+        "Tomada seed=%s de %s em %.1fs (%s)", seed, key, secs, json.dumps(reply.get("timings", {}))
+    )
+    return {"seed": seed, "mp3": str(mp3), "vocal": str(vocal), "secs": secs}
+
+
+def _install(src: str | Path, dest: Path) -> None:
+    tmp = dest.with_suffix(".part.mp3")
+    shutil.copyfile(src, tmp)
+    tmp.replace(dest)
+
+
+def stt_available() -> bool:
+    return bool(os.environ.get("XAI_API_KEY"))
+
+
+def transcribe(path: str | Path) -> str:
+    """xAI speech-to-text (REST, US$0,10/h) da voz isolada; hindi = devanāgarī na saída."""
+    import httpx
+
+    key = os.environ.get("XAI_API_KEY")
+    if not key:
+        raise RuntimeError("XAI_API_KEY não definida")
+    base = os.environ.get("XAI_BASE_URL", "https://api.x.ai/v1").rstrip("/")
+    with open(path, "rb") as fh, httpx.Client(timeout=60.0) as client:
+        resp = client.post(
+            f"{base}{STT_URL_PATH}",
+            headers={"Authorization": f"Bearer {key}"},
+            files={"file": ("take.mp3", fh, "audio/mpeg")},
+            data={"model": STT_MODEL, "language": "hi"},
+        )
+    resp.raise_for_status()
+    return str(resp.json().get("text") or "")
+
+
+def _norm_deva(text: str) -> str:
+    text = _ACCENT_RE.sub("", text)
+    text = re.sub(r"[\s।॥|/,.\-?!…\"'0-9०-९]", "", text)
+    for a, b in (("ङ्", "ं"), ("म्", "ं"), ("ँ", "ं"), ("ः", ""), ("्", "")):
+        text = text.replace(a, b)
+    return text
+
+
+def _norm_latin(text: str) -> str:
+    from vedic_pipeline.common.sanskrit import iast_to_ascii
+
+    if has_devanagari(text):
+        text = devanagari_to_iast(text)
+    text = iast_to_ascii(text.lower())
+    return re.sub(r"[^a-z]", "", text.replace("h", ""))
+
+
+def _levenshtein(a: str, b: str) -> int:
+    row = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        prev, row[0] = row[0], i
+        for j, cb in enumerate(b, 1):
+            prev, row[j] = row[j], min(row[j] + 1, row[j - 1] + 1, prev + (ca != cb))
+    return row[-1]
+
+
+def cer(reference: str, transcript: str, lines: list[str] | None = None) -> float:
+    """CER da transcrição contra o devanāgarī do verso (normalizado: sem pontuação,
+    anusvāra/visarga/virāma unificados). Sem devanāgarī de referência, compara em
+    latim (transcrição transliterada contra o IAST, sem diacríticos)."""
+    if reference and has_devanagari(reference):
+        ref, hyp = _norm_deva(reference), _norm_deva(transcript)
+    else:
+        ref, hyp = _norm_latin(reference or " ".join(lines or [])), _norm_latin(transcript)
+    if not ref:
+        return 1.0
+    return round(min(1.0, _levenshtein(ref, hyp) / len(ref)), 3)
+
+
+_UPGRADES: set[str] = set()
+_UPGRADES_LOCK = threading.Lock()
+
+
+def _schedule_upgrade(key: str, lines: list[str], reference: str, title: str) -> bool:
+    dest = cache_path(key, lines)
+    with _UPGRADES_LOCK:
+        if str(dest) in _UPGRADES:
+            return False
+        _UPGRADES.add(str(dest))
+
+    def run() -> None:
+        try:
+            upgrade(key, lines, reference=reference, title=title)
+        except Exception:  # noqa: BLE001
+            logger.exception("Seleção de tomadas falhou para %s; fica a primeira", key)
+        finally:
+            with _UPGRADES_LOCK:
+                _UPGRADES.discard(str(dest))
+
+    threading.Thread(target=run, name=f"chant-upgrade-{key}", daemon=True).start()
+    return True
+
+
+def upgrade(key: str, lines: list[str], *, reference: str = "", title: str = "") -> dict[str, Any]:
+    """Gera as tomadas que faltam, pontua todas pelo CER do STT e instala a melhor.
+
+    STT ausente ou com erro: fica a primeira tomada bem-sucedida (a já servida)."""
+    dest = cache_path(key, lines)
+    meta = chant_meta(dest)
+    if meta.get("status") != "provisional" or not dest.exists():
+        return meta
+    takes = [t for t in meta.get("takes", []) if Path(t.get("mp3", "")).exists()]
+    done = {t["seed"] for t in takes}
+    for seed in take_seeds(int(meta.get("n_takes") or chant_takes())):
+        if seed in done:
+            continue
+        try:
+            takes.append(_run_take(key, lines, seed, dest, title))
+        except Exception:  # noqa: BLE001
+            logger.exception("Tomada seed=%s de %s falhou; seguindo sem ela", seed, key)
+    chosen = takes[0] if takes else None
+    stt_error = None
+    if chosen and len(takes) > 1:
+        if not stt_available():
+            stt_error = "XAI_API_KEY ausente"
+        else:
+            try:
+                for t in takes:
+                    t["transcript"] = transcribe(t["vocal"])
+                    t["cer"] = cer(reference, t["transcript"], lines)
+                chosen = min(takes, key=lambda t: (t["cer"], takes.index(t)))
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("STT falhou para %s (%s); fica a primeira tomada", key, exc)
+                stt_error = f"{type(exc).__name__}: {exc}"[:200]
+                chosen = takes[0]
+    if chosen and Path(chosen["mp3"]).resolve() != dest.resolve():
+        _install(chosen["mp3"], dest)
+    meta.update(
+        {
+            "status": "final",
+            "chosen_seed": chosen["seed"] if chosen else meta.get("chosen_seed"),
+            "chosen_cer": chosen.get("cer") if chosen else None,
+            "stt_error": stt_error,
+            "takes": [{k: t.get(k) for k in ("seed", "cer", "transcript", "secs")} for t in takes],
+        }
+    )
+    _write_meta(dest, meta)
+    shutil.rmtree(_takes_dir(dest), ignore_errors=True)
+    logger.info("Canto de %s: seed %s escolhida (%s)", key, meta["chosen_seed"], meta["takes"])
+    return meta
+
+
+def resume_upgrade(key: str, lines: list[str], *, reference: str = "", title: str = "") -> bool:
+    """Retoma a seleção de um cache provisório (ex.: o app recarregou no meio)."""
+    dest = cache_path(key, lines)
+    if (
+        chant_takes() < 2
+        or chant_meta(dest).get("status") != "provisional"
+        or not chant_available()
+    ):
+        return False
+    return _schedule_upgrade(key, lines, reference, title)
+
+
+def cached_chant(key: str, lines: list[str], *, title: str = "", reference: str = "") -> Path:
+    """MP3 cantado do verso (cache ou geração local). Levanta em falha.
+
+    Com `VEDIC_CHANT_TAKES` > 1 a primeira tomada (seed 33) é servida já, como
+    cache provisório, e as outras são geradas e pontuadas em segundo plano; a
+    melhor substitui o arquivo (o primeiro pedido fica abaixo dos ~100 s do túnel)."""
     if not lines:
         raise ValueError("verso sem linhas para cantar")
     cached = get_cached_chant(key, lines)
@@ -302,34 +534,30 @@ def cached_chant(key: str, lines: list[str], *, title: str = "") -> Path:
     missing = missing_requirements()
     if missing:
         raise ChantUnavailable("; ".join(missing))
+    n = chant_takes()
     with _GEN_LOCK:
         cached = get_cached_chant(key, lines)
         if cached is not None:
             return cached
         dest = cache_path(key, lines)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        tmp = dest.with_suffix(".part.mp3")
-        payload = {
-            "lyrics": lyrics_for(lines),
-            "duration": chant_duration(lines),
-            "out": str(tmp.resolve()),
-            "tanpura": str(tanpura_path().resolve()),
-            "recipe": RECIPE,
-            "title": title or key,
-            "comment": f"{MODEL_CREDIT}. Tanpura: {TANPURA_CREDIT}.",
+        first = _run_take(key, lines, take_seeds(n)[0], dest, title)
+        _install(first["mp3"], dest)
+        meta = {
+            "key": key,
+            "status": "provisional" if n > 1 else "final",
+            "n_takes": n,
+            "chosen_seed": first["seed"],
+            "chosen_cer": None,
+            "takes": [first],
+            "recipe_version": RECIPE["version"],
         }
-        t0 = time.monotonic()
-        reply = _WORKER.request(payload, chant_timeout())
-        if not tmp.exists() or tmp.stat().st_size < 1000:
-            raise RuntimeError("worker de canto não gravou o MP3")
-        tmp.replace(dest)
-        logger.info(
-            "Canto de %s gerado em %.1fs (%s)",
-            key,
-            time.monotonic() - t0,
-            json.dumps(reply.get("timings", {})),
-        )
-        return dest
+        _write_meta(dest, meta)
+        if n == 1:
+            shutil.rmtree(_takes_dir(dest), ignore_errors=True)
+    if n > 1:
+        _schedule_upgrade(key, lines, reference, title)
+    return dest
 
 
 def credits() -> list[str]:
