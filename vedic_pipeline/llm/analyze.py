@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from vedic_pipeline.api.verse_service import padas_of
+from vedic_pipeline.common.style import clean_prose
 
 logger = logging.getLogger("vedic_pipeline.llm.analyze")
 
@@ -30,8 +31,11 @@ apresente a forma contextual e a forma isolada):
 - "pada": número do pāda (1-based)
 - "form": palavra tal como aparece no texto (Devanāgarī)
 - "iast": palavra isolada (sem sandhi) em IAST
-- "grammar": análise concisa em português (ex.: "nom. sg. m. de deva-", "raiz kṛ, pres. 3ª sing.")
-- "gloss": glosa em português (1-3 palavras)
+- "grammar": análise concisa em português, sempre com as mesmas abreviaturas
+  (nom., acus., instr., dat., abl., gen., loc., voc.; sg., du., pl.; m., f., n.;
+  pres., impf., aor., perf., fut., impv., opt.; 1ª/2ª/3ª p.), ex.: "nom. sg. m. de deva-",
+  "raiz kṛ, pres. 3ª p. sg."
+- "gloss": glosa em português (1-3 palavras, sem ponto final, sem aspas)
 
 Responda SOMENTE com JSON válido:
 {"words": [{"pada": 1, "form": "...", "iast": "...", "grammar": "...", "gloss": "..."}]}
@@ -105,7 +109,16 @@ def _parse_words(answer: str) -> list[dict[str, Any]]:
             continue
         words = data.get("words") if isinstance(data, dict) else None
         if isinstance(words, list):
-            return [w for w in words if isinstance(w, dict) and (w.get("form") or w.get("gloss"))]
+            out = []
+            for w in words:
+                if not isinstance(w, dict) or not (w.get("form") or w.get("gloss")):
+                    continue
+                # glosas/análises curtas: sem markdown nem ponto final solto
+                for key in ("grammar", "gloss", "iast"):
+                    if isinstance(w.get(key), str):
+                        w[key] = clean_prose(w[key]).rstrip(".") if key == "gloss" else clean_prose(w[key])
+                out.append(w)
+            return out
     return []
 
 

@@ -27,6 +27,7 @@ _RULES: tuple[tuple[str, str], ...] = (
     ("/api/v1/ask", "generation"),
     ("/api/v1/search", "generation"),
     ("/api/v1/verses", "media"),
+    ("/api/v1/figures", "media"),
     ("/metrics", "metrics"),
 )
 
@@ -65,13 +66,26 @@ def limit_for_group(group: str) -> int:
     return min(base, cap)
 
 
+def _is_valid_ip(val: str | None) -> bool:
+    if not val:
+        return False
+    import ipaddress
+    try:
+        ipaddress.ip_address(val.strip())
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def _client_ip(request_or_ip: str | None, forwarded_for: str | None = None) -> str:
     """Resolve IP do cliente respeitando proxy confiável (Caddy/uvicorn --proxy-headers)."""
     if forwarded_for and os.environ.get("VEDIC_TRUST_PROXY_HEADERS", "true").strip().lower() not in {"0", "false", "off", "no"}:
         # X-Forwarded-For: client, proxy1, proxy2 — primeiro é o cliente.
         first = forwarded_for.split(",")[0].strip()
-        if first:
+        if _is_valid_ip(first):
             return first[:64]
+    if _is_valid_ip(request_or_ip):
+        return (request_or_ip or "").strip()[:64]
     return (request_or_ip or "unknown")[:64]
 
 

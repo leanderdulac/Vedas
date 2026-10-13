@@ -17,19 +17,26 @@ from pathlib import Path
 from typing import Any
 
 from vedic_pipeline.api.verse_service import get_verse
+from vedic_pipeline.common.style import clean_prose
 
 logger = logging.getLogger("vedic_pipeline.llm.translate")
 
 TRANSLATION_DIR = Path("data/translations")
 
-TRANSLATE_SYSTEM_PT = """Você é um tradutor de sânscrito clássico (védico).
+TRANSLATE_SYSTEM_PT = """Você é tradutor de sânscrito védico para o português do Brasil.
 
-Traduza o verso abaixo para português claro, natural e fiel ao original.
+Traduza o verso abaixo para um português claro, natural e fiel ao original, com a dignidade de
+um texto litúrgico, mas sem arcaísmos forçados.
 Regras:
-- O texto sânscrito é a fonte; as testemunhas IAST/EN só apoiam a leitura.
-- Mantenha termos técnicos em sânscrito transliterado quando útil (ex.: ātman, brahman, yajña).
+- O texto sânscrito é a fonte; as testemunhas IAST/EN só apoiam a leitura. Não decalque a
+  sintaxe da tradução inglesa.
+- Mantenha em IAST os termos técnicos sem bom equivalente (yajña, ṛtvij, hotṛ, purohita),
+  sempre com a mesma grafia, sem itálico.
 - Não invente palavras, doutrina ou números de mantra ausentes no verso.
-- Entregue apenas a tradução, sem comentários introdutórios.
+- Entregue apenas a tradução, em texto simples: sem negrito, títulos, aspas, notas ou
+  comentários. Quebre as linhas nos pāda quando ajudar a leitura.
+- Se o original trouxer mais de um verso, ponha o localizador sozinho numa linha antes de cada
+  um, sem formatação (por exemplo: RV 1.1.2).
 """
 
 TRANSLATE_SYSTEM_EN = """You are a translator of classical (Vedic) Sanskrit.
@@ -39,7 +46,9 @@ Rules:
 - The Sanskrit text is the source; IAST/EN witnesses only support the reading.
 - Keep technical terms in transliterated Sanskrit when useful (e.g. ātman, brahman, yajña).
 - Do not invent words, doctrine, or mantra numbers absent from the verse.
-- Output only the translation, without introductory remarks.
+- Output only the translation as plain text: no bold, headings, quotes, notes or remarks.
+- If the original has several verses, put the bare locator on its own line before each one
+  (e.g. RV 1.1.2).
 """
 
 
@@ -74,6 +83,8 @@ def load_cached_translation(bundle: dict[str, Any], lang: str) -> dict[str, Any]
         return None
     if not isinstance(payload, dict) or not payload.get("translation"):
         return None
+    # cache gravado antes do guia de estilo pode trazer **negrito**: limpa na leitura
+    payload["translation"] = clean_prose(payload["translation"], lang=lang)
     payload["cached"] = True
     return payload
 
@@ -147,7 +158,7 @@ def generate_translation(
         "lang": lang,
         "provider": generated.get("provider"),
         "model": generated.get("model"),
-        "translation": (generated.get("answer") or "").strip(),
+        "translation": clean_prose(generated.get("answer"), lang=lang),
         "source_role": role,
         "source_text": text,
         "references": [],

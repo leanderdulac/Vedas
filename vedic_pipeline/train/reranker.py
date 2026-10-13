@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,16 @@ EVAL_SPLITS = frozenset({"holdout", "eval", "test", "valid", "validation", "dev"
 
 
 def detect_device() -> str:
-    """Prefer CUDA, then Apple MPS, then CPU. Never silently skip MPS on Mac."""
+    """Prefer CUDA, then Apple MPS, then CPU. Never silently skip MPS on Mac.
+
+    O fine-tune do CE roda em processo dedicado (`scripts/train_reranker.py`),
+    então usa MPS quando disponível, ao contrário do default conservador de
+    `vedic_pipeline.train.device` (API/embeddings em processo compartilhado).
+    `VEDIC_DEVICE=cuda|mps|cpu` explícito continua tendo precedência.
+    """
+    explicit = (os.environ.get("VEDIC_DEVICE") or "").strip().lower()
+    if explicit in {"cuda", "mps", "cpu"}:
+        return explicit
     try:
         import torch
 

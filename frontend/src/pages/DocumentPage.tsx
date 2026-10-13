@@ -135,8 +135,8 @@ export default function DocumentPage() {
 
       <p className="muted" style={{ margin: "0.4rem 0 0.8rem" }}>
         No verso: ouvir, explicar (PT/EN), ilustrar e conversar. Ilustrações em cache aparecem
-        sozinhas. Gerar uma nova imagem ou vídeo exige permissão <strong>image</strong> e{" "}
-        <strong>video</strong> na chave em console.x.ai.
+        sozinhas. Com Stable Diffusion local a imagem, o vídeo e o drone de tanpura saem da
+        máquina; sem esse extra, a geração usa a chave xAI (permissão image e video).
       </p>
       <article className="card reader-content">
         {units.length > 0 ? (

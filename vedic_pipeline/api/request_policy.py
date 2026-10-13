@@ -12,7 +12,7 @@ from vedic_pipeline.llm.generate import DEFAULT_XAI_MODEL
 
 GENERATION_TOKEN_UNSET = (
     "Geração paga exige VEDIC_GENERATION_API_TOKEN nesta instância "
-    "(VEDIC_REQUIRE_GENERATION_TOKEN=true)"
+    "(VEDIC_REQUIRE_GENERATION_TOKEN=true ou VEDIC_PUBLIC_API=1)"
 )
 
 _MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-/]{0,127}(?::[A-Za-z0-9._\-]{1,64})?$")
@@ -81,17 +81,48 @@ def validate_index_dir(value: str) -> str:
     return resolved
 
 
+def public_api() -> bool:
+    """Instância publicada (`VEDIC_PUBLIC_API=1`, ligada em docker-compose.prod.yml).
+
+    O default é privado: token vazio deixa a chave do servidor autorizar,
+    para a UI local funcionar.
+    """
+    return env_flag('VEDIC_PUBLIC_API')
+
+
 def generation_token_required() -> bool:
-    """Prod/compose.prod: fail-closed. Dev local continua aberto se o token estiver vazio."""
-    return env_flag("VEDIC_REQUIRE_GENERATION_TOKEN")
+    """Fail-closed se `VEDIC_REQUIRE_GENERATION_TOKEN` ou `VEDIC_PUBLIC_API` estiver ligado.
+
+    Prod/compose.prod liga as duas. Dev local continua aberto se o token
+    estiver vazio e nenhuma das flags estiver ligada.
+    """
+    return env_flag("VEDIC_REQUIRE_GENERATION_TOKEN") or public_api()
+
+
+def _generation_token() -> str:
+    return (os.environ.get('VEDIC_GENERATION_API_TOKEN') or '').strip()
+
+
+def _require_generation_token(authorization: str | None) -> None:
+    """503 se o token é obrigatório e não foi configurado; 401 se não confere."""
+    expected = _generation_token()
+    if not expected:
+        if generation_token_required():
+            raise HTTPException(503, GENERATION_TOKEN_UNSET)
+        # Instância local/privada: a chave do servidor já autoriza a geração.
+        return
+    supplied = authorization.removeprefix('Bearer ') if authorization and authorization.startswith('Bearer ') else ''
+    if not secrets.compare_digest(supplied.encode(), expected.encode()):
+        raise HTTPException(401, 'Token de geração inválido', headers={'WWW-Authenticate': 'Bearer'})
 
 
 def public_generation_policy() -> dict[str, bool]:
     xai = bool((os.environ.get("XAI_API_KEY") or "").strip())
-    token = bool((os.environ.get("VEDIC_GENERATION_API_TOKEN") or "").strip())
+    token = bool(_generation_token())
     require = generation_token_required()
     return {
         "require_token": require,
+        "public_api": public_api(),
         "token_configured": token,
         "xai_configured": xai,
         "open_paid": bool(xai and not token and not require),
@@ -107,20 +138,7 @@ def authorize_generation(provider: str, model: str | None, authorization: str | 
             raise HTTPException(422, 'Modo extrativo não aceita seleção de modelo')
         return selected, None
 
-    expected = os.environ.get('VEDIC_GENERATION_API_TOKEN', '')
-    if not expected:
-        if generation_token_required():
-            raise HTTPException(503, GENERATION_TOKEN_UNSET)
-        # Instância local/privada: a chave xAI no servidor já autoriza a geração.
-        # Em API pública, defina VEDIC_GENERATION_API_TOKEN ou
-        # VEDIC_REQUIRE_GENERATION_TOKEN=true.
-        configured = (os.environ.get('XAI_MODEL') or DEFAULT_XAI_MODEL) if selected == 'xai' else (os.environ.get('VEDIC_LOCAL_LM') or 'gpt2')
-        if model is not None and model != configured:
-            raise HTTPException(422, 'Modelo não autorizado pelo servidor')
-        return selected, configured
-    supplied = authorization.removeprefix('Bearer ') if authorization and authorization.startswith('Bearer ') else ''
-    if not secrets.compare_digest(supplied.encode(), expected.encode()):
-        raise HTTPException(401, 'Token de geração inválido', headers={'WWW-Authenticate': 'Bearer'})
+    _require_generation_token(authorization)
     configured = (os.environ.get('XAI_MODEL') or DEFAULT_XAI_MODEL) if selected == 'xai' else (os.environ.get('VEDIC_LOCAL_LM') or 'gpt2')
     if model is not None and model != configured:
         raise HTTPException(422, 'Modelo não autorizado pelo servidor')
@@ -128,18 +146,11 @@ def authorize_generation(provider: str, model: str | None, authorization: str | 
 
 
 def authorize_media(authorization: str | None) -> None:
-    """Gate de mídia paga (TTS/Imagine: /audio, /image, /video).
+    """Gate de mídia (TTS, Imagine ou Stable Diffusion local).
 
-    Espelha a política de geração do /ask: em instância local/privada (sem
-    VEDIC_GENERATION_API_TOKEN) a chave xAI no servidor autoriza; em API pública,
-    o token obrigatório impede que anônimos gastem créditos de voz/imagem/vídeo
-    — comportamento que antes ficava aberto em /audio, /image e /video.
+    Instância privada, token vazio: a chave do servidor autoriza.
+    Instância pública (`VEDIC_PUBLIC_API=1`): sem token configurado responde
+    503; com token, a requisição precisa enviá-lo. Leitura de arquivo em
+    cache continua fora desta função.
     """
-    expected = os.environ.get('VEDIC_GENERATION_API_TOKEN', '')
-    if not expected:
-        if generation_token_required():
-            raise HTTPException(503, GENERATION_TOKEN_UNSET)
-        return
-    supplied = authorization.removeprefix('Bearer ') if authorization and authorization.startswith('Bearer ') else ''
-    if not secrets.compare_digest(supplied.encode(), expected.encode()):
-        raise HTTPException(401, 'Token de geração inválido', headers={'WWW-Authenticate': 'Bearer'})
+    _require_generation_token(authorization)

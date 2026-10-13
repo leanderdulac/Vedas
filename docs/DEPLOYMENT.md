@@ -34,6 +34,8 @@ POSTGRES_DB=vedas
 
 # Chaves de API e Tokens de Segurança
 VEDIC_PIPELINE_API_TOKEN=TokenAleatorioParaOperacoesHttpDoPipeline
+# O compose de produção liga VEDIC_PUBLIC_API. Sem o token abaixo,
+# /ask (xAI ou local) e a geração de mídia respondem 503.
 VEDIC_GENERATION_API_TOKEN=TokenAleatorioParaGeracaoHttp
 XAI_API_KEY=xai-sua-chave-opcional
 

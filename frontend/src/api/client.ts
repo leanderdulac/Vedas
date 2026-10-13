@@ -77,6 +77,31 @@ export type DocumentSummary = {
   units?: VerseUnit[];
 };
 
+export type RemissiveRef = {
+  id: string;
+  name: string;
+  present?: boolean;
+};
+
+export type RemissiveLocator = {
+  index: number;
+  locator: string;
+};
+
+export type RemissiveEntry = {
+  id: string;
+  name: string;
+  kind: "personagem" | "conceito" | string;
+  epithet: string;
+  gloss: string;
+  in_query: boolean;
+  count: number;
+  locators: RemissiveLocator[];
+  see_also: RemissiveRef[];
+};
+
+export type SearchFigure = RemissiveEntry;
+
 export type SearchHit = {
   chunk_id: string;
   doc_id?: string;
@@ -259,19 +284,23 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ lang, provider }),
     }),
+  recitationInfo: () =>
+    request<{ style: "spoken" | "chant"; chant_available: boolean; credits: string[] }>("/api/v1/recitation"),
   verseAudioUrl: (verseId: string) =>
     `${API_BASE}/api/v1/verses/${encodeURIComponent(verseId)}/audio`,
   mediaCached: () =>
     request<{ images: string[]; videos: string[] }>("/api/v1/media/cached"),
   verseImageUrl: (verseId: string) =>
     `${API_BASE}/api/v1/verses/${encodeURIComponent(verseId)}/image`,
+  figureImageUrl: (figureId: string) =>
+    `${API_BASE}/api/v1/figures/${encodeURIComponent(figureId)}/image`,
   startVerseVideo: (verseId: string) =>
     request<{ verse_id: string; status: string; ready?: boolean }>(
       `/api/v1/verses/${encodeURIComponent(verseId)}/video`,
       { method: "POST", body: JSON.stringify({}) }
     ),
   verseVideoStatus: (verseId: string) =>
-    request<{ verse_id: string; status: string; ready?: boolean }>(
+    request<{ verse_id: string; status: string; ready?: boolean; detail?: string }>(
       `/api/v1/verses/${encodeURIComponent(verseId)}/video`
     ),
   verseVideoFileUrl: (verseId: string) =>
@@ -283,7 +312,13 @@ export const api = {
     language?: string;
     backend?: string;
   }) =>
-    request<{ query: string; retrieval_backend: string; hits: SearchHit[] }>(
+    request<{
+      query: string;
+      retrieval_backend: string;
+      hits: SearchHit[];
+      figure?: SearchFigure | null;
+      remissive?: RemissiveEntry[];
+    }>(
       "/api/v1/search",
       { method: "POST", body: JSON.stringify(body) }
     ),

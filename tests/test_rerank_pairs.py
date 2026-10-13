@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -284,7 +285,7 @@ class DetectDeviceTests(unittest.TestCase):
         fake_torch = MagicMock()
         fake_torch.cuda.is_available.return_value = False
         fake_torch.backends.mps.is_available.return_value = True
-        with patch.dict(sys.modules, {"torch": fake_torch}):
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": ""}):
             self.assertEqual(detect_device(), "mps")
 
     def test_detect_device_cpu_when_neither_cuda_nor_mps(self):
@@ -293,7 +294,7 @@ class DetectDeviceTests(unittest.TestCase):
         fake_torch = MagicMock()
         fake_torch.cuda.is_available.return_value = False
         fake_torch.backends.mps.is_available.return_value = False
-        with patch.dict(sys.modules, {"torch": fake_torch}):
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": ""}):
             self.assertEqual(detect_device(), "cpu")
 
     def test_detect_device_prefers_cuda_over_mps(self):
@@ -302,8 +303,17 @@ class DetectDeviceTests(unittest.TestCase):
         fake_torch = MagicMock()
         fake_torch.cuda.is_available.return_value = True
         fake_torch.backends.mps.is_available.return_value = True
-        with patch.dict(sys.modules, {"torch": fake_torch}):
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": ""}):
             self.assertEqual(detect_device(), "cuda")
+
+    def test_detect_device_honors_vedic_device_env(self):
+        from vedic_pipeline.train.reranker import detect_device
+
+        fake_torch = MagicMock()
+        fake_torch.cuda.is_available.return_value = False
+        fake_torch.backends.mps.is_available.return_value = True
+        with patch.dict(sys.modules, {"torch": fake_torch}), patch.dict(os.environ, {"VEDIC_DEVICE": "cpu"}):
+            self.assertEqual(detect_device(), "cpu")
 
     def test_resolve_device_auto_and_explicit(self):
         from vedic_pipeline.train.reranker import resolve_device

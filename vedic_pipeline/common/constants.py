@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 ALLOWED_LICENSES = frozenset(
@@ -57,5 +58,9 @@ SANSKRIT_SPECIAL_TOKENS = [
 DEFAULT_CHUNK_SIZE = 800
 DEFAULT_CHUNK_OVERLAP = 120
 
-# Modelo de embeddings multilingue (bom para en/hi; sa se beneficia de Unicode)
-DEFAULT_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+# Modelo de embeddings multilingue (bom para en/hi; sa se beneficia de Unicode).
+# Override via VEDIC_EMBEDDING_MODEL — ex.: intfloat/multilingual-e5-small
+# (mesma dim 384; e5 exige prefixos "query: "/"passage: ", aplicados automaticamente).
+DEFAULT_EMBEDDING_MODEL = os.environ.get(
+    "VEDIC_EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+)

@@ -17,6 +17,7 @@ from vedic_pipeline.common.corpus import (
 )
 from vedic_pipeline.crawler.download import download_source
 from vedic_pipeline.crawler.licenses import validate_source
+from vedic_pipeline.etl.books import expand_book_file, is_book_source
 from vedic_pipeline.etl.extractors import extract_text
 from vedic_pipeline.etl.structured_json import expand_structured_file, looks_structured
 from vedic_pipeline.etl.vedicheritage import (
@@ -104,7 +105,10 @@ def ingest_manifest(
             local = download_source(src, raw_dir=raw_dir)
             records = None
             # Vedic Heritage Portal: parser dedicado (Devanāgarī + atribuição gov-ind).
-            if (src.get("source_class") == "vedicheritage") or is_vedicheritage_url(url):
+            if is_book_source(src):
+                # livro inteiro → um registro por seção (capítulo, sūtras, página)
+                records = expand_book_file(local, source=src)
+            elif (src.get("source_class") == "vedicheritage") or is_vedicheritage_url(url):
                 records = parse_vedicheritage_file(local, source=src)
             elif src.get("source_class") == "structured-json" or looks_structured(local):
                 records = expand_structured_file(local, source=src)

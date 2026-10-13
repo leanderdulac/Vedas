@@ -54,7 +54,7 @@ chmod +x scripts/run_dev.sh scripts/run_prod.sh
 | POST | `/api/v1/ask` | Q&A RAG |
 | GET | `/api/v1/verses/{id}` | bundle do verso (testemunhas sa/IAST/EN) |
 | GET | `/api/v1/verses/{id}/padas` | **pāda do verso** (segmentação determinística; alimenta o modo eco) |
-| GET | `/api/v1/verses/{id}/audio` | recitação TTS (cache em disco) |
+| GET | `/api/v1/verses/{id}/audio` | recitação sânscrito (TTS, cache em disco) |
 | POST | `/api/v1/verses/{id}/explain` | explicação PT/EN (LLM ou extrativa) |
 | POST | `/api/v1/verses/{id}/translate` | **tradução do sânscrito** para PT/EN (LLM; cache aberto) |
 | POST | `/api/v1/verses/{id}/analyze` | **vyākaraṇa interlinear**: pāda + análise palavra-por-palavra (LLM; cache aberto) |
@@ -142,12 +142,15 @@ python scripts/bulk_ingest_open.py --manifest fixtures/sources_markandeya.json -
 python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 ```
 
-### Contagens canônicas (snapshot 2026-08-07/08)
+### Contagens canônicas (índice local, 2026-09-17)
 
-> Snapshot de **um** ambiente (bulk ingest completo), perfil
-> `canonical-snapshot` em `fixtures/corpus_profiles.json`. **Não** é o default
-> de um clone: isso começa em `bootstrap` (`fixtures/sources_vedic_corpus.json`).
-> Depois do ingest, grave um lock e verifique:
+> Snapshot de **um** ambiente: esta máquina, bulk ingest completo
+> (`artifacts/embeddings/index_meta.json`). **Não** é o default de um clone:
+> isso começa em `bootstrap` (`fixtures/sources_vedic_corpus.json`) e cresce
+> conforme o manifesto — os números abaixo não são automáticos nem garantidos.
+> O perfil `canonical-snapshot` em `fixtures/corpus_profiles.json` ainda
+> registra o snapshot de agosto (1.054 documentos, 23.702 chunks); o índice
+> numpy atual é o da tabela. Depois do ingest, grave um lock e verifique:
 >
 > ```bash
 > vedic-pipeline corpus-status --profile bootstrap
@@ -156,14 +159,14 @@ python scripts/smoke_rag.py --strict --json-out data/smoke_report.json
 
 | Métrica | Valor |
 |---------|-------|
-| Documentos no corpus / PG | **1054** (alinhados, purge on) |
-| Caracteres | **~19,8M** |
-| Chunks + embeddings | **23.702** (numpy e pgvector) |
+| Documentos no corpus | **6.973** (5.061 em sânscrito, 1.912 em inglês) |
+| Caracteres | **~31,1M** |
+| Chunks + embeddings | **67.170**, dim **384**, modelo `paraphrase-multilingual-MiniLM-L12-v2` |
 | Hinos Ṛgveda (Griffith) | **1028** (mandalas **1–10** completas) |
 | Upaniṣads PD adicionais | Kena, Kaṭha, Muṇḍaka, Māṇḍūkya, Taittirīya, Aitareya, Praśna, Chāndogya, Bṛhadāraṇyaka, Śvetāśvatara (+ Müller) |
 | Ranking | híbrido + boost título/hino + **max 2 chunks/doc** |
 | Ask | JSON + **SSE** `/api/v1/ask/stream` |
-| Smoke retrieval | **10/10** (`python scripts/smoke_rag.py --strict`) |
+| Smoke retrieval | **37/37** no gold (`fixtures/smoke_queries.json`); o CI usa 4 queries |
 
 **Obras de base:** Mahābhārata Ganguli vols. 1–4, Rāmāyaṇa Valmiki, Upaniṣads (Müller + páginas SBE/sacred-texts), Gītā Arnold, Yoga-sūtra Johnston, Manu, Viṣṇu Purāṇa integral (Wilson), Garuḍa Purāṇa (Wood), Mārkaṇḍeya Purāṇa (Pargiter en + Devanāgarī, scans OCR), Ṛgveda Griffith completo, Chāndogya e Bṛhadāraṇyaka integrais (SBE01/SBE15), saṃhitās Vedic Heritage em sânscrito.
 
@@ -205,6 +208,12 @@ export XAI_API_KEY=...          # https://console.x.ai
 python -m vedic_pipeline ask "Explain verse 6 of the Isha Upanishad from the sources" \
   --provider auto --top-k 5
 ```
+
+Redação: os prompts de /ask, explicação e tradução levam o guia de estilo de
+`vedic_pipeline/common/style.py` (prosa corrida de professor, sem markdown, travessões nem
+clichês de chatbot; IAST consistente; citações `[n]` + localizador). Todo texto final passa
+por `clean_prose` (determinístico); a voz recebe `speech_text`. Explicações de verso ganham
+ainda uma revisão por um modelo barato (`VEDIC_TEXT_EDITOR=1`, padrão; `0` desliga).
 
 Providers:
 
@@ -259,6 +268,205 @@ Runtime slim: a imagem Docker instala `requirements-api.txt` (sem
 `datasets`/`accelerate`/`sentencepiece` de treino). Para treino local use
 `pip install -r requirements_vedic_pipeline.txt` ou `pip install -e ".[train]"`;
 `/tokenize` e `/train` na imagem de API respondem 501.
+
+## Ilustração, vídeo e áudio (Stable Diffusion)
+
+`VEDIC_MEDIA_BACKEND=auto` usa a família Stable Diffusion quando o extra
+está instalado e, sem ele, o xAI Imagine.
+
+```bash
+pip install -e ".[media]"
+# Apple Silicon. Na primeira geração, HF_HUB_OFFLINE=0 para baixar os pesos.
+export VEDIC_MEDIA_BACKEND=diffusion VEDIC_DEVICE=mps HF_HUB_OFFLINE=0
+```
+
+| Mídia | Modelo | O que faz |
+| --- | --- | --- |
+| Imagem | `stabilityai/sdxl-turbo` (fallback `sd-turbo`) | Still do verso e retrato das figuras. No verso, um refresh (`?refresh=1`) refina o JPEG que já existe; na figura, gera de novo do zero. |
+| Vídeo | `stable-video-diffusion-img2vid-xt` | Alguns segundos a partir do still, com movimento lento. |
+| Áudio | TTS + `stable-audio-open-1.0` | A fala continua no TTS. O Stable Audio só acrescenta um drone de tanpura por baixo — ele não pronuncia sânscrito. |
+
+O retrato das figuras cabe nos 77 tokens do CLIP: a iconografia vem primeiro
+(no Agni: pele vermelha, duas cabeças, sete línguas de fogo, carneiro, concha),
+depois o estilo de pintura devocional. O que não deve aparecer (letras, pele
+azul) vai no prompt negativo, que só pesa com CFG: por isso o turbo roda com
+`VEDIC_SD_TURBO_GUIDANCE=1.5`. Sem `VEDIC_SD_MODEL`, o SDXL-Turbo é usado se
+estiver no cache; offline e sem os pesos, cai para o sd-turbo. Num M5 Max, uma
+figura de 512 px leva ~0,8 s; o vídeo SVD (14 quadros, 1024x576) ~1,5 min.
+
+### Modo qualidade das imagens
+
+O turbo a 512 px sai tosco. Comparação em outubro de 2026 (Agni e RV 1.1.1,
+M5 Max, mesmo prompt):
+
+| Candidato | Tempo/imagem | Resultado |
+| --- | --- | --- |
+| `grok-imagine-image-quality` (xAI) | ~6 s, US$ 0,05 | Duas cabeças, carneiro, conchas; cena do verso fiel. Escolhido. |
+| `grok-imagine-image-2.0` (xAI) | ~18 s, US$ 0,04 | Mesma qualidade, mas escreveu "अग्नि" na moldura. |
+| SDXL base 1.0 (+ refiner), 1024 px, 30 passos | 14–16 s | Estilo de miniatura autêntico, mas o Agni vira uma deusa de muitos braços. |
+| Playground v2.5, 1024 px | ~13 s | Pintura rica, uma cabeça, sem carneiro; verso confuso. |
+| Turbo 512 → img2img 1024 | ~6 s | Mais nítido, mesma composição tosca. |
+
+Por isso `VEDIC_IMAGE_BACKEND=xai` manda figuras e stills para o Grok Imagine
+e o vídeo e o drone continuam locais. O Imagine não tem prompt negativo: as
+proibições entram como uma frase "Avoid: …" e o prompt pede para não escrever
+letras. Se o xAI falhar e o extra media existir, a imagem sai do turbo local
+(`render_image(fast=True)`). Para ficar 100% local em qualidade, use
+`VEDIC_IMAGE_BACKEND=diffusion` com `VEDIC_SD_MODEL` completo: 1024 px, 30
+passos e CFG 7 por padrão, com `VEDIC_SD_REFINER` e `VEDIC_SD_UPSCALE`
+opcionais.
+
+O estilo segue o acervo de referência do Leandro (ver `docs/IMAGE_STYLE.md`): os retratos usam o
+busto escultural escuro (`VEDIC_FIGURE_STYLE=sculpted`) e os versos usam a pintura devocional
+cinematográfica (`VEDIC_SCENE_STYLE=cinematic`); `miniature` volta ao estilo antigo. As
+referências opcionais (`VEDIC_IMAGE_STYLE_REF`, `VEDIC_SCENE_STYLE_REF`) apontam para imagens
+locais que nunca entram no git.
+
+Retratos com verbete (devas, Nārada, Brahmā, Śiva, Vyāsa, Vālmīki, Hanumān…) usam a iconografia
+curada; sábios não herdam a coroa do estilo. Uma consulta que só nomeia alguém sem verbete
+("Vasishtha") ganha uma figura `nome-<slug>` se o nome é próprio e atestado no acervo
+(maiúscula nos trechos e ≥3 chunks no índice lexical).
+
+Sem `ffmpeg` no `PATH`, a recitação é gravada sem o drone. `VEDIC_AUDIO_BED=0`
+desliga a cama e mantém a voz sozinha.
+
+O drone fica 22 dB abaixo da voz em RMS (`VEDIC_AUDIO_BED_DB`, de -40 a -12)
+e passa por um passa-baixa em ~1,2 kHz. Antes ele era normalizado e somado com
+ganho fixo, ficava só ~3 dB abaixo da voz, e os harmônicos de 1 a 4 kHz soavam
+como um segundo narrador. No front, `src/data/playback.ts` garante uma voz por
+vez: o MP3 do backend nunca toca junto com a voz do navegador, que só entra
+quando o MP3 falha antes de começar.
+
+### Recitação cantada (`VEDIC_RECITATION_STYLE=chant`)
+
+Padrão: `spoken` (voz falada do xAI, como antes). Com `chant`, o "▶ Ouvir" dos
+versos em sânscrito canta o verso com o ACE-Step 1.5 (MIT) rodando localmente
+(MLX/MPS no Mac): letra em IAST com um pāda por linha, `vocal_language=sa`,
+66 bpm, C# maior e seed 33 fixos (a receita aprovada na rodada v3; o modelo
+compõe a própria melodia, igual para o mesmo verso). O Demucs htdemucs (MIT)
+isola a voz e ela é mixada sobre a tanpura real "Acoustic Tanpura 10" de
+sankalp (Freesound #155272, **CC BY 4.0**), afinada em C#. O crédito vai nos
+metadados do MP3, no cabeçalho `X-Recitation-Credit` e na UI enquanto toca
+(`GET /api/v1/recitation`).
+
+Instalação (fora do git, ~10 GB): `scripts/setup_chant.sh` clona o ACE-Step
+num venv próprio, instala o Demucs, baixa os checkpoints e roda
+`scripts/fetch_tanpura.py` (a tanpura vai para `data/assets/`, ignorado). No
+`.env`: `VEDIC_RECITATION_STYLE=chant` e `VEDIC_ACESTEP_DIR=<checkout>`.
+Opcionais: `VEDIC_ACESTEP_PYTHON`, `VEDIC_CHANT_TANPURA`, `VEDIC_CHANT_TIMEOUT`
+(600 s).
+
+Melhor de 3 (`VEDIC_CHANT_TAKES`, padrão 3; 1 = uma tomada só): o primeiro
+pedido de um verso gera a tomada com seed 33 e já a serve (cache
+provisório, ~30–50 s, abaixo dos ~100 s do túnel). Em segundo plano saem as
+seeds 44 e 77; a voz isolada de cada tomada (antes da tanpura) passa pelo
+speech-to-text do xAI (`grok-voice-transcribe-2.0`, US$0,10/h, ~US$0,003 por
+verso) e a de menor CER contra o devanāgarī substitui o arquivo. Seed, CER e
+transcrição de cada tomada ficam no `.json` ao lado do MP3; os cabeçalhos
+`X-Chant-Seed`/`X-Chant-Status` dizem qual está tocando. Sem `XAI_API_KEY` ou
+com erro no STT, fica a primeira tomada. Se o app recarregar no meio, a
+seleção recomeça no próximo pedido do verso.
+
+O app conversa com `scripts/chant_worker.py` (no venv do ACE-Step) por
+stdin/stdout; o worker sobe na primeira recitação cantada e mantém o modelo na
+memória. Cada verso é gerado uma vez e fica em `data/audio/*_chant_*.mp3`
+(~45 s no M5 Max com a carga do modelo, ~25–40 s depois). Gerar segue a mesma
+política de token da mídia; cache toca aberto. Se o ACE-Step não estiver
+instalado, falhar ou estourar o tempo, o endpoint cai na voz falada.
+`POST /api/v1/recite` (`{"text", "label"}`) recita um trecho avulso sem
+`verse_id` (ex.: Bhāgavata do GRETIL) com as mesmas regras. Nada de NC/GPL no
+caminho do app (o alinhador MMS e o Seed-VC só serviram para avaliar).
+
+### Vídeo dos versos (~5 s)
+
+O SVD img2vid-xt gera 25 quadros a 768×432 (~90 s e ~21 GB no MPS do M5 Max;
+1024×576 com 25 quadros não cabe nos 36 GB). Os quadros tocam a 5 fps (5 s),
+o `ffmpeg minterpolate` interpola até 24 fps e um zoom lento (Ken Burns) com
+upscale lanczos fecha em 1024×576, H.264 com faststart. O still quadrado entra
+inteiro, com as laterais preenchidas pelo próprio still desfocado, então o
+alto das chamas não é mais cortado.
+
+| Variável | Padrão | Efeito |
+| --- | --- | --- |
+| `VEDIC_SVD_FRAMES` | 25 | Quadros do SVD (máx. 25 no xt) |
+| `VEDIC_SVD_FPS` | 5 | Ritmo dos quadros; duração = quadros / fps |
+| `VEDIC_VIDEO_INTERP_FPS` | 24 | Interpolação por movimento; 0 desliga |
+| `VEDIC_VIDEO_ZOOM` | 1.06 | Zoom do Ken Burns; 1 desliga |
+| `VEDIC_SVD_WIDTH` | 768 | Largura em que o SVD roda (512–1024) |
+| `VEDIC_VIDEO_OUT_WIDTH` | 1024 | Largura do MP4 final |
+| `VEDIC_SVD_FRAMING` | `pad` | `pad` (still inteiro) ou `cover` (recorte 16:9) |
+
+#### Motor de vídeo configurável (`VEDIC_VIDEO_BACKEND`)
+
+O `POST /api/v1/verses/{id}/video` grava um job pendente em
+`data/media/jobs/` e renderiza numa thread de fundo; o `GET` só lê esse job.
+O motor sai de `VEDIC_VIDEO_BACKEND`, no mesmo padrão do `VEDIC_IMAGE_BACKEND`:
+
+| Valor | Motor | Observações |
+| --- | --- | --- |
+| `svd` | Stable Video Diffusion local | Padrão com o extra media (vazio segue `VEDIC_MEDIA_BACKEND`) |
+| `xai` | Grok Imagine image-to-video (`XAI_VIDEO_MODEL`, padrão `grok-imagine-video-1.5`) | Usa `XAI_API_KEY`; 720p 16:9 |
+| `runway` | Runway API image-to-video (`RUNWAY_VIDEO_MODEL`, padrão `gen4.5`; `gen4_turbo` é mais barato) | Usa `RUNWAYML_API_SECRET`; 1280:720 |
+
+Nas APIs, o still quadrado vai inteiro num quadro 16:9 (laterais com o próprio
+still desfocado), como no SVD, e o MP4 é baixado com a validação SSRF das
+imagens (teto de 50 MB). Se a API falhar (sem chave, sem crédito, recusa,
+tempo esgotado) e o extra media existir, o mesmo job cai no SVD e registra
+`fallback_from` e `fallback_reason`; o job de sucesso guarda modelo e custo
+(`cost_usd`, e `credits` na Runway). `VEDIC_VIDEO_SECONDS` (5, de 2 a 10)
+define a duração pedida e `VEDIC_VIDEO_TIMEOUT` (600 s) a espera máxima.
+
+Comparação no RV 1.1.5 (mesmo still do Grok Imagine, outubro de 2026):
+
+| Motor | Render | Saída | Custo | Resultado |
+| --- | --- | --- | --- | --- |
+| SVD img2vid-xt (local, MPS) | ~90–160 s | 5 s, 1024×576, 24 fps | grátis (~21 GB de memória) | Fiel ao still, mas movimento quase nulo e rostos borrados |
+| `grok-imagine-video-1.5` (xAI) | ~36 s | 5 s, 1280×720, 24 fps, com áudio ambiente | US$ 0,71 (cobrado no `usage`) | Nítido, chamas e fumaça sobem, push-in lento; o Agni ganha uma segunda cabeça no meio do vídeo |
+| Runway `gen4.5` / `gen4_turbo` | — | — | 12 / 5 créditos por s (US$ 0,60 / 0,25 em 5 s) | Não testado: a conta estava sem créditos |
+
+## SLM local (continued-pretraining LoRA) + migração de embeddings
+
+**SLM** — adaptar um modelo pequeno ao corpus védico (base recomendada
+`Qwen/Qwen2.5-0.5B`; vocab cobre Devanāgarī; no Apple Silicon use
+`VEDIC_DEVICE=mps`). Docs com OCR ruidoso (scans) são excluídos do treino:
+
+```bash
+# stats do dataset sem baixar nada
+python scripts/train_slm_lora.py --dry-run
+
+# treino (HF_HUB_OFFLINE=0 na primeira vez para baixar o modelo-base)
+HF_HUB_OFFLINE=0 VEDIC_DEVICE=mps python scripts/train_slm_lora.py \
+  --base-model Qwen/Qwen2.5-0.5B --max-steps 500 --out artifacts/slm-qwen05
+
+# usar como fallback de geração local
+export VEDIC_LOCAL_LM=artifacts/slm-qwen05
+```
+
+Device de treino unificado (`VEDIC_DEVICE=cuda|mps|cpu`, default conservador
+cpu; MPS exige flag explícita por causa do histórico de SIGSEGV): vale para
+`train-model`, `train_slm_lora.py`, o fine-tune do reranker, a difusão e o
+encode dos embeddings. Sem a variável, a busca semântica continua em CPU.
+
+**Embeddings** — trocar o modelo de embeddings (ex.: `intfloat/multilingual-e5-small`,
+mesma dim 384, prefixos `query:`/`passage:` aplicados automaticamente):
+
+```bash
+# backup do índice atual + reindex (numpy e/ou pgvector) + smoke de validação
+VEDIC_EMBEDDING_MODEL=intfloat/multilingual-e5-small \
+  python scripts/migrate_embeddings.py --backend both --smoke gold
+
+# ou fixar no env para todos os comandos
+export VEDIC_EMBEDDING_MODEL=intfloat/multilingual-e5-small
+```
+
+O modelo gravado no `index_meta.json` é a fonte da verdade na busca (o
+pgvector passa a consultar com o mesmo modelo do índice, mesmo que o env
+mude depois).
+
+`build-index` também grava o BM25 invertido (`lexical.npz` ao lado dos
+embeddings). A busca usa esse arquivo em vez de retokenizar os chunks.
+Se o arquivo não existir ou o corpus tiver mudado, ele é refeito na
+primeira carga do índice.
 
 ## Artefatos remotos (S3/MinIO) + treino isolado
 
@@ -334,6 +542,19 @@ python scripts/eval_reranker_smoke.py --model artifacts/reranker_domain_v5 --jso
 
 Fontes sem licença na lista permitida são bloqueadas. Material BBT/Vedabase somente com autorização explícita.
 
+Fontes de uso privado com permissão pendente ficam no registro
+`vedic_pipeline/crawler/licensed_sources.py` (licença, nota e caminho local). Hoje há uma:
+o Śrīmad-Bhāgavatam em português do Vedabase (BBT), só verso em Devanāgarī, transliteração e
+tradução, sem sinônimos nem significados. O texto fica só em `data/raw/vedabase_sb_ptbr/`
+(gitignored), nunca no Git, e fica fora do índice até `VEDIC_ENABLE_LICENSED_SOURCES=1`:
+
+```bash
+# coleta educada (respeita robots.txt e o Crawl-delay de 10 s; retoma pelo cache)
+python -m vedic_pipeline.etl.vedabase_sb crawl --out data/raw/vedabase_sb_ptbr
+# depois da autorização da BBT: liga e reindexa (só os trechos novos são codificados)
+VEDIC_ENABLE_LICENSED_SOURCES=1 python scripts/rebuild_index_safe.py
+```
+
 ## Smoke / regressão
 
 ```bash
@@ -342,6 +563,13 @@ python scripts/smoke_rag.py
 python scripts/smoke_rag.py --backend numpy --strict
 python scripts/smoke_rag.py --backend pgvector --strict --json-out data/smoke_report.json
 ```
+
+Consultas de entidade ("Narada Muni", "Nārada", "Quem foi Vyāsa?") passam por
+`vedic_pipeline/search/entity.py`: tira títulos e palavras de pergunta, soma grafias do corpus
+(Griffith escreve "Nárad"), injeta os melhores trechos de cada obra que cita o nome, limita o
+top-k por obra (os quatro volumes do Mahābhārata contam como uma) e, no `/ask`, usa 14 trechos,
+contexto maior e um prompt que percorre cada tradição e diz quais obras de referência faltam.
+Pergunta com hino ou obra nomeados segue o caminho do localizador. `VEDIC_ENTITY_MODE=false` desliga.
 
 Gold set: `fixtures/smoke_queries.json` (37 queries: 19 anteriores + 18 beyond-stress após locator PRs #5–#9).  
 CI: `.github/workflows/smoke.yml` + `fixtures/smoke_queries_ci.json` (recorte rápido de 4 queries). O gate de promote do CE usa o gold expandido, não o CI.
@@ -396,6 +624,13 @@ Testes & Qualidade: `pytest -v` (ou `python -m unittest discover -s tests -v`) e
 
 Busca e chat aceitam somente o diretório definido em `VEDIC_API_INDEX_DIR` (padrão `artifacts/embeddings`). A CLI mantém a possibilidade de escolher outros diretórios.
 
-Para usar `provider=xai` ou `provider=local` por HTTP, configure `VEDIC_GENERATION_API_TOKEN` e envie `Authorization: Bearer <token>`. O modelo permitido vem de `XAI_MODEL` ou `VEDIC_LOCAL_LM`; o cliente não pode escolher outro. `auto` também exige autorização se selecionar xAI. Sem configuração do token, geração HTTP retorna 503; com token ausente ou incorreto na requisição, retorna 401. Essas respostas acontecem antes de iniciar o streaming ou recuperar documentos.
+Há dois modos de geração (`/ask` com xAI ou modelo local, e a mídia nova em `/audio`, `/image`, `/video`):
 
-`provider=extractive` continua público e não aceita `model`. A interface web atual usa esse modo automaticamente quando não há chave xAI; para usar geração protegida, clientes HTTP precisam enviar o cabeçalho. Não exponha o token em `VITE_*` nem no bundle público. O token do pipeline não concede acesso à geração.
+| Modo | Quando | Sem `VEDIC_GENERATION_API_TOKEN` |
+|------|--------|----------------------------------|
+| Privado (default) | `VEDIC_PUBLIC_API` desligado | A chave do servidor autoriza. A UI local funciona. |
+| Público | `VEDIC_PUBLIC_API=1` (`docker-compose.prod.yml`) | **503.** Com o token configurado, a requisição envia `Authorization: Bearer <token>` ou recebe **401**. |
+
+O modelo permitido vem de `XAI_MODEL` ou `VEDIC_LOCAL_LM`; o cliente não escolhe outro. `auto` com `XAI_API_KEY` cai em xAI e segue a mesma regra. A checagem acontece antes do streaming e antes de recuperar documentos.
+
+`provider=extractive` continua aberto nos dois modos e não aceita `model`. Não exponha o token em `VITE_*` nem no bundle público. O token do pipeline não concede acesso à geração. Leitura de mídia já em cache continua aberta.

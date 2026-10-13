@@ -126,7 +126,9 @@ def build_pgvector_index(
         raise ValueError("Nenhum chunk gerado.")
 
     model = _load_st_model(model_name)
-    texts = [c["text"] for c in chunks]
+    from vedic_pipeline.search.embeddings import _passage_texts
+
+    texts = _passage_texts(model_name, [c["text"] for c in chunks])
     logger.info("Gerando embeddings pgvector para %d chunks...", len(texts))
     vectors = model.encode(
         texts,
@@ -175,11 +177,11 @@ def search_pgvector(
     language: str | None = None,
     url: str | None = None,
 ) -> list[dict[str, Any]]:
-    from vedic_pipeline.search.embeddings import _load_st_model
+    from vedic_pipeline.search.embeddings import _load_st_model, _query_text
 
     model = _load_st_model(model_name)
     q = model.encode(
-        [query],
+        [_query_text(model_name, query)],
         convert_to_numpy=True,
         normalize_embeddings=True,
     )[0].astype(np.float32)

@@ -8,30 +8,44 @@ from pathlib import Path
 from typing import Any
 
 from vedic_pipeline.common.constants import DEFAULT_EMBED_DIR
+from vedic_pipeline.common.style import STYLE_GUIDE_EN, STYLE_GUIDE_PT, clean_prose, edit_prose
 from vedic_pipeline.etl.structure import format_locator, parse_verse_id
 from vedic_pipeline.storage.db import get_connection, get_database_url
 
 logger = logging.getLogger("vedic_pipeline.api.verse")
 
-EXPLAIN_SYSTEM_PT = """Você é um preceptor de estudos védicos.
+EXPLAIN_SYSTEM_PT = (
+    """Você é professor de estudos védicos e escreve a nota explicativa que acompanha o verso,
+lida ao lado do original sânscrito (que o leitor já vê na tela; não o copie).
 
-Explique o verso em português claro, para leitura junto do original sânscrito.
-Regras:
-- O original sânscrito é a fonte; tradução e IAST só iluminam, não substituem.
-- Cite o localizador (ex.: RV 10.129.1, BG 2.47) e a edição da testemunha.
-- Não invente números de mantra nem doutrina que não esteja nas testemunhas.
-- Estruture: (1) sentido do verso, (2) termos-chave, (3) limites do corpus.
+Conteúdo:
+- O original sânscrito é a fonte; a tradução e o IAST só ajudam a ler.
+- Primeiro parágrafo: o que o verso diz e qual é o seu lugar no hino. Segundo parágrafo: os
+  termos que pedem explicação (por exemplo purohita, ṛtvij, hotṛ), explicados dentro das frases,
+  não em lista. Se houver mais de um verso, trate todos em sequência, pelo localizador (RV 1.1.2).
+- Não invente números de mantra nem doutrina ausente das testemunhas; se algo não puder ser
+  afirmado a partir delas, diga numa frase.
+- Extensão: de 2 a 4 parágrafos, no máximo 300 palavras.
+
 """
+    + STYLE_GUIDE_PT
+)
 
-EXPLAIN_SYSTEM_EN = """You are a guide for Vedic study.
+EXPLAIN_SYSTEM_EN = (
+    """You are a teacher of Vedic studies writing the explanatory note printed beside the verse
+(the reader already sees the Sanskrit; do not copy it).
 
-Explain the verse in clear English, to be read beside the Sanskrit original.
-Rules:
-- The Sanskrit original is the source; translation and IAST only illuminate it.
-- Cite the locator (e.g. RV 10.129.1, BG 2.47) and the witness edition.
+Content:
+- The Sanskrit original is the source; translation and IAST only help the reading.
+- First paragraph: what the verse says and its place in the hymn. Second: the terms that need
+  explaining (e.g. purohita, ṛtvij, hotṛ), explained inside sentences, not as a list. If several
+  verses are given, cover them in order by locator (RV 1.1.2).
 - Do not invent verse numbers or doctrine absent from the witnesses.
-- Structure: (1) sense of the verse, (2) key terms, (3) corpus limits.
+- Length: 2 to 4 paragraphs, at most 300 words.
+
 """
+    + STYLE_GUIDE_EN
+)
 
 
 def witness_role(row: dict[str, Any]) -> str:
@@ -246,23 +260,29 @@ def explain_verse(
         f"verse_id: {verse_id}\n\n"
         + "\n\n---\n\n".join(blocks)
     )
-    generated = generate_answer(system, user, provider=provider, model=model, max_tokens=900)
+    generated = generate_answer(system, user, provider=provider, model=model, max_tokens=1500)
+    explanation = clean_prose(generated.get("answer"), lang=lang)
+    explanation = edit_prose(explanation, lang=lang, provider=generated.get("provider") or provider)
     return {
         "verse_id": verse_id,
         "locator": bundle.get("locator"),
         "lang": lang,
         "provider": generated.get("provider"),
         "model": generated.get("model"),
-        "explanation": generated.get("answer"),
+        "explanation": explanation,
         "witnesses": bundle.get("witnesses"),
     }
 
 
 def recitation_text(bundle: dict[str, Any]) -> str | None:
+    """Texto recitável do verso: só o corpo, sem rubrica `[RV 1.1.1]`, sem
+    versos consecutivos do chunk, sem anukramaṇí, numerais e acentos védicos
+    (o TTS leria tudo isso literalmente)."""
     for role in ("sa", "iast", "en"):
         for w in bundle.get("witnesses") or []:
             if w.get("role") == role and (w.get("text") or "").strip():
-                return w["text"].strip()
+                body = _verse_body(w["text"], bundle.get("verse_id") or "")
+                return _strip_tts_noise(body) or None
     return None
 
 
@@ -277,6 +297,34 @@ _DEVA_DIGIT_RE = re.compile(r"[०-९]")
 # acentos védicos (udātta/anudātta): o verso recitável vem acentuado nas
 # edições védicas; a rubrica de anukramaṇí, não.
 _ACCENT_RE = re.compile(r"[॒॑]")
+
+
+def _strip_tts_noise(text: str) -> str:
+    """Remove do corpo do verso o que o TTS leria literalmente:
+
+    - rubrica de anukramaṇí fundida ao verso (linhas sem acento védico antes
+      da primeira linha acentuada — ex. AV: '१-४ अथर्वा। वाचस्पतिः।');
+    - numerais de fechamento `॥ १ ॥` / `॥६९०॥` (o nº do arca, não é fala);
+    - acentos védicos ॒॑ (sinal de tom combinante, não letra — a síntese
+      gagueja/interfere neles);
+    - preserva textos em IAST ou inglês sem descartar as linhas.
+    """
+    has_deva = bool(re.search(r"[\u0900-\u097F]", text))
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    if has_deva and len(lines) > 1 and _ACCENT_RE.search(text):
+        while lines and not _ACCENT_RE.search(lines[0]):
+            lines = lines[1:]
+    clean = "\n".join(lines)
+    clean = _DEVA_DIGIT_RE.sub("", clean)
+    clean = re.sub(r"[॥।|]\s*[॥।|]?", " ", clean)
+    clean = _ACCENT_RE.sub("", clean)
+    clean = re.sub(r"[ \t]+", " ", clean).strip()
+    if has_deva:
+        # linhas remanescentes sem nenhuma letra devanāgarī (restos de rubrica)
+        clean = "\n".join(
+            ln for ln in clean.split("\n") if re.search(r"[\u0900-\u097F]", ln)
+        )
+    return clean.strip()
 
 
 def _verse_body(text: str, verse_id: str) -> str:
